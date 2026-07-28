@@ -1,0 +1,3193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Productivity App</title>
+<meta name="description" content="Live day/night tracker, Hindu panchang, weather, task planner, date calculator and curated news in one page.">
+<meta name="theme-color" content="#FFC130">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Productivity App">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html{ -webkit-text-size-adjust: 100%; }
+button, .day-cell, .tab-btn, .wx-loc-card, a{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+</style>
+<style>
+:root{
+  --bg1:#FFF4DA; --bg2:#DDF3FF; --bg3:#FFE3EC;
+  --ink:#171A3D; --paper:#fffdf8;
+  --tint-rgb:23,26,61;
+  --card: rgba(255,255,255,0.78);
+  --card-line: rgba(var(--tint-rgb),0.10);
+  --card-shadow: 0 6px 22px rgba(var(--tint-rgb),0.07);
+  --gold:#FFC130; --saffron:#FF8A26; --coral:#FF5D73; --teal:#00BFA6;
+  --good:#12b981; --warn:#ff9f1c; --bad:#ff4d5e;
+  --text-hi:#171A3D; --text-lo:rgba(var(--tint-rgb),0.60);
+  --radius:18px;
+  --font-display:'Fraunces', serif;
+  --font-body:'Inter', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--font-body);
+  background:
+    radial-gradient(circle at 8% 6%, rgba(255,193,48,0.35), transparent 40%),
+    radial-gradient(circle at 96% 18%, rgba(0,191,166,0.28), transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(255,93,115,0.20), transparent 45%),
+    linear-gradient(155deg, var(--bg1), var(--bg2) 60%, var(--bg3));
+  background-attachment:fixed;
+  color:var(--text-hi);
+  min-height:100vh;
+  transition: background 1.2s ease;
+  overflow-x:hidden;
+}
+::selection{background:var(--gold); color:#241a00;}
+button{font-family:inherit; cursor:pointer;}
+input, select{font-family:inherit;}
+.app{max-width:900px; margin:0 auto; padding: 18px 16px 100px;}
+
+/* ---------- Top bar ---------- */
+.topbar{display:flex; align-items:center; justify-content:space-between; padding:6px 2px 18px;}
+.brand{display:flex; flex-direction:column; line-height:1;}
+.brand .mark{font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:0.2px; background:linear-gradient(120deg,var(--saffron),var(--coral)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.brand .sub{font-size:11px; color:var(--text-lo); letter-spacing:1.5px; text-transform:uppercase; margin-top:4px;}
+.icon-btn{
+  width:40px; height:40px; border-radius:50%; border:1px solid var(--card-line);
+  background:var(--card); color:var(--text-hi); font-size:18px; box-shadow:var(--card-shadow);
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* ---------- Living Sky hero ---------- */
+.sky{
+  position:relative; border-radius:24px; overflow:hidden;
+  padding:26px 22px 22px; margin-bottom:16px;
+  border:1px solid rgba(255,255,255,0.5);
+  box-shadow:0 10px 32px rgba(var(--tint-rgb),0.14);
+  background: linear-gradient(135deg, var(--sky1,#4FACFE), var(--sky2,#00C9B7));
+  transition: background 2s ease;
+}
+.sky::before{
+  content:''; position:absolute; inset:0; opacity:0.55; pointer-events:none;
+  background: radial-gradient(circle at 85% -10%, rgba(255,255,255,0.45), transparent 55%);
+}
+.sky-row{display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:1;}
+.day-progress-label{font-size:12px; letter-spacing:1.2px; text-transform:uppercase; color:rgba(13,17,32,0.65); font-weight:600;}
+.day-of-year{font-family:var(--font-display); font-size:15px; font-weight:600; color:rgba(13,17,32,0.85); margin-top:2px;}
+.sun-orb{font-size:26px;}
+.arc-wrap{position:relative; height:64px; margin:14px 0 6px;}
+.arc-track{position:absolute; left:0; right:0; top:30px; height:2px; background:rgba(13,17,32,0.18); border-radius:2px;}
+.arc-fill{position:absolute; left:0; top:30px; height:2px; background:rgba(13,17,32,0.55); border-radius:2px;}
+.arc-dot{position:absolute; top:14px; width:30px; height:30px; margin-left:-15px; display:flex; align-items:center; justify-content:center; font-size:20px; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.25));}
+.big-clock-row{display:flex; gap:20px; flex-wrap:wrap; align-items:center; position:relative; z-index:1;}
+.day-pie-wrap{position:relative; width:72px; height:72px; flex:none;}
+.day-pie{width:100%; height:100%; transform:rotate(-90deg);}
+.pie-track{fill:none; stroke:rgba(13,17,32,0.15); stroke-width:10;}
+.pie-fill{fill:none; stroke:var(--ink); stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset 1s linear;}
+.pie-center{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:13px; color:var(--ink);}
+.big-stat .num{font-family:var(--font-mono); font-weight:600; font-size:26px; color:var(--ink); line-height:1;}
+.big-stat .num .num-total{font-size:0.52em; font-weight:500; color:rgba(13,17,32,0.55);}
+.big-stat .lbl{font-size:11px; color:rgba(13,17,32,0.6); text-transform:uppercase; letter-spacing:1px; margin-top:5px;}
+.sky-meta{display:flex; gap:18px; margin-top:16px; flex-wrap:wrap; position:relative; z-index:1;}
+.meta-chip{background:rgba(255,255,255,0.4); border-radius:12px; padding:8px 12px; font-size:12.5px; color:rgba(13,17,32,0.85); display:flex; gap:6px; align-items:center; font-weight:600;}
+
+/* ---------- Cards ---------- */
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
+.card{
+  background:var(--card); border:1px solid var(--card-line); border-radius:var(--radius);
+  padding:16px; box-shadow:var(--card-shadow);
+}
+.card h3{font-family:var(--font-display); font-size:15px; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+.card .eyebrow{font-size:10.5px; text-transform:uppercase; letter-spacing:1.3px; color:var(--text-lo); margin-bottom:4px; font-weight:600;}
+.stat-big{font-family:var(--font-mono); font-size:22px; font-weight:600;}
+.stat-sub{font-size:12px; color:var(--text-lo); margin-top:4px;}
+
+.bedcard{margin-bottom:14px;}
+.bed-row{display:flex; justify-content:space-between; align-items:center;}
+.bed-countdown{font-family:var(--font-mono); font-size:26px; font-weight:600; color:var(--coral);}
+.bed-times{display:flex; gap:18px; margin-top:10px; font-size:12.5px; color:var(--text-lo);}
+.bed-times b{color:var(--text-hi); font-weight:600;}
+.sleep-log{border-top:1px solid var(--card-line); margin-top:14px; padding-top:2px;}
+.sleep-graph-wrap{border-top:1px solid var(--card-line); margin-top:14px; padding-top:2px;}
+.sleep-graph{width:100%; height:96px; display:block; margin-top:8px;}
+.sleep-bar{fill:var(--teal);}
+.sleep-bar.short{fill:var(--coral);}
+.sleep-bar.long{fill:var(--gold);}
+.sleep-target-line{stroke:rgba(var(--tint-rgb),0.5); stroke-width:1; stroke-dasharray:3,3;}
+.sleep-target-label{font-size:6.5px; fill:var(--text-lo); font-family:var(--font-body);}
+.sleep-bar-track{fill:rgba(var(--tint-rgb),0.06);}
+.sleep-axis-label{font-size:7px; fill:var(--text-lo); font-family:var(--font-body);}
+.sleep-value-label{font-size:7.5px; fill:var(--text-hi); font-family:var(--font-mono); font-weight:600;}
+
+/* Panchang */
+.panchang-row{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+.panchang-tithi{font-family:var(--font-display); font-size:19px; font-weight:600; color:var(--saffron);}
+.tag{display:inline-block; font-size:11px; padding:3px 9px; border-radius:20px; background:rgba(255,193,48,0.20); color:#a3690a; border:1px solid rgba(255,193,48,0.45); font-weight:700; margin-top:6px;}
+.tag.holiday{background:rgba(255,93,115,0.16); color:#c23350; border-color:rgba(255,93,115,0.4);}
+.tag.holiday.nl{background:rgba(0,191,166,0.16); color:#0a8b78; border-color:rgba(0,191,166,0.4);}
+.approx-note{font-size:10.5px; color:var(--text-lo); margin-top:8px; font-style:italic;}
+
+/* Weather mini */
+.weather-mini{display:flex; align-items:center; gap:12px;}
+.weather-mini .wicon{font-size:34px;}
+.clothing-tips{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;}
+.clothing-tips span{background:rgba(var(--tint-rgb),0.055); border:1px solid var(--card-line); border-radius:20px; padding:5px 10px; font-size:12px;}
+
+/* Task list */
+.task-list{display:flex; flex-direction:column; gap:8px; margin-top:4px;}
+.task-item{display:flex; align-items:center; gap:10px; background:rgba(var(--tint-rgb),0.035); border:1px solid var(--card-line); border-radius:12px; padding:10px 12px;}
+.task-item.done .task-text{text-decoration:line-through; color:var(--text-lo);}
+.task-check{width:20px; height:20px; border-radius:6px; border:1.5px solid var(--card-line); flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; background:transparent;}
+.task-item.done .task-check{background:var(--good); border-color:var(--good); color:#04241a;}
+.task-text{flex:1; font-size:13.5px;}
+.task-time-badge{font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--saffron); background:rgba(var(--tint-rgb),0.08); border-radius:6px; padding:3px 6px; flex:none;}
+.task-date{font-size:10.5px; color:var(--text-lo); font-family:var(--font-mono);}
+.task-del{background:none; border:none; color:var(--text-lo); font-size:16px; padding:2px 4px;}
+.task-empty{color:var(--text-lo); font-size:13px; padding:8px 2px;}
+
+.add-row{display:flex; gap:8px; margin-top:12px;}
+.add-row input[type=text]{flex:1; background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); border-radius:10px; padding:10px 12px; color:var(--text-hi); font-size:13.5px;}
+.add-row-time{width:92px; flex:none; background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); border-radius:10px; padding:10px 8px; color:var(--text-hi); font-size:12.5px; font-family:var(--font-mono);}
+.add-row input::placeholder{color:var(--text-lo);}
+.add-row button{background:linear-gradient(120deg,var(--gold),var(--saffron)); color:#241a00; border:none; border-radius:10px; padding:0 16px; font-weight:700; font-size:13px;}
+.quick-dates{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+.quick-dates button{background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); color:var(--text-hi); border-radius:20px; padding:6px 12px; font-size:11.5px;}
+.quick-dates button.active{background:var(--gold); color:#241a00; border-color:var(--gold);}
+.quick-dates input[type=date]{background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); color:var(--text-hi); border-radius:20px; padding:5px 10px; font-size:11.5px;}
+
+/* Tabs / bottom nav */
+.tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:50;
+  display:flex; justify-content:center; padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg, rgba(255,248,232,0.97), rgba(255,248,232,0.55));
+  backdrop-filter:blur(10px);
+}
+.tabbar-inner{display:flex; gap:4px; background:rgba(255,255,255,0.6); border:1px solid var(--card-line); border-radius:20px; padding:6px; max-width:900px; width:100%; box-shadow:var(--card-shadow); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+.tabbar-inner::-webkit-scrollbar{display:none;}
+.tab-btn{flex:0 0 auto; min-width:56px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 6px; border:none; background:none; color:var(--text-lo); border-radius:14px; font-size:9.5px; font-weight:600; letter-spacing:0.2px;}
+.tab-btn .ticon{font-size:16px;}
+.tab-btn.active{background:linear-gradient(135deg,var(--gold),var(--coral)); color:#2b0d0a;}
+
+.view{display:none;}
+.view.active{display:block;}
+
+/* Section headers */
+.section-title{font-family:var(--font-display); font-size:19px; font-weight:600; margin:6px 0 12px;}
+.section-sub{font-size:12.5px; color:var(--text-lo); margin-top:-8px; margin-bottom:14px;}
+
+/* Calendar */
+.year-switch{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+.year-switch button{background:var(--card); border:1px solid var(--card-line); color:var(--text-hi); border-radius:10px; width:32px; height:32px; box-shadow:var(--card-shadow);}
+.year-switch .yr{font-family:var(--font-mono); font-weight:700; font-size:16px;}
+.months-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px;}
+.month-card{background:var(--card); border:1px solid var(--card-line); border-radius:16px; padding:12px; box-shadow:var(--card-shadow);}
+.month-title{font-family:var(--font-display); font-weight:600; font-size:14px; margin-bottom:8px;}
+.dow-row{display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:3px;}
+.dow-row span{font-size:9px; text-align:center; color:var(--text-lo);}
+.days-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+.day-cell{aspect-ratio:1; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:10.5px; position:relative; background:rgba(var(--tint-rgb),0.025); color:var(--text-lo);}
+.day-cell.in-month{color:var(--text-hi); background:rgba(var(--tint-rgb),0.055);}
+.day-cell.today{background:linear-gradient(135deg,var(--gold),var(--saffron)); color:#241a00; font-weight:800;}
+.day-cell.has-holiday::after{content:''; position:absolute; bottom:2px; width:4px; height:4px; border-radius:50%; background:var(--coral);}
+.day-cell.has-tasks::before{content:''; position:absolute; top:2px; right:2px; width:4px; height:4px; border-radius:50%; background:var(--teal);}
+.day-cell.auspicious{box-shadow: inset 0 0 0 1.4px rgba(255,140,20,0.7);}
+
+/* modal */
+.modal-back{position:fixed; inset:0; background:rgba(var(--tint-rgb),0.38); backdrop-filter:blur(4px); z-index:100; display:none; align-items:flex-end; justify-content:center;}
+.modal-back.open{display:flex;}
+.modal{background:var(--paper); border:1px solid var(--card-line); border-radius:22px 22px 0 0; max-width:560px; width:100%; max-height:86vh; overflow-y:auto; padding:20px 20px calc(24px + env(safe-area-inset-bottom)); box-shadow:0 -14px 44px rgba(var(--tint-rgb),0.20);}
+@media(min-width:640px){ .modal-back{align-items:center;} .modal{border-radius:22px; max-height:80vh;} }
+.modal-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+.modal-head h2{font-family:var(--font-display); font-size:20px; font-weight:600;}
+.modal-close{background:rgba(var(--tint-rgb),0.07); border:none; color:var(--text-hi); width:32px; height:32px; border-radius:50%; font-size:16px;}
+.modal .card{margin-bottom:10px; box-shadow:none;}
+
+/* Weather view */
+.weather-day-row{display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--card-line);}
+.weather-day-row:last-child{border-bottom:none;}
+.wd-date{width:64px; flex:none;}
+.wd-date .wd-d{font-family:var(--font-mono); font-weight:700; font-size:15px;}
+.wd-date .wd-w{font-size:10.5px; color:var(--text-lo);}
+.wd-icon{font-size:24px; width:34px; text-align:center;}
+.wd-temp{width:78px; flex:none; font-family:var(--font-mono); font-size:13px;}
+.wd-tips{flex:1; display:flex; gap:5px; flex-wrap:wrap;}
+.wd-tips span{background:rgba(var(--tint-rgb),0.05); border-radius:14px; padding:3px 8px; font-size:11px;}
+.forecast-toggle{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
+.forecast-toggle button{background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); color:var(--text-hi); border-radius:20px; padding:7px 14px; font-size:12px; font-weight:600;}
+.forecast-toggle button.active{background:var(--teal); color:#04241a; border-color:var(--teal);}
+
+/* Multi-location weather */
+.wx-locations-row{display:flex; gap:10px; overflow-x:auto; padding:2px 2px 10px; -webkit-overflow-scrolling:touch;}
+.wx-loc-card{flex:none; min-width:112px; max-width:132px; background:var(--card); border:1.5px solid var(--card-line); border-radius:14px; padding:10px 30px 10px 12px; box-shadow:var(--card-shadow); cursor:pointer; position:relative; touch-action:manipulation;}
+.wx-loc-card.active{border-color:var(--saffron);}
+.wx-loc-card .wlc-name{font-size:11.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.wx-loc-card .wlc-temp{font-family:var(--font-mono); font-size:19px; font-weight:700; margin-top:5px;}
+.wx-loc-card .wlc-sub{font-size:10px; color:var(--text-lo); margin-top:2px;}
+.wx-loc-card .wlc-icon{position:absolute; top:9px; right:9px; font-size:15px;}
+.wx-loc-card .wlc-remove{position:absolute; bottom:7px; right:7px; background:rgba(var(--tint-rgb),0.10); border:none; border-radius:50%; width:22px; height:22px; font-size:11px; color:var(--text-lo); display:flex; align-items:center; justify-content:center; touch-action:manipulation;}
+.wx-add-location{display:flex; gap:8px; margin-top:2px;}
+.wx-add-location input{flex:1; background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); border-radius:10px; padding:9px 12px; font-size:13.5px; color:var(--text-hi);}
+
+/* settings */
+.settings-row{display:flex; justify-content:space-between; align-items:center; padding:12px 2px; border-bottom:1px solid var(--card-line);}
+.settings-row:last-child{border:none;}
+.settings-row label{font-size:13.5px;}
+.settings-row input[type=time], .settings-row input[type=text], .settings-row input[type=number]{background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); color:var(--text-hi); border-radius:8px; padding:7px 10px; font-size:13px;}
+.btn{background:linear-gradient(120deg,var(--gold),var(--saffron)); color:#241a00; border:none; border-radius:10px; padding:9px 16px; font-weight:700; font-size:13px;}
+.btn.ghost{background:rgba(var(--tint-rgb),0.055); color:var(--text-hi); border:1px solid var(--card-line);}
+.loc-status{font-size:12px; color:var(--text-lo); margin-top:6px;}
+
+/* Filters (planner) */
+.filter-row{display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;}
+.filter-row button{background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); color:var(--text-hi); border-radius:20px; padding:6px 13px; font-size:12px; font-weight:600;}
+.filter-row button.active{background:var(--coral); color:#2b0d0a; border-color:var(--coral);}
+.group-label{font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-lo); margin:16px 0 8px; font-weight:700;}
+
+/* Date calculator */
+.dc-row{display:flex; gap:10px; flex-wrap:wrap;}
+.dc-field{flex:1; min-width:140px; display:flex; flex-direction:column; gap:5px;}
+.dc-field label{font-size:11px; color:var(--text-lo); text-transform:uppercase; letter-spacing:0.8px; font-weight:600;}
+.dc-field input{background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); color:var(--text-hi); border-radius:8px; padding:8px 10px; font-size:13.5px; font-family:var(--font-mono);}
+.dc-field select{background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); color:var(--text-hi); border-radius:8px; padding:9px 10px; font-size:13.5px; font-family:var(--font-body);}
+.dc-checkbox-row{display:flex; gap:16px; margin-top:12px; flex-wrap:wrap;}
+.dc-checkbox{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-hi); cursor:pointer;}
+.dc-checkbox input[type=checkbox]{width:16px; height:16px; accent-color:var(--saffron);}
+.dc-holiday-list{margin-top:10px; display:flex; flex-direction:column; gap:5px;}
+.dc-holiday-list .hitem{font-size:12.5px; display:flex; justify-content:space-between; gap:8px; padding:6px 10px; background:rgba(var(--tint-rgb),0.04); border-radius:8px;}
+.dc-result{margin-top:14px;}
+.dc-stat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(110px,1fr)); gap:10px;}
+.dc-stat{background:rgba(var(--tint-rgb),0.05); border:1px solid var(--card-line); border-radius:12px; padding:12px;}
+.dc-stat .num{font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--saffron);}
+.dc-stat .lbl{font-size:11px; color:var(--text-lo); text-transform:uppercase; letter-spacing:0.6px; margin-top:4px;}
+.dc-plain{font-size:14px; margin-top:4px;}
+
+/* News */
+.news-item{display:flex; gap:12px; padding:12px 4px; border-bottom:1px solid var(--card-line);}
+.news-item:last-child{border-bottom:none;}
+.news-thumb{width:64px; height:64px; border-radius:10px; object-fit:cover; flex:none; background:rgba(var(--tint-rgb),0.06);}
+.news-body{flex:1; min-width:0;}
+.news-title{font-size:13.5px; font-weight:600; line-height:1.35; display:block; color:var(--text-hi); text-decoration:none;}
+.news-title:hover{text-decoration:underline;}
+.news-meta{font-size:11px; color:var(--text-lo); margin-top:5px;}
+.news-error{font-size:13px; color:var(--text-lo); padding:10px 2px;}
+.news-retry{margin-top:10px;}
+
+@media(max-width:520px){
+  .grid2{grid-template-columns:1fr;}
+  .big-clock-row{gap:16px;}
+  .big-stat .num{font-size:24px;}
+}
+
+/* ============================================================
+   Dim mode — auto-applied after sunset for eye comfort.
+   Warm, low-glare palette (no blue-heavy tones), muted accents.
+   ============================================================ */
+body.dim-mode{
+  --tint-rgb:255,225,190;
+  --card: rgba(48,36,26,0.55);
+  --card-line: rgba(255,225,190,0.12);
+  --card-shadow: 0 6px 22px rgba(0,0,0,0.30);
+  --text-hi:#F5DDBF; --text-lo:rgba(245,221,191,0.58);
+  --paper:#241a12;
+  --gold:#E8A94D; --saffron:#E07A38; --coral:#D8636E; --teal:#3FA394;
+  background:
+    radial-gradient(circle at 8% 6%, rgba(224,122,56,0.10), transparent 40%),
+    radial-gradient(circle at 96% 18%, rgba(63,163,148,0.08), transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(216,99,110,0.08), transparent 45%),
+    linear-gradient(155deg, #1B140D, #241A12 55%, #170F0A);
+  transition: background 2.5s ease;
+}
+body.dim-mode .brand .mark{ -webkit-background-clip:text; background-clip:text; }
+body.dim-mode .tag{ color:#F2C98A; }
+body.dim-mode .tag.holiday{ color:#F0A8AF; }
+body.dim-mode .tag.holiday.nl{ color:#8FE0D2; }
+body.dim-mode .modal-back{ background:rgba(0,0,0,0.55); }
+body.dim-mode .tabbar{
+  background:linear-gradient(0deg, rgba(20,15,10,0.97), rgba(20,15,10,0.55));
+}
+body.dim-mode .tabbar-inner{ background:rgba(255,225,190,0.06); }
+body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
+
+/* Living Sky hero flips to a dark, glare-free surface at night —
+   text and accents recolor for contrast against it. */
+.sky.sky-night .day-progress-label{ color:rgba(255,232,205,0.75); }
+.sky.sky-night .day-of-year{ color:rgba(255,232,205,0.92); }
+.sky.sky-night .arc-track{ background:rgba(255,232,205,0.18); }
+.sky.sky-night .arc-fill{ background:rgba(255,232,205,0.55); }
+.sky.sky-night .big-stat .num{ color:#FFE8C8; }
+.sky.sky-night .big-stat .lbl{ color:rgba(255,232,205,0.62); }
+.sky.sky-night .meta-chip{ background:rgba(255,255,255,0.10); color:rgba(255,236,214,0.9); }
+.sky.sky-night .pie-track{ stroke:rgba(255,255,255,0.16); }
+.sky.sky-night .pie-fill{ stroke:#FFE8C8; }
+.sky.sky-night .pie-center{ color:#FFE8C8; }
+.sky.sky-night .big-stat .num .num-total{ color:rgba(255,232,205,0.55); }
+.sky.sky-night::before{ opacity:0.25; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">Productivity App</div>
+      <div class="sub" id="todayHeaderDate">—</div>
+    </div>
+    <button class="icon-btn" onclick="App.openSettings()">⚙️</button>
+  </div>
+
+  <!-- ===================== TODAY ===================== -->
+  <div class="view active" id="view-today">
+
+    <div class="sky" id="skyHero">
+      <div class="sky-row">
+        <div>
+          <div class="day-progress-label">Day of the year</div>
+          <div class="day-of-year" id="dayOfYearLabel">—</div>
+        </div>
+        <div class="sun-orb" id="orbEmoji">☀️</div>
+      </div>
+
+      <div class="arc-wrap">
+        <div class="arc-track"></div>
+        <div class="arc-fill" id="arcFill"></div>
+        <div class="arc-dot" id="arcDot">☀️</div>
+      </div>
+
+      <div class="big-clock-row">
+        <div class="day-pie-wrap">
+          <svg class="day-pie" viewBox="0 0 100 100">
+            <circle class="pie-track" cx="50" cy="50" r="42"></circle>
+            <circle class="pie-fill" id="pieFill" cx="50" cy="50" r="42"></circle>
+          </svg>
+          <div class="pie-center" id="pieCenterLabel">—</div>
+        </div>
+        <div class="big-stat"><div class="num" id="minsLeft">—</div><div class="lbl">Minutes left today</div></div>
+        <div class="big-stat"><div class="num" id="secsLeft">—</div><div class="lbl">Seconds left today</div></div>
+      </div>
+
+      <div class="sky-meta">
+        <div class="meta-chip">🕐 <span id="nowTimeChip">—</span></div>
+        <div class="meta-chip">🌅 Rise <span id="sunriseChip">—</span></div>
+        <div class="meta-chip">🌇 Set <span id="sunsetChip">—</span></div>
+        <div class="meta-chip" id="daylenChip">☀️ —</div>
+      </div>
+    </div>
+
+    <div class="card bedcard">
+      <div class="bed-row">
+        <div>
+          <div class="eyebrow" id="bedLabelTop">Remaining time before bed</div>
+          <div class="bed-countdown" id="bedCountdown">—</div>
+        </div>
+        <div style="font-size:26px" id="bedEmoji">🛏️</div>
+      </div>
+      <div class="bed-times">
+        <div>Wake <b id="wakeTimeShow">—</b></div>
+        <div>Bed <b id="bedTimeShow">—</b></div>
+      </div>
+
+      <div class="sleep-log">
+        <div class="eyebrow" style="margin-top:14px;">Log last night's actual sleep</div>
+        <div class="dc-row" style="margin-top:6px;">
+          <div class="dc-field"><label>Went to bed</label><input type="time" id="sleepLogBedInput"></div>
+          <div class="dc-field"><label>Woke up</label><input type="time" id="sleepLogWakeInput"></div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button class="btn ghost" onclick="App.saveSleepLog()">Save</button>
+          <span class="stat-sub" id="sleepLogStatus"></span>
+        </div>
+      </div>
+
+      <div class="sleep-graph-wrap">
+        <div class="eyebrow" style="margin-top:16px;">Sleep duration — last 14 nights</div>
+        <div class="stat-sub" id="sleepGraphAvg"></div>
+        <svg id="sleepGraphSvg" class="sleep-graph" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
+        <div class="stat-sub" id="sleepGraphEmpty" style="display:none;">Log a night's sleep above to start seeing your pattern here.</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>🪔 Panchang</h3>
+        <div class="panchang-tithi" id="tithiName">—</div>
+        <div class="stat-sub" id="pakshaLabel">—</div>
+        <div class="stat-sub" id="tithiTimeRange" style="margin-top:2px;">—</div>
+        <div id="tithiTags"></div>
+        <div class="stat-sub" id="brahmaMuhurtaRange" style="margin-top:8px;">🌅 Brahma Muhurta —</div>
+      </div>
+      <div class="card">
+        <h3>🎉 Today</h3>
+        <div id="holidayBox"><div class="stat-sub">No holidays today</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h3>🌤️ Weather now</h3>
+      <div class="weather-mini">
+        <div class="wicon" id="wxIconNow">—</div>
+        <div>
+          <div class="stat-big" id="wxTempNow">—</div>
+          <div class="stat-sub" id="wxDescNow">Fetching…</div>
+        </div>
+      </div>
+      <div class="clothing-tips" id="wxTipsNow"></div>
+    </div>
+
+    <div class="card">
+      <h3>✅ Today's tasks &amp; events</h3>
+      <div class="task-list" id="todayTaskList"></div>
+      <div class="add-row">
+        <input type="text" id="todayTaskInput" placeholder="Add a task or event for today…">
+        <input type="time" id="todayTaskTimeInput" class="add-row-time" title="Optional time">
+        <button onclick="App.addTaskForToday()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CALENDAR ===================== -->
+  <div class="view" id="view-calendar">
+    <div class="section-title">Year calendar</div>
+    <div class="section-sub">Tap any day for sunrise/sunset, panchang, holidays, weather &amp; tasks.</div>
+    <div class="year-switch">
+      <button onclick="App.changeYear(-1)">‹</button>
+      <div class="yr" id="calYearLabel">—</div>
+      <button onclick="App.changeYear(1)">›</button>
+    </div>
+    <div class="months-grid" id="monthsGrid"></div>
+  </div>
+
+  <!-- ===================== WEATHER ===================== -->
+  <div class="view" id="view-weather">
+    <div class="section-title">Plan around the sky</div>
+    <div class="section-sub">Genuine forecast data blended from ECMWF, NOAA, DWD and other national weather services via Open-Meteo — tap a city to see its forecast, or add up to 8.</div>
+
+    <div class="wx-locations-row" id="wxLocationsRow"></div>
+    <div class="wx-add-location">
+      <input type="text" id="wxAddLocationInput" placeholder="Add a city (e.g. Tokyo, São Paulo, Mumbai)…">
+      <button class="btn ghost" onclick="App.addWeatherLocation()">Add city</button>
+    </div>
+    <div class="stat-sub" id="wxAddLocationStatus" style="margin:6px 2px 14px;"></div>
+
+    <div class="section-sub" id="wxLocLabel">Live forecast, synced to your location.</div>
+    <div class="forecast-toggle">
+      <button class="active" data-range="7" onclick="App.setWxRange(7,this)">Next 7 days</button>
+      <button data-range="15" onclick="App.setWxRange(15,this)">Next 15 days</button>
+      <button data-range="16" onclick="App.setWxRange(16,this)">Max (16d)</button>
+    </div>
+    <div class="card">
+      <div id="wxList"></div>
+      <div class="approx-note" id="wxBeyondNote" style="margin-top:10px;">Live forecasts are only available ~16 days ahead — dates further out will show without weather until closer to the date.</div>
+    </div>
+  </div>
+
+  <!-- ===================== TASKS ===================== -->
+  <div class="view" id="view-tasks">
+    <div class="section-title">Task planner</div>
+    <div class="section-sub">Plan tomorrow, next week, next month — or reschedule what slipped.</div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h3>➕ New task or event</h3>
+      <div class="add-row">
+        <input type="text" id="plannerTaskInput" placeholder="What do you need to do?">
+        <input type="time" id="plannerTaskTimeInput" class="add-row-time" title="Optional time">
+      </div>
+      <div class="quick-dates" id="quickDates">
+        <button data-q="today">Today</button>
+        <button data-q="tomorrow">Tomorrow</button>
+        <button data-q="week">Next week</button>
+        <button data-q="month">Next month</button>
+        <input type="date" id="customDate">
+      </div>
+      <div style="margin-top:12px;"><button class="btn" onclick="App.addTaskFromPlanner()">Add task</button></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h3>📷 Scan a note or photo</h3>
+      <div class="stat-sub">Snap a photo of a handwritten note, sticky note, or printed reminder — I'll pull out the text and try to spot a date/time. Works best on clear, printed writing; cursive handwriting is hit-or-miss, so always double-check before adding.</div>
+      <div style="margin-top:10px;">
+        <input type="file" id="scanFileInput" accept="image/*" capture="environment" style="display:none;" onchange="App.handleScanFile(event)">
+        <button class="btn ghost" onclick="document.getElementById('scanFileInput').click()">📷 Choose or take a photo</button>
+      </div>
+      <div class="stat-sub" id="scanStatus" style="margin-top:8px;"></div>
+      <div id="scanReview" style="display:none; margin-top:12px;">
+        <div class="dc-field"><label>Task text (edit if needed)</label><input type="text" id="scanTaskText"></div>
+        <div class="dc-row" style="margin-top:8px;">
+          <div class="dc-field"><label>Date</label><input type="date" id="scanTaskDate"></div>
+          <div class="dc-field"><label>Time (optional)</label><input type="time" id="scanTaskTime"></div>
+        </div>
+        <div style="margin-top:10px;"><button class="btn" onclick="App.confirmScanTask()">Add as task</button></div>
+        <details style="margin-top:10px;"><summary class="stat-sub" style="cursor:pointer;">Show full extracted text</summary><div class="stat-sub" id="scanFullText" style="margin-top:6px; white-space:pre-wrap;"></div></details>
+      </div>
+    </div>
+
+    <div class="filter-row" id="taskFilterRow">
+      <button class="active" data-f="all">All</button>
+      <button data-f="overdue">Overdue</button>
+      <button data-f="today">Today</button>
+      <button data-f="upcoming">Upcoming</button>
+      <button data-f="done">Completed</button>
+    </div>
+
+    <div id="plannerList"></div>
+  </div>
+
+  <!-- ===================== DATE CALCULATOR ===================== -->
+  <div class="view" id="view-datecalc">
+    <div class="section-title">Date &amp; time calculator</div>
+    <div class="section-sub">Days between two dates, working days, weekends, and public holidays — or add/subtract days from a date.</div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h3>📆 Days between two dates</h3>
+      <div class="dc-row">
+        <div class="dc-field"><label>Start date</label><input type="date" id="dcStart"></div>
+        <div class="dc-field"><label>End date</label><input type="date" id="dcEnd"></div>
+      </div>
+      <div class="dc-checkbox-row">
+        <label class="dc-checkbox"><input type="checkbox" id="dcIncludeWeekdays" checked> Include weekdays</label>
+        <label class="dc-checkbox"><input type="checkbox" id="dcIncludeWeekends" checked> Include weekends</label>
+      </div>
+      <div class="dc-field" style="margin-top:10px; max-width:260px;">
+        <label>Count public holidays for</label>
+        <select id="dcCountrySelect">
+          <option value="none">Don't count holidays</option>
+          <option value="IN">🇮🇳 India</option>
+          <option value="NL">🇳🇱 Netherlands</option>
+          <option value="BOTH">🇮🇳 India + 🇳🇱 Netherlands</option>
+        </select>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button class="btn" onclick="App.runDateDiff()">Calculate</button>
+        <button class="btn ghost" onclick="App.resetDateDiff()">Reset</button>
+      </div>
+      <div id="dcResult" class="dc-result"></div>
+    </div>
+
+    <div class="card">
+      <h3>➕ Add / subtract days</h3>
+      <div class="dc-row">
+        <div class="dc-field"><label>From date</label><input type="date" id="dcBaseDate"></div>
+        <div class="dc-field"><label>Days (+/−)</label><input type="number" id="dcOffsetDays" value="30"></div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button class="btn" onclick="App.runDateOffset()">Calculate</button>
+        <button class="btn ghost" onclick="App.resetDateOffset()">Reset</button>
+      </div>
+      <div id="dcOffsetResult" class="dc-result"></div>
+    </div>
+  </div>
+
+  <!-- ===================== NEWS ===================== -->
+  <div class="view" id="view-news">
+    <div class="section-title">Headlines</div>
+    <div class="section-sub">Curated per category from reliable direct sources, with automatic fallbacks if one is unreachable.</div>
+    <div class="filter-row" id="newsCatRow">
+      <button class="active" data-cat="global">🌍 International</button>
+      <button data-cat="local_nl">🇳🇱 Local (Netherlands)</button>
+      <button data-cat="local_in">🇮🇳 India</button>
+      <button data-cat="business">💼 Business</button>
+      <button data-cat="entrepreneur">🚀 Entrepreneur</button>
+      <button data-cat="ai">🤖 AI</button>
+      <button data-cat="tech">💻 Tech</button>
+      <button data-cat="it">🖥️ IT</button>
+    </div>
+    <div class="card">
+      <div id="newsList"><div class="stat-sub">Loading headlines…</div></div>
+    </div>
+  </div>
+
+  <!-- ===================== HEALTH ===================== -->
+  <div class="view" id="view-health">
+    <div class="section-title">Health</div>
+    <div class="filter-row" id="healthSubNav">
+      <button class="active" data-sub="steps">🚶 Steps &amp; Route</button>
+      <button data-sub="calories">🍽️ Calories</button>
+      <button data-sub="water">💧 Water</button>
+      <button data-sub="screen">📱 Screen Time</button>
+      <button data-sub="radiation">📡 Radiation</button>
+    </div>
+
+    <!-- ---- Steps & Route ---- -->
+    <div id="healthSteps">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="stat-sub">Honest limits, upfront: this tracks steps using your <b>phone's</b> motion sensor and GPS, only while this page is open in a mobile browser. It cannot read an Apple Watch or Wear OS watch directly — smartwatches don't run web pages, that needs a native watch app. If your watch already counts your steps well, the manual entry below is the most reliable option. The live tracker uses noise-filtering and GPS-quality checks to stay as accurate as a phone-based sensor genuinely can be, but no browser-based pedometer or consumer GPS can be perfectly glitch-free — phone placement, walking style, and satellite conditions all cause real variance.</div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="eyebrow">Steps today</div>
+          <div class="stat-big" id="stepsTodayCount">0</div>
+          <div class="stat-sub" id="stepsGoalLabel">Goal: 10,000</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Distance &amp; calories (est.)</div>
+          <div class="stat-big" id="stepsDistanceLabel">0.0 km</div>
+          <div class="stat-sub" id="stepsCaloriesLabel">~0 kcal burned</div>
+          <div class="stat-sub" id="strideCalibrationNote" style="margin-top:6px; font-style:italic;"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>✍️ Manual entry</h3>
+        <div class="stat-sub">Enter today's step count from your phone/watch's own health app for the most accurate number.</div>
+        <div class="add-row" style="margin-top:8px;">
+          <input type="number" id="manualStepsInput" placeholder="e.g. 8500" min="0">
+          <button onclick="App.saveManualSteps()">Save</button>
+        </div>
+        <div class="dc-field" style="margin-top:10px; max-width:200px;"><label>Daily step goal</label><input type="number" id="stepGoalInput" min="1000" step="500"></div>
+        <div style="margin-top:8px;"><button class="btn ghost" onclick="App.saveStepGoal()">Update goal</button></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>⚖️ Body weight</h3>
+        <div class="stat-sub">Used only to personalize your calorie-burn estimate (via the standard MET formula) — without it, estimates fall back to a generic average.</div>
+        <div class="add-row" style="margin-top:8px;">
+          <input type="number" id="weightLogInput" placeholder="e.g. 68" min="20" step="0.1">
+          <button onclick="App.saveWeightLog()">Save (kg)</button>
+        </div>
+        <div class="stat-sub" id="weightLogStatus" style="margin-top:6px;"></div>
+        <div class="stat-sub" id="weightGraphAvg" style="margin-top:10px;"></div>
+        <svg id="weightGraphSvg" class="sleep-graph" viewBox="0 0 320 100" preserveAspectRatio="none"></svg>
+        <div class="stat-sub" id="weightGraphEmpty" style="display:none;">Log your weight above to start seeing your trend here.</div>
+      </div>
+
+      <div class="card">
+        <h3>📍 Live walk tracker</h3>
+        <div class="stat-sub">Uses your phone's accelerometer (noise-smoothed) to count steps, and GPS (with poor-accuracy readings filtered out) to draw your route. Keep this tab open and your phone with you — it stops if you leave the page. Completing one walk with GPS also calibrates your personal stride length for more accurate distance on days you don't use GPS.</div>
+        <div class="dc-field" style="margin-top:10px; max-width:240px;">
+          <label>Step sensitivity <span style="font-weight:400; text-transform:none;">(lower = more sensitive)</span></label>
+          <input type="number" id="stepSensitivityInput" min="0.2" max="3" step="0.1" value="0.8">
+        </div>
+        <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
+          <button class="btn ghost" onclick="App.saveStepSensitivity()">Save sensitivity</button>
+          <span class="stat-sub" id="sensitivitySaveStatus"></span>
+        </div>
+        <div class="stat-sub" style="margin-top:6px;">If your phone under-counts steps, lower this number; if it over-counts (counts steps when it shouldn't), raise it. Different phone models genuinely have different accelerometer sensitivity — there's no single correct value for every device.</div>
+        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" id="startWalkBtn" onclick="App.startWalkTracking()">▶️ Start walk</button>
+          <button class="btn ghost" id="stopWalkBtn" onclick="App.stopWalkTracking()" style="display:none;">⏹️ Stop walk</button>
+        </div>
+        <div class="stat-sub" id="walkStatus" style="margin-top:8px;"></div>
+        <div class="dc-stat-grid" id="walkLiveStats" style="margin-top:10px; display:none;">
+          <div class="dc-stat"><div class="num" id="walkStepsLive">0</div><div class="lbl">Steps this walk</div></div>
+          <div class="dc-stat"><div class="num" id="walkDistLive">0.00 km</div><div class="lbl">Distance</div></div>
+          <div class="dc-stat"><div class="num" id="walkTimeLive">0:00</div><div class="lbl">Duration</div></div>
+        </div>
+        <div id="walkMap" class="walk-map" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- ---- Calories ---- -->
+    <div id="healthCalories" style="display:none;">
+      <div class="grid2" style="margin-bottom:14px;">
+        <div class="card">
+          <div class="eyebrow">Today's intake</div>
+          <div class="stat-big" id="calorieTodayTotal">0 kcal</div>
+          <div class="stat-sub" id="calorieGoalLabel">Goal: 2,000 kcal</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Daily goal</div>
+          <div class="add-row" style="margin-top:4px;">
+            <input type="number" id="calorieGoalInput" min="500" step="50">
+            <button onclick="App.saveCalorieGoal()">Set</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📷 Snap a meal</h3>
+        <div class="stat-sub">Runs a real on-device image model (TensorFlow.js + MobileNet) to guess the food — but calorie-from-photo is a genuinely hard, unsolved problem. It recognizes a limited set of common dishes and can't see portion size. Treat this as a rough starting point to confirm or correct, not a precise reading.</div>
+        <div style="margin-top:10px;">
+          <input type="file" id="mealFileInput" accept="image/*" capture="environment" style="display:none;" onchange="App.handleMealPhoto(event)">
+          <button class="btn ghost" onclick="document.getElementById('mealFileInput').click()">📷 Choose or take a photo</button>
+        </div>
+        <div class="stat-sub" id="mealScanStatus" style="margin-top:8px;"></div>
+        <div id="mealScanReview" style="display:none; margin-top:12px;">
+          <div class="dc-row">
+            <div class="dc-field"><label>Food name</label><input type="text" id="mealScanName"></div>
+            <div class="dc-field"><label>Calories (kcal)</label><input type="number" id="mealScanCalories" min="0"></div>
+          </div>
+          <div style="margin-top:10px;"><button class="btn" onclick="App.confirmMealScan()">Log this</button></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📖 Food database</h3>
+        <div class="filter-row" id="foodDbNav">
+          <button class="active" data-db="IN">🇮🇳 Indian</button>
+          <button data-db="NL">🇳🇱 Dutch</button>
+          <button data-db="custom">➕ Custom</button>
+        </div>
+        <div id="foodDbList"></div>
+        <div id="customFoodForm" style="display:none; margin-top:12px; border-top:1px solid var(--card-line); padding-top:12px;">
+          <div class="dc-row">
+            <div class="dc-field"><label>Food name</label><input type="text" id="customFoodName"></div>
+            <div class="dc-field"><label>Calories (kcal)</label><input type="number" id="customFoodCalories" min="0"></div>
+          </div>
+          <div style="margin-top:8px;"><button class="btn ghost" onclick="App.addCustomFood()">Add to my foods</button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📝 Today's food log</h3>
+        <div id="foodLogList"></div>
+      </div>
+    </div>
+
+    <!-- ---- Water ---- -->
+    <div id="healthWater" style="display:none;">
+      <div class="grid2" style="margin-bottom:14px;">
+        <div class="card">
+          <div class="eyebrow">Today's water intake</div>
+          <div class="stat-big" id="waterTodayTotal">0 ml</div>
+          <div class="stat-sub" id="waterGoalLabel">Goal: 2,500 ml</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Glasses today</div>
+          <div class="stat-big" id="waterGlassesCount">0</div>
+          <div class="stat-sub" id="waterGlassSizeLabel">1 glass = 250 ml</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>➕ Log a glass</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" onclick="App.addWaterGlass(1)">+1 glass</button>
+          <button class="btn ghost" onclick="App.addWaterGlass(-1)">−1 glass</button>
+        </div>
+        <div class="stat-sub" id="waterLogStatus" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>⚙️ Settings</h3>
+        <div class="stat-sub">General hydration guidance (not personalized medical advice) commonly cites around 2–3 liters a day from all beverages combined for most adults — less on cooler days or if you get water from food, more if you're active or it's hot. Adjust the goal to whatever your own doctor or situation calls for.</div>
+        <div class="dc-row" style="margin-top:10px;">
+          <div class="dc-field"><label>Glass size (ml)</label><input type="number" id="waterGlassMlInput" min="50" step="10"></div>
+          <div class="dc-field"><label>Daily goal (ml)</label><input type="number" id="waterGoalMlInput" min="500" step="100"></div>
+        </div>
+        <div style="margin-top:10px;"><button class="btn ghost" onclick="App.saveWaterSettings()">Save settings</button></div>
+      </div>
+    </div>
+
+    <!-- ---- Screen Time ---- -->
+    <div id="healthScreen" style="display:none;">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="stat-sub">Honest limit, upfront: a website genuinely cannot see how long you spend in <i>other</i> apps, or which app you use most — browsers are deliberately sandboxed from that information for privacy/security reasons, and there is no web technology (for this app or any other website) that can read it. What's shown below is real time spent in <b>this app's tab specifically</b>, which is accurate for itself but isn't your total phone/laptop usage.</div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:14px;">
+        <div class="card">
+          <div class="eyebrow">Time in this app today</div>
+          <div class="stat-big" id="screenAppSessionLabel">0m</div>
+          <div class="stat-sub">Tracked automatically while this tab is open and focused.</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Total device screen time today</div>
+          <div class="stat-big" id="screenManualLabel">Not logged</div>
+          <div class="stat-sub">Your phone already measures this accurately — see below.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📲 Get your real total from your phone</h3>
+        <div class="stat-sub">Your phone's own OS tracks this properly across every app — far more accurately than any website could:</div>
+        <div class="stat-sub" style="margin-top:6px;">
+          <b>iPhone:</b> Settings → Screen Time → shows daily total and per-app breakdown, including which app you use most.<br>
+          <b>Android:</b> Settings → Digital Wellbeing &amp; parental controls → Dashboard, same breakdown.
+        </div>
+        <div class="add-row" style="margin-top:10px;">
+          <input type="number" id="manualScreenMinutesInput" placeholder="Total minutes today, e.g. 240">
+          <button onclick="App.saveManualScreenTime()">Save</button>
+        </div>
+        <div class="stat-sub" id="screenManualStatus" style="margin-top:6px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>🩺 General guidance</h3>
+        <div class="stat-sub">There's no single official medical number for adult screen time the way there sometimes is for children — expert bodies mostly avoid a strict hour limit and focus on <i>how</i> screens are used. Commonly cited, reasonable benchmarks:</div>
+        <div class="stat-sub" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+          <span>• Roughly 2–4 hours/day of <i>recreational</i> (non-work) screen use is the range generally considered reasonable for adults.</span>
+          <span>• The "20-20-20" rule for eye strain: every 20 minutes, look at something 20 feet away for 20 seconds.</span>
+          <span>• Avoid screens for the last 30–60 minutes before bed — blue light and stimulation can delay sleep onset.</span>
+          <span>• For children, the WHO and AAP publish age-specific guidance (generally far stricter than adult benchmarks, especially under age 5) — worth checking their sites directly if this app is used by a child in your household.</span>
+        </div>
+        <div class="dc-field" style="margin-top:10px; max-width:220px;"><label>Your personal recreational-use goal (hours)</label><input type="number" id="screenGoalInput" min="0.5" step="0.5"></div>
+        <div style="margin-top:8px;"><button class="btn ghost" onclick="App.saveScreenGoal()">Save goal</button></div>
+      </div>
+    </div>
+
+    <!-- ---- Radiation ---- -->
+    <div id="healthRadiation" style="display:none;">
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📡 About EMF / radiation "detection"</h3>
+        <div class="stat-sub">Being straightforward instead of building something fake: a phone's web browser has <b>no access</b> to any sensor that measures RF, cellular, or WiFi radiation. Even native phone apps that claim to be "EMF meters" can only read the phone's magnetometer (the compass sensor) — which detects magnetic fields (like from a nearby speaker or fridge magnet), not the radio/cellular/WiFi radiation people usually mean by "EMF." There is no standard phone hardware, and no web technology, that can genuinely measure ambient electromagnetic radiation in a room. Any app — this one included — that showed you a "safety score" here would be making up a number, not measuring anything real. I'm not willing to do that for a topic people have genuine safety questions about.</div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📶 What's actually real: your network connection</h3>
+        <div class="stat-sub">This is genuine data your browser can see about your current internet connection — it's a network-quality reading, <b>not</b> a radiation measurement, and says nothing about RF exposure or safety.</div>
+        <div class="dc-stat-grid" style="margin-top:10px;">
+          <div class="dc-stat"><div class="num" id="netConnType">—</div><div class="lbl">Connection type</div></div>
+          <div class="dc-stat"><div class="num" id="netDownlink">—</div><div class="lbl">Est. speed (Mbps)</div></div>
+          <div class="dc-stat"><div class="num" id="netRtt">—</div><div class="lbl">Latency (ms)</div></div>
+        </div>
+        <div class="stat-sub" id="netInfoNote" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>🔎 If you genuinely want to measure EMF</h3>
+        <div class="stat-sub">Regulatory bodies (like the FCC, ICNIRP, and WHO) already set and enforce exposure limits that phones and cell towers must comply with by law — that's the real safety baseline, already in place before any app gets involved. If you specifically want to measure ambient EMF yourself, that requires dedicated hardware — a real RF/EMF meter (not a phone) — since no phone sensor, and no app, native or web, can substitute for one.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.walk-map{width:100%; height:220px; border-radius:14px; margin-top:12px; border:1px solid var(--card-line); overflow:hidden;}
+.food-row{display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--card-line);}
+.food-row:last-child{border-bottom:none;}
+.food-row .fr-name{flex:1; font-size:13.5px;}
+.food-row input[type=number]{width:72px; background:rgba(var(--tint-rgb),0.05); border:1px solid var(--card-line); border-radius:8px; padding:6px 8px; font-size:12.5px; color:var(--text-hi); font-family:var(--font-mono);}
+.food-row .fr-qty{width:52px;}
+.food-row button{background:var(--teal); color:#04241a; border:none; border-radius:8px; padding:6px 10px; font-size:12px; font-weight:700;}
+.food-log-item{display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--card-line); font-size:13px;}
+.food-log-item:last-child{border-bottom:none;}
+.food-log-item .fl-name{flex:1;}
+.food-log-item .fl-cal{font-family:var(--font-mono); color:var(--text-lo); font-size:12px;}
+</style>
+
+<div class="tabbar">
+  <div class="tabbar-inner">
+    <button class="tab-btn active" data-view="today" onclick="App.switchTab('today')"><span class="ticon">☀️</span>Today</button>
+    <button class="tab-btn" data-view="calendar" onclick="App.switchTab('calendar')"><span class="ticon">📅</span>Calendar</button>
+    <button class="tab-btn" data-view="weather" onclick="App.switchTab('weather')"><span class="ticon">🌦️</span>Weather</button>
+    <button class="tab-btn" data-view="tasks" onclick="App.switchTab('tasks')"><span class="ticon">✅</span>Tasks</button>
+    <button class="tab-btn" data-view="datecalc" onclick="App.switchTab('datecalc')"><span class="ticon">🧮</span>Dates</button>
+    <button class="tab-btn" data-view="news" onclick="App.switchTab('news')"><span class="ticon">📰</span>News</button>
+    <button class="tab-btn" data-view="health" onclick="App.switchTab('health')"><span class="ticon">❤️</span>Health</button>
+  </div>
+</div>
+
+<!-- Day detail modal -->
+<div class="modal-back" id="dayModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="dayModalTitle">—</h2>
+      <button class="modal-close" onclick="App.closeModal('dayModal')">✕</button>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Sun</div>
+      <div class="stat-sub" id="dayModalSun">—</div>
+      <div class="stat-sub" id="dayModalBrahma" style="margin-top:4px;">🌅 Brahma Muhurta —</div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Panchang</div>
+      <div class="panchang-tithi" id="dayModalTithi">—</div>
+      <div class="stat-sub" id="dayModalPaksha">—</div>
+      <div class="stat-sub" id="dayModalTithiRange" style="margin-top:2px;">—</div>
+    </div>
+    <div class="card" id="dayModalHolidayCard" style="display:none;">
+      <div class="eyebrow">Holidays</div>
+      <div id="dayModalHolidays"></div>
+    </div>
+    <div class="card" id="dayModalWxCard" style="display:none;">
+      <div class="eyebrow">Weather</div>
+      <div class="stat-sub" id="dayModalWx">—</div>
+      <div class="clothing-tips" id="dayModalWxTips"></div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Tasks &amp; events for this day</div>
+      <div class="task-list" id="dayModalTasks"></div>
+      <div class="add-row">
+        <input type="text" id="dayModalTaskInput" placeholder="Add a task or event…">
+        <input type="time" id="dayModalTaskTimeInput" class="add-row-time" title="Optional time">
+        <button onclick="App.addTaskForModalDay()">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-back" id="settingsModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Settings</h2>
+      <button class="modal-close" onclick="App.closeModal('settingsModal')">✕</button>
+    </div>
+
+    <div class="card">
+      <h3>📍 Location</h3>
+      <div class="settings-row"><label>City</label><input type="text" id="cityInput" placeholder="e.g. Amsterdam"></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button class="btn ghost" onclick="App.useGeolocation()">Use device location</button>
+        <button class="btn" onclick="App.searchCity()">Find city</button>
+      </div>
+      <div class="loc-status" id="locStatus">—</div>
+    </div>
+
+    <div class="card">
+      <h3>🛌 Sleep schedule</h3>
+      <div class="settings-row"><label>Wake-up time</label><input type="time" id="wakeInput"></div>
+      <div class="settings-row"><label>Bedtime</label><input type="time" id="bedInput"></div>
+    </div>
+
+    <div style="margin-top:10px;"><button class="btn" onclick="App.saveSettings()">Save settings</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Astronomy: sunrise / sunset (standard solar position formulas)
+   ============================================================ */
+const RAD = Math.PI/180, DAY_MS = 86400000, J1970 = 2440588, J2000 = 2451545;
+function toJulian(d){ return d.valueOf()/DAY_MS - 0.5 + J1970; }
+function fromJulian(j){ return new Date((j + 0.5 - J1970)*DAY_MS); }
+function toDays(d){ return toJulian(d) - J2000; }
+function solarMeanAnomaly(d){ return RAD*(357.5291 + 0.98560028*d); }
+function eclipticLongitude(M){
+  const C = RAD*(1.9148*Math.sin(M) + 0.02*Math.sin(2*M) + 0.0003*Math.sin(3*M));
+  const P = RAD*102.9372;
+  return M + C + P + Math.PI;
+}
+function declination(l){ return Math.asin(Math.sin(l)*Math.sin(RAD*23.4397)); }
+function julianCycle(d, lw){ return Math.round(d - 0.0009 - lw/(2*Math.PI)); }
+function approxTransit(Ht, lw, n){ return 0.0009 + (Ht+lw)/(2*Math.PI) + n; }
+function solarTransitJ(ds, M, L){ return J2000 + ds + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L); }
+function hourAngle(h, phi, dec){
+  const cosH = (Math.sin(h) - Math.sin(phi)*Math.sin(dec)) / (Math.cos(phi)*Math.cos(dec));
+  return Math.acos(Math.max(-1, Math.min(1, cosH)));
+}
+function getSunTimes(date, lat, lng){
+  const lw = RAD*-lng, phi = RAD*lat, d = toDays(date);
+  const n = julianCycle(d, lw);
+  const ds = approxTransit(0, lw, n);
+  const M = solarMeanAnomaly(ds);
+  const L = eclipticLongitude(M);
+  const dec = declination(L);
+  const Jnoon = solarTransitJ(ds, M, L);
+  const h0 = -0.833*RAD;
+  const w = hourAngle(h0, phi, dec);
+  const a = approxTransit(w, lw, n);
+  const Jset = solarTransitJ(a, M, L);
+  const Jrise = Jnoon - (Jset - Jnoon);
+  return { sunrise: fromJulian(Jrise), sunset: fromJulian(Jset), noon: fromJulian(Jnoon) };
+}
+
+/* ============================================================
+   Panchang: approximate tithi from lunar phase
+   ============================================================ */
+const SYNODIC = 29.530588861;
+const KNOWN_NEW_MOON = Date.UTC(2000,0,6,18,14,0); // reference new moon
+const TITHI_NAMES = ["Pratipada","Dwitiya","Tritiya","Chaturthi","Panchami","Shashthi","Saptami","Ashtami","Navami","Dashami","Ekadashi","Dwadashi","Trayodashi","Chaturdashi","Purnima"];
+function getTithi(date){
+  const diffDays = (date.getTime() - KNOWN_NEW_MOON) / DAY_MS;
+  let age = diffDays % SYNODIC;
+  if(age < 0) age += SYNODIC;
+  const tithiIndex = Math.floor(age / (SYNODIC/30)) + 1; // 1..30
+  const paksha = tithiIndex <= 15 ? "Shukla" : "Krishna";
+  let num = tithiIndex <= 15 ? tithiIndex : tithiIndex - 15;
+  let name = TITHI_NAMES[num-1];
+  if(num === 15) name = paksha === "Shukla" ? "Purnima" : "Amavasya";
+  const auspicious = [4,8,9,11,13,15].includes(num);
+  return { name, paksha, num, auspicious };
+}
+
+/* ============================================================
+   Precise tithi timing — true sun/moon ecliptic longitudes
+   (used for exact start/end clock times, e.g. Trayodashi)
+   ============================================================ */
+function normalizeAngle(deg){ deg = deg % 360; if(deg < 0) deg += 360; return deg; }
+function angularDiff(a,b){ // signed difference a-b in (-180,180]
+  let d = (a-b) % 360; if(d > 180) d -= 360; if(d <= -180) d += 360; return d;
+}
+function sunLongitudeDeg(date){
+  const d = toDays(date);
+  const M = solarMeanAnomaly(d);
+  return normalizeAngle(eclipticLongitude(M) * 180/Math.PI);
+}
+// Truncated lunar ecliptic longitude series (largest ~13 periodic terms,
+// after standard low-precision lunar theory formulas).
+// Typical accuracy: a few arcminutes, i.e. tithi boundary times usually
+// accurate to within roughly 10-20 minutes.
+function moonLongitudeDeg(date){
+  const T = toDays(date) / 36525;
+  const dr = Math.PI/180;
+  const Lp = normalizeAngle(218.3164477 + 481267.88123421*T - 0.0015786*T*T + T*T*T/538841 - T*T*T*T/65194000);
+  const D  = normalizeAngle(297.8501921 + 445267.1114034*T - 0.0018819*T*T + T*T*T/545868 - T*T*T*T/113065000) * dr;
+  const M  = normalizeAngle(357.5291092 + 35999.0502909*T - 0.0001536*T*T + T*T*T/24490000) * dr;
+  const Mp = normalizeAngle(134.9633964 + 477198.8675055*T + 0.0087414*T*T + T*T*T/69699 - T*T*T*T/14712000) * dr;
+  const F  = normalizeAngle(93.2720950 + 483202.0175233*T - 0.0036539*T*T - T*T*T/3526000 + T*T*T*T/863310000) * dr;
+  const E = 1 - 0.002516*T - 0.0000074*T*T;
+  // [D mult, M mult, M' mult, F mult, coeff (1e-6 deg), E power]
+  const terms = [
+    [0,0,1,0, 6288774,0],[2,0,-1,0, 1274027,0],[2,0,0,0, 658314,0],[0,0,2,0, 213618,0],
+    [0,1,0,0, -185116,1],[0,0,0,2, -114332,0],[2,0,-2,0, 58793,0],[2,-1,-1,0, 57066,1],
+    [2,0,1,0, 53322,0],[2,-1,0,0, 45758,1],[0,1,-1,0, -40923,1],[1,0,0,0, -34720,0],
+    [0,1,1,0, -30383,1]
+  ];
+  let sum = 0;
+  for(const [di,mi,mpi,fi,coeff,ePow] of terms){
+    const arg = D*di + M*mi + Mp*mpi + F*fi;
+    const factor = ePow===0 ? 1 : (ePow===1 ? E : E*E);
+    sum += coeff * factor * Math.sin(arg);
+  }
+  return normalizeAngle(Lp + sum/1000000);
+}
+function elongationDeg(date){
+  return normalizeAngle(moonLongitudeDeg(date) - sunLongitudeDeg(date));
+}
+function bisectCrossing(tA, tB, targetDeg){
+  let a = tA, b = tB;
+  let fa = angularDiff(elongationDeg(new Date(a)), targetDeg);
+  for(let i=0;i<40;i++){
+    const mid = (a+b)/2;
+    const fm = angularDiff(elongationDeg(new Date(mid)), targetDeg);
+    if((fa<=0 && fm>0) || (fa>=0 && fm<0)){ b = mid; } else { a = mid; fa = fm; }
+    if(b-a < 1000) break; // ~1 second precision
+  }
+  return new Date((a+b)/2);
+}
+function findCrossingTime(centerDate, targetDeg){
+  const stepMs = 3600000;
+  const windowH = 40;
+  let t0 = centerDate.getTime() - windowH*stepMs;
+  let prevT = t0;
+  let prevVal = angularDiff(elongationDeg(new Date(t0)), targetDeg);
+  for(let i=1;i<=windowH*2;i++){
+    const t = t0 + i*stepMs;
+    const val = angularDiff(elongationDeg(new Date(t)), targetDeg);
+    if(prevVal <= 0 && val > 0) return bisectCrossing(prevT, t, targetDeg);
+    prevT = t; prevVal = val;
+  }
+  return null;
+}
+function getPreciseTithi(date){
+  const elong = elongationDeg(date);
+  const tithiIndex = Math.max(1, Math.min(30, Math.floor(elong/12) + 1));
+  const startDeg = normalizeAngle((tithiIndex-1)*12);
+  const endDeg = normalizeAngle(tithiIndex*12);
+  const startTime = findCrossingTime(date, startDeg);
+  const endTime = findCrossingTime(date, endDeg);
+  const paksha = tithiIndex <= 15 ? "Shukla" : "Krishna";
+  let num = tithiIndex <= 15 ? tithiIndex : tithiIndex - 15;
+  let name = TITHI_NAMES[num-1];
+  if(num === 15) name = paksha === "Shukla" ? "Purnima" : "Amavasya";
+  const auspicious = [4,8,9,11,13,15].includes(num);
+  return { name, paksha, num, startTime, endTime, auspicious };
+}
+function brahmaMuhurta(sunrise){
+  // Traditional definition: the 48-minute window ending 48 minutes
+  // before sunrise (i.e. starting 1h36m before sunrise).
+  return { start: new Date(sunrise.getTime() - 96*60000), end: new Date(sunrise.getTime() - 48*60000) };
+}
+
+/* ============================================================
+   Holidays 2026 (verified via search) — India + Netherlands
+   ============================================================ */
+const HOLIDAYS = {
+  IN: [
+    ["2026-01-26","Republic Day"],["2026-03-04","Holi"],["2026-03-21","Id-ul-Fitr"],
+    ["2026-03-26","Ram Navami"],["2026-03-31","Mahavir Jayanti"],["2026-04-03","Good Friday"],
+    ["2026-05-01","Buddha Purnima"],["2026-05-27","Id-ul-Zuha (Bakrid)"],["2026-06-26","Muharram"],
+    ["2026-08-15","Independence Day"],["2026-08-26","Id-e-Milad"],["2026-09-04","Janmashtami"],
+    ["2026-10-02","Gandhi Jayanti"],["2026-10-20","Dussehra"],["2026-11-08","Diwali"],
+    ["2026-11-24","Guru Nanak Jayanti"],["2026-12-25","Christmas"]
+  ],
+  NL: [
+    ["2026-01-01","New Year's Day"],["2026-04-03","Good Friday"],["2026-04-05","Easter Sunday"],
+    ["2026-04-06","Easter Monday"],["2026-04-27","King's Day"],["2026-05-05","Liberation Day"],
+    ["2026-05-14","Ascension Day"],["2026-05-24","Whit Sunday"],["2026-05-25","Whit Monday"],
+    ["2026-12-25","Christmas Day"],["2026-12-26","Boxing Day"]
+  ]
+};
+function holidaysFor(dateStr){
+  const out = [];
+  HOLIDAYS.IN.forEach(([d,n])=>{ if(d===dateStr) out.push({country:"IN", name:n}); });
+  HOLIDAYS.NL.forEach(([d,n])=>{ if(d===dateStr) out.push({country:"NL", name:n}); });
+  return out;
+}
+// Holiday data currently covers 2026 only. countryFilter: 'IN' | 'NL' | 'BOTH'.
+function holidaysInRange(startStr, endStr, countryFilter){
+  const countries = countryFilter === 'BOTH' ? ['IN','NL'] : [countryFilter];
+  const list = [];
+  countries.forEach(c=>{
+    (HOLIDAYS[c]||[]).forEach(([d,name])=>{
+      if(d >= startStr && d <= endStr) list.push({country:c, date:d, name});
+    });
+  });
+  list.sort((a,b)=> a.date.localeCompare(b.date) || a.country.localeCompare(b.country));
+  return list;
+}
+
+/* ============================================================
+   Weather codes (WMO) -> icon/description
+   ============================================================ */
+const WMO = {
+  0:["☀️","Clear sky"],1:["🌤️","Mostly clear"],2:["⛅","Partly cloudy"],3:["☁️","Overcast"],
+  45:["🌫️","Fog"],48:["🌫️","Rime fog"],51:["🌦️","Light drizzle"],53:["🌦️","Drizzle"],55:["🌧️","Dense drizzle"],
+  61:["🌦️","Light rain"],63:["🌧️","Rain"],65:["🌧️","Heavy rain"],71:["🌨️","Light snow"],73:["🌨️","Snow"],
+  75:["❄️","Heavy snow"],77:["❄️","Snow grains"],80:["🌦️","Rain showers"],81:["🌧️","Rain showers"],
+  82:["⛈️","Violent showers"],85:["🌨️","Snow showers"],86:["❄️","Heavy snow showers"],
+  95:["⛈️","Thunderstorm"],96:["⛈️","Thunderstorm + hail"],99:["⛈️","Severe thunderstorm"]
+};
+function wmoInfo(code){ return WMO[code] || ["🌡️","—"]; }
+function clothingTips(tMax, tMin, precipProb, windMax){
+  const tips = [];
+  if(precipProb >= 40) tips.push("☂️ Umbrella");
+  if(tMin <= 7) tips.push("🧥 Warm jacket");
+  else if(tMin <= 14) tips.push("🧶 Light jacket");
+  if(windMax >= 35) tips.push("🌬️ Windbreaker");
+  if(tMax >= 24 && precipProb < 30) tips.push("👕 Summer clothes");
+  if(tMax <= 3) tips.push("🧤 Gloves & scarf");
+  if(tips.length === 0) tips.push("🙂 Dress as usual");
+  return tips;
+}
+
+/* ============================================================
+   Resilient fetching: timeouts + multi-source fallback chains.
+   Every external call below tries several independent routes in
+   sequence (direct connection, then two different free CORS
+   proxies, then a JSON-conversion service as a last resort) so a
+   single blocked/rate-limited/down source doesn't take a whole
+   tab offline. Only the first successful response is used.
+   ============================================================ */
+async function fetchWithTimeout(url, ms){
+  const controller = new AbortController();
+  const timeoutId = setTimeout(()=>controller.abort(), ms);
+  try{
+    const res = await fetch(url, {signal: controller.signal});
+    return res;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+function proxyAllOrigins(u){ return `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`; }
+function proxyCodeTabs(u){ return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`; }
+function proxyRss2Json(u){ return `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}`; }
+
+// Small, dependency-free RSS <item> extractor (regex-based, not DOMParser)
+// so it behaves identically however the XML arrives, and stays testable
+// outside a browser.
+function decodeXMLEntities(s){
+  return s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+          .replace(/&#39;/g,"'").replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+}
+function extractTag(block, tag){
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i');
+  const m = re.exec(block);
+  if(!m) return '';
+  let val = m[1];
+  const cdata = /^\s*<!\[CDATA\[([\s\S]*)\]\]>\s*$/.exec(val);
+  if(cdata) val = cdata[1];
+  return decodeXMLEntities(val.trim());
+}
+function parseRSSItems(xmlText, limit){
+  const items = [];
+  const itemRe = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+  let m;
+  while((m = itemRe.exec(xmlText)) && items.length < (limit||50)){
+    const block = m[1];
+    items.push({
+      title: extractTag(block, 'title'),
+      link: extractTag(block, 'link'),
+      pubDate: extractTag(block, 'pubDate'),
+      description: extractTag(block, 'description')
+    });
+  }
+  return items;
+}
+// News dates arrive in different shapes depending on the source: RFC 822
+// ("Thu, 23 Jul 2026 09:00:00 GMT") from raw RSS, or space-separated
+// ("2026-07-23 09:00:00") from rss2json. Try both before giving up.
+function parsePubDate(str){
+  if(!str) return null;
+  let d = new Date(str);
+  if(!isNaN(d.getTime())) return d;
+  d = new Date(str.replace(' ','T'));
+  if(!isNaN(d.getTime())) return d;
+  return null;
+}
+
+// Real, editorially-curated feeds per category. Where a first-party
+// CORS-enabled JSON API exists (Hacker News), that's used directly with
+// no proxy at all — it's the most reliable option available.
+const NEWS_SOURCES = {
+  global:       {kind:'rss', name:'BBC World',      url:'http://feeds.bbci.co.uk/news/world/rss.xml'},
+  business:     {kind:'rss', name:'BBC Business',   url:'http://feeds.bbci.co.uk/news/business/rss.xml'},
+  local_nl:     {kind:'rss', name:'DutchNews.nl',   url:'https://www.dutchnews.nl/feed/'},
+  local_in:     {kind:'rss', name:'Times of India', url:'https://timesofindia.indiatimes.com/rssfeedstopstories.cms'},
+  entrepreneur: {kind:'hn',  query:'startup funding'},
+  ai:           {kind:'hn',  query:'artificial intelligence'},
+  tech:         {kind:'hn',  frontpage:true},
+  it:           {kind:'hn',  query:'enterprise software IT'}
+};
+
+function buildNewsAttempts(cat){
+  const cfg = NEWS_SOURCES[cat] || NEWS_SOURCES.global;
+  const attempts = [];
+  if(cfg.kind === 'hn'){
+    const hnUrl = cfg.frontpage
+      ? 'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=20'
+      : `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(cfg.query)}&tags=story&hitsPerPage=20`;
+    attempts.push({label:'Hacker News', url:hnUrl, type:'hn-json'});
+    const gnQuery = cfg.query || 'technology';
+    const gnUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(gnQuery)}&hl=en-US&gl=US&ceid=US:en`;
+    attempts.push({label:'Google News', url:gnUrl, type:'xml'});
+    attempts.push({label:'Google News (proxy 1)', url:proxyAllOrigins(gnUrl), type:'xml'});
+    attempts.push({label:'Google News (proxy 2)', url:proxyCodeTabs(gnUrl), type:'xml'});
+    attempts.push({label:'Google News (proxy 3)', url:proxyRss2Json(gnUrl), type:'rss2json'});
+  } else {
+    const rssUrl = cfg.url;
+    attempts.push({label:cfg.name, url:rssUrl, type:'xml'});
+    attempts.push({label:cfg.name+' (proxy 1)', url:proxyAllOrigins(rssUrl), type:'xml'});
+    attempts.push({label:cfg.name+' (proxy 2)', url:proxyCodeTabs(rssUrl), type:'xml'});
+    attempts.push({label:cfg.name+' (proxy 3)', url:proxyRss2Json(rssUrl), type:'rss2json'});
+  }
+  return attempts;
+}
+
+// Soft relevance filter: keeps a category's results on-topic by title,
+// but never filters down to too few items — if filtering would leave
+// fewer than 3 results, the unfiltered list is used instead so a strict
+// keyword miss never means an empty tab.
+const NEWS_RELEVANCE_KEYWORDS = {
+  ai: ['ai','artificial intelligence','machine learning','llm','gpt','neural','openai','anthropic','chatbot','generative','deep learning','claude','gemini'],
+  entrepreneur: ['startup','founder','entrepreneur','funding','venture','raise','seed round','series a','series b','ipo','acquisition','bootstrapp'],
+  it: ['software','cloud','enterprise','cyber','data center','saas','network','infrastructure','security','it ','sysadmin','devops']
+};
+function filterByRelevance(items, cat){
+  const keywords = NEWS_RELEVANCE_KEYWORDS[cat];
+  if(!keywords || !keywords.length) return items;
+  const filtered = items.filter(it=>{
+    const t = (it.title||'').toLowerCase();
+    return keywords.some(k=>t.includes(k));
+  });
+  return filtered.length >= 3 ? filtered : items;
+}
+
+async function loadNewsItems(cat, timeoutMs){
+  timeoutMs = timeoutMs || 9000;
+  const attempts = buildNewsAttempts(cat);
+  const errors = [];
+  for(const attempt of attempts){
+    try{
+      const res = await fetchWithTimeout(attempt.url, timeoutMs);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      let items;
+      if(attempt.type === 'xml'){
+        const text = await res.text();
+        items = parseRSSItems(text, 20);
+        if(!items.length) throw new Error('no items parsed');
+      } else if(attempt.type === 'rss2json'){
+        const data = await res.json();
+        if(data.status !== 'ok' || !data.items || !data.items.length) throw new Error(data.message || 'no items');
+        items = data.items.slice(0,20).map(it=>({title:it.title, link:it.link, pubDate:it.pubDate, description:it.description}));
+      } else if(attempt.type === 'hn-json'){
+        const data = await res.json();
+        if(!data.hits || !data.hits.length) throw new Error('no hits');
+        items = data.hits.slice(0,20).map(hit=>({
+          title: hit.title || hit.story_title || '(untitled)',
+          link: hit.url || hit.story_url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
+          pubDate: hit.created_at || '',
+          description: `${hit.points||0} points · ${hit.num_comments||0} comments on Hacker News`
+        }));
+      }
+      items = filterByRelevance(items, cat);
+      return { items, sourceLabel: attempt.label };
+    }catch(e){
+      const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
+      errors.push(`${attempt.label}: ${reason}`);
+    }
+  }
+  throw new Error(errors.join(' | '));
+}
+
+function buildWeatherAttempts(lat, lon){
+  const directUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,windspeed_10m_max,sunrise,sunset&current_weather=true&timezone=auto&forecast_days=16`;
+  return [
+    {label:'Open-Meteo', url:directUrl},
+    {label:'Open-Meteo (proxy 1)', url:proxyAllOrigins(directUrl)},
+    {label:'Open-Meteo (proxy 2)', url:proxyCodeTabs(directUrl)}
+  ];
+}
+async function loadWeatherData(lat, lon, timeoutMs){
+  timeoutMs = timeoutMs || 9000;
+  const attempts = buildWeatherAttempts(lat, lon);
+  const errors = [];
+  for(const attempt of attempts){
+    try{
+      const res = await fetchWithTimeout(attempt.url, timeoutMs);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if(data.error || !data.daily) throw new Error(data.reason || 'malformed response');
+      return { data, sourceLabel: attempt.label };
+    }catch(e){
+      const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
+      errors.push(`${attempt.label}: ${reason}`);
+    }
+  }
+  throw new Error(errors.join(' | '));
+}
+
+/* ============================================================
+   Date helpers
+   ============================================================ */
+function pad2(n){ return String(n).padStart(2,"0"); }
+function dstr(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function startOfDay(d){ const n=new Date(d); n.setHours(0,0,0,0); return n; }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function addMonths(d,n){ const r=new Date(d); r.setMonth(r.getMonth()+n); return r; }
+function dayOfYear(d){ const s=new Date(d.getFullYear(),0,1); return Math.floor((startOfDay(d)-startOfDay(s))/DAY_MS)+1; }
+function isLeap(y){ return (y%4===0 && y%100!==0) || y%400===0; }
+function getISOWeek(date){
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(),0,4));
+  const firstDayNum = (firstThursday.getUTCDay()+6)%7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate()-firstDayNum+3);
+  return 1 + Math.round((d-firstThursday)/(7*DAY_MS));
+}
+function fmtHM(d){ return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+function fmtTimeShort(hhmm){ return hhmm; }
+// Bed time is the previous evening, wake time is the following morning —
+// so if wake <= bed numerically, it means the clock rolled past midnight.
+function computeSleepDuration(bedHHMM, wakeHHMM){
+  const [bh,bm] = bedHHMM.split(':').map(Number);
+  const [wh,wm] = wakeHHMM.split(':').map(Number);
+  const bedMin = bh*60+bm, wakeMin = wh*60+wm;
+  let diff = wakeMin - bedMin;
+  if(diff <= 0) diff += 1440;
+  return diff/60;
+}
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DOW = ["S","M","T","W","T","F","S"];
+
+/* ============================================================
+   Photo-to-task text parsing helpers (pure functions — used by
+   the OCR "scan a note" feature, but testable independent of it).
+   These are best-effort heuristics over OCR output, not a real
+   NLP date parser: they catch common written formats but will
+   miss unusual phrasing or misread characters.
+   ============================================================ */
+const MONTH_ABBR_TO_NUM = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+function extractDateFromText(text, refYear){
+  if(!text) return null;
+  refYear = refYear || new Date().getFullYear();
+  const monthRe = 'jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec';
+  const patterns = [
+    // 2026-08-12 or 2026/08/12
+    { re: new RegExp('\\b(20\\d{2})[-/.](0?[1-9]|1[0-2])[-/.](0?[1-9]|[12]\\d|3[01])\\b'),
+      fn: m => `${m[1]}-${pad2(+m[2])}-${pad2(+m[3])}` },
+    // Month DD, YYYY  (August 12, 2026 / Aug 12 2026)
+    { re: new RegExp(`\\b(${monthRe})[a-z]*\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s+(20\\d{2})\\b`, 'i'),
+      fn: m => `${m[3]}-${pad2(MONTH_ABBR_TO_NUM[m[1].slice(0,3).toLowerCase()])}-${pad2(+m[2])}` },
+    // DD Month YYYY (12 August 2026)
+    { re: new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${monthRe})[a-z]*\\.?,?\\s+(20\\d{2})\\b`, 'i'),
+      fn: m => `${m[3]}-${pad2(MONTH_ABBR_TO_NUM[m[2].slice(0,3).toLowerCase()])}-${pad2(+m[1])}` },
+    // DD/MM/YYYY or DD-MM-YYYY (common in India & Netherlands)
+    { re: new RegExp('\\b(0?[1-9]|[12]\\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.](20\\d{2})\\b'),
+      fn: m => `${m[3]}-${pad2(+m[2])}-${pad2(+m[1])}` },
+    // Month DD (no year) — assume reference year
+    { re: new RegExp(`\\b(${monthRe})[a-z]*\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, 'i'),
+      fn: m => `${refYear}-${pad2(MONTH_ABBR_TO_NUM[m[1].slice(0,3).toLowerCase()])}-${pad2(+m[2])}` },
+    // DD Month (no year)
+    { re: new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${monthRe})[a-z]*\\.?\\b`, 'i'),
+      fn: m => `${refYear}-${pad2(MONTH_ABBR_TO_NUM[m[2].slice(0,3).toLowerCase()])}-${pad2(+m[1])}` }
+  ];
+  for(const p of patterns){
+    const m = p.re.exec(text);
+    if(m){
+      try{
+        const iso = p.fn(m);
+        const d = new Date(iso+'T00:00:00');
+        if(!isNaN(d.getTime())) return iso;
+      }catch(e){}
+    }
+  }
+  return null;
+}
+function extractTimeFromText(text){
+  if(!text) return null;
+  let m = /\b(1[0-2]|0?[1-9]):([0-5]\d)\s*(am|pm)\b/i.exec(text);
+  if(m){
+    let h = parseInt(m[1],10);
+    const isPM = /pm/i.test(m[3]);
+    if(isPM && h!==12) h += 12;
+    if(!isPM && h===12) h = 0;
+    return `${pad2(h)}:${m[2]}`;
+  }
+  m = /\b([01]?\d|2[0-3]):([0-5]\d)\b/.exec(text);
+  if(m) return `${pad2(+m[1])}:${m[2]}`;
+  m = /\b(1[0-2]|0?[1-9])\s*(am|pm)\b/i.exec(text);
+  if(m){
+    let h = parseInt(m[1],10);
+    const isPM = /pm/i.test(m[2]);
+    if(isPM && h!==12) h += 12;
+    if(!isPM && h===12) h = 0;
+    return `${pad2(h)}:00`;
+  }
+  return null;
+}
+// First non-empty line (or a truncated fallback) — used as the task title
+// suggestion, since OCR output is often multi-line and the first line is
+// usually the heading/subject of a handwritten note.
+function suggestTaskTextFromOCR(text){
+  if(!text) return '';
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length) return '';
+  let candidate = lines[0];
+  if(candidate.length > 80) candidate = candidate.slice(0,80).trim();
+  return candidate;
+}
+
+/* ============================================================
+   Step detection (phone accelerometer, foreground-only).
+   A simple, honest threshold/debounce peak counter — not a
+   commercial-grade pedometer, but a real, testable algorithm:
+   counts a step each time the acceleration magnitude crosses
+   above `threshold` after being below it, no more often than
+   once per `minIntervalMs` (caps unrealistic step rates from
+   sensor jitter).
+   ============================================================ */
+/* ============================================================
+   Step detection (phone accelerometer, foreground-only).
+   Two real, honest improvements over a bare threshold check:
+   1. An exponential moving average smooths high-frequency sensor
+      jitter before peak detection (a standard noise-reduction
+      technique — it doesn't eliminate sensor noise, it reduces it).
+   2. Sensitivity is adjustable, because accelerometer scale and
+      noise floor genuinely differ between phone models — no single
+      fixed threshold is correct for every device.
+   This is still a lightweight peak/debounce counter, not a
+   commercial fused-sensor pedometer. No phone-based, browser-based
+   step counter can be glitch-free — sensor noise, phone placement
+   (hand/pocket/bag), and walking style all introduce real variance.
+   ============================================================ */
+function createStepDetector(opts){
+  opts = opts || {};
+  const threshold = opts.threshold != null ? opts.threshold : 0.8;
+  const minIntervalMs = opts.minIntervalMs != null ? opts.minIntervalMs : 300;
+  const smoothingAlpha = opts.smoothingAlpha != null ? opts.smoothingAlpha : 0.4; // EMA weight for new sample
+  let lastStepTime = -Infinity;
+  let wasAboveThreshold = false;
+  let smoothed = 0;
+  let primed = false;
+  return {
+    feed(magnitude, timestampMs){
+      if(!primed){ smoothed = magnitude; primed = true; }
+      else { smoothed = smoothingAlpha*magnitude + (1-smoothingAlpha)*smoothed; }
+      let stepped = false;
+      if(smoothed > threshold){
+        if(!wasAboveThreshold && (timestampMs - lastStepTime) > minIntervalMs){
+          stepped = true;
+          lastStepTime = timestampMs;
+        }
+        wasAboveThreshold = true;
+      } else {
+        wasAboveThreshold = false;
+      }
+      return stepped;
+    },
+    reset(){ lastStepTime = -Infinity; wasAboveThreshold = false; smoothed = 0; primed = false; }
+  };
+}
+// Standard great-circle distance between two lat/lon points, in km.
+function haversineDistanceKm(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+// GPS points are only trusted if the device reports reasonable accuracy
+// (position.coords.accuracy, in meters) and the implied speed since the
+// last fix is physically plausible for walking/light jogging. This won't
+// eliminate GPS drift (3-15m error is normal for consumer GPS — no browser
+// API changes that), but it filters out the obvious glitches: a stray fix
+// that would imply teleporting 200m in 2 seconds gets discarded instead of
+// corrupting the route and distance total.
+function isPlausibleGpsFix(prevFix, nextFix, opts){
+  opts = opts || {};
+  const maxAccuracyM = opts.maxAccuracyM != null ? opts.maxAccuracyM : 30;
+  const maxSpeedMps = opts.maxSpeedMps != null ? opts.maxSpeedMps : 7; // ~25 km/h, generous for a fast run
+  if(nextFix.accuracy != null && nextFix.accuracy > maxAccuracyM) return false;
+  if(!prevFix) return true;
+  const dtSec = (nextFix.timestamp - prevFix.timestamp) / 1000;
+  if(dtSec <= 0) return false;
+  const distKm = haversineDistanceKm(prevFix.lat, prevFix.lon, nextFix.lat, nextFix.lon);
+  const speedMps = (distKm*1000) / dtSec;
+  return speedMps <= maxSpeedMps;
+}
+// Calorie estimate using the standard MET (Metabolic Equivalent of Task)
+// formula: kcal = MET x weight(kg) x duration(hours). This is the same
+// approach fitness trackers use for a generic "walking" activity — it's a
+// real, widely-used formula, but still an estimate: true energy expenditure
+// varies with incline, pace, fitness level, and individual metabolism,
+// none of which a phone can measure. Without a saved body weight, falls
+// back to a per-step population-average approximation.
+const WALKING_MET = 3.5;
+function estimateCaloriesBurned(steps, distanceKm, weightKg, durationHours){
+  if(weightKg && durationHours && durationHours > 0){
+    return Math.round(WALKING_MET * weightKg * durationHours);
+  }
+  if(weightKg && distanceKm && distanceKm > 0){
+    // ~5 km/h walking pace assumed if duration isn't known
+    return Math.round(WALKING_MET * weightKg * (distanceKm/5));
+  }
+  if(distanceKm && distanceKm > 0) return Math.round(distanceKm * 60);
+  return Math.round((steps||0) * 0.04);
+}
+
+/* ============================================================
+   Food database — approximate calories per typical serving.
+   Deliberately editable in the UI: home cooking varies a lot,
+   so these are starting points, not fixed truths.
+   ============================================================ */
+const FOOD_DATABASE = {
+  IN: [
+    {id:'in-roti', name:'Roti / Chapati (1 piece)', calories:120},
+    {id:'in-rice', name:'Basmati rice, cooked (1 cup)', calories:205},
+    {id:'in-dal', name:'Dal tadka (1 cup)', calories:180},
+    {id:'in-paneer', name:'Paneer butter masala (1 cup)', calories:350},
+    {id:'in-chicken-curry', name:'Chicken curry (1 cup)', calories:280},
+    {id:'in-samosa', name:'Samosa (1 piece)', calories:260},
+    {id:'in-idli', name:'Idli (1 piece)', calories:40},
+    {id:'in-dosa', name:'Plain dosa (1)', calories:130},
+    {id:'in-biryani', name:'Biryani (1 cup)', calories:350},
+    {id:'in-butter-chicken', name:'Butter chicken (1 cup)', calories:490},
+    {id:'in-chana', name:'Chana masala (1 cup)', calories:270},
+    {id:'in-paratha', name:'Aloo paratha (1 piece)', calories:210},
+    {id:'in-curd', name:'Curd / yogurt (1 cup)', calories:150},
+    {id:'in-gulab-jamun', name:'Gulab jamun (1 piece)', calories:150}
+  ],
+  NL: [
+    {id:'nl-stroopwafel', name:'Stroopwafel (1 piece)', calories:130},
+    {id:'nl-bitterballen', name:'Bitterballen (1 piece)', calories:65},
+    {id:'nl-kibbeling', name:'Kibbeling (100g)', calories:250},
+    {id:'nl-erwtensoep', name:'Erwtensoep / pea soup (1 bowl)', calories:300},
+    {id:'nl-stamppot', name:'Stamppot (1 plate)', calories:450},
+    {id:'nl-kroket', name:'Broodje kroket (1 sandwich)', calories:400},
+    {id:'nl-gouda', name:'Gouda cheese (30g slice)', calories:110},
+    {id:'nl-poffertjes', name:'Poffertjes (10 pieces)', calories:300},
+    {id:'nl-hagelslag', name:'Bread with hagelslag (1 slice)', calories:200},
+    {id:'nl-frikandel', name:'Frikandel (1 piece)', calories:220},
+    {id:'nl-appeltaart', name:'Appeltaart (1 slice)', calories:320}
+  ]
+};
+// Maps a subset of MobileNet/ImageNet class labels to a rough calorie
+// estimate. MobileNet's food-related classes are limited (~30-40 of its
+// 1000 categories), so most dishes — especially home-cooked Indian/Dutch
+// meals — simply won't match; that's a real limit of a general-purpose
+// image classifier, not a bug.
+const FOOD_ML_CALORIE_MAP = {
+  'cheeseburger':300, 'hotdog':290, 'hot dog':290, 'pizza':285, 'ice cream':210, 'ice_cream':210,
+  'pretzel':340, 'bagel':245, 'guacamole':230, 'burrito':380, 'carbonara':400, 'trifle':300,
+  'french loaf':270, 'meat loaf':350, 'meatloaf':350, 'potpie':400, 'espresso':5, 'eggnog':220,
+  'banana':105, 'orange':62, 'lemon':17, 'strawberry':4, 'pineapple':82, 'pomegranate':105, 'fig':37,
+  'mashed potato':215, 'broccoli':55, 'cauliflower':25, 'cucumber':16, 'mushroom':22, 'corn':125,
+  'pancake':175, 'waffle':220, 'sandwich':300, 'taco':210, 'dough':200
+};
+
+/* ============================================================
+   App state
+   ============================================================ */
+const App = {
+  settings: {
+    lat: 52.3676, lon: 4.9041, city: "Amsterdam, NL",
+    wake: "07:00", bed: "23:00", tzGuessed:true
+  },
+  tasks: {}, // { 'YYYY-MM-DD': [{id,text,done}] }
+  sleepLog: {}, // { 'YYYY-MM-DD' (wake date): {bedTime:'HH:MM', wakeTime:'HH:MM', durationHours:N} }
+  calYear: new Date().getFullYear(),
+  wxData: null,
+  wxRange: 7,
+  wxLocData: {}, // id -> {data, error, sourceLabel, loading}
+  activeWxLocId: 'primary',
+  _wxLocationsLoadedOnce: false,
+  modalDate: null,
+  taskFilter: "all",
+  newsCat: "global",
+  _newsLoadedOnce: false,
+  health: {
+    stepGoal: 10000,
+    calorieGoal: 2000,
+    steps: {},      // 'YYYY-MM-DD' -> count
+    customFoods: [],// [{id, name, calories}]
+    foodLog: {},    // 'YYYY-MM-DD' -> [{id, name, calories, qty}]
+    weightLog: {},  // 'YYYY-MM-DD' -> kg
+    calorieBurnLog: {}, // 'YYYY-MM-DD' -> kcal burned from tracked walks
+    strideM: null,      // calibrated stride length (meters/step), learned from a GPS-tracked walk
+    stepSensitivity: 0.8, // accelerometer threshold; lower = more sensitive
+    waterGlassMl: 250,
+    waterGoalMl: 2500,
+    waterLog: {},   // 'YYYY-MM-DD' -> glasses count
+    screenGoalHours: 4,
+    screenTimeLog: {} // 'YYYY-MM-DD' -> {appSessionMinutes, manualMinutes}
+  },
+  foodDbView: 'IN',
+  walkSession: null, // {active, steps, distanceKm, startTime, lastFix, detector, map, polyline, geoWatchId, motionHandler, timerInterval}
+
+  init(){
+    const steps = [
+      ['loadState', ()=>this.loadState()],
+      ['bindQuickDates', ()=>this.bindQuickDates()],
+      ['bindTaskFilters', ()=>this.bindTaskFilters()],
+      ['bindNewsFilters', ()=>this.bindNewsFilters()],
+      ['renderSettingsForm', ()=>this.renderSettingsForm()],
+      ['renderWxLocationsRow', ()=>this.renderWxLocationsRow()],
+      ['initSleepLogInputs', ()=>this.initSleepLogInputs()],
+      ['initScreenTimeTracking', ()=>this.initScreenTimeTracking()],
+      ['tick', ()=>this.tick()],
+      ['renderCalendar', ()=>this.renderCalendar()],
+      ['fetchWeather', ()=>this.fetchWeather()]
+    ];
+    for(const [label, fn] of steps){
+      try{ fn(); }catch(e){ console.error(`Productivity App init step failed: ${label}`, e); }
+    }
+    setInterval(()=>{ try{ this.tick(); }catch(e){ console.error('tick() failed', e); } }, 1000);
+    setInterval(()=>{
+      try{ this.fetchWeather(); this.loadOtherLocationsWeather(); }
+      catch(e){ console.error('weather refresh failed', e); }
+    }, 20*60*1000);
+  },
+  initSleepLogInputs(){
+    const bedInput = document.getElementById('sleepLogBedInput');
+    const wakeInput = document.getElementById('sleepLogWakeInput');
+    if(bedInput && !bedInput.value) bedInput.value = this.settings.bed;
+    if(wakeInput && !wakeInput.value) wakeInput.value = this.settings.wake;
+    this.renderSleepGraph();
+  },
+
+  loadState(){
+    try{
+      const s = localStorage.getItem('productivityapp_settings');
+      if(s) Object.assign(this.settings, JSON.parse(s));
+    }catch(e){}
+    try{
+      const t = localStorage.getItem('productivityapp_tasks');
+      if(t) this.tasks = JSON.parse(t);
+    }catch(e){}
+    try{
+      const sl = localStorage.getItem('productivityapp_sleep_log');
+      if(sl) this.sleepLog = JSON.parse(sl);
+    }catch(e){}
+    try{
+      const h = localStorage.getItem('productivityapp_health');
+      if(h) Object.assign(this.health, JSON.parse(h));
+    }catch(e){}
+    this.ensurePrimaryLocation();
+  },
+  ensurePrimaryLocation(){
+    if(!Array.isArray(this.settings.locations)) this.settings.locations = [];
+    let primary = this.settings.locations.find(l=>l.id==='primary');
+    if(!primary){
+      primary = {id:'primary', label:this.settings.city, lat:this.settings.lat, lon:this.settings.lon};
+      this.settings.locations.unshift(primary);
+    } else {
+      primary.label = this.settings.city;
+      primary.lat = this.settings.lat;
+      primary.lon = this.settings.lon;
+    }
+  },
+  saveTasks(){ localStorage.setItem('productivityapp_tasks', JSON.stringify(this.tasks)); },
+  saveSleepLogState(){ localStorage.setItem('productivityapp_sleep_log', JSON.stringify(this.sleepLog)); },
+  saveHealthState(){ localStorage.setItem('productivityapp_health', JSON.stringify(this.health)); },
+  saveSleepLog(){
+    const bedVal = document.getElementById('sleepLogBedInput').value;
+    const wakeVal = document.getElementById('sleepLogWakeInput').value;
+    const status = document.getElementById('sleepLogStatus');
+    if(!bedVal || !wakeVal){ status.textContent = 'Fill in both times.'; return; }
+    const durationHours = computeSleepDuration(bedVal, wakeVal);
+    const todayStr = dstr(new Date());
+    this.sleepLog[todayStr] = { bedTime: bedVal, wakeTime: wakeVal, durationHours };
+    this.saveSleepLogState();
+    status.textContent = `Saved — ${durationHours.toFixed(1)}h logged for last night.`;
+    this.renderSleepGraph();
+  },
+  renderSleepGraph(){
+    const svg = document.getElementById('sleepGraphSvg');
+    const emptyMsg = document.getElementById('sleepGraphEmpty');
+    const avgLabel = document.getElementById('sleepGraphAvg');
+    if(!svg) return;
+    const days = [];
+    const today = new Date();
+    for(let i=13;i>=0;i--) days.push(dstr(addDays(today,-i)));
+    const entries = days.map(d=>this.sleepLog[d]).filter(e=>e && typeof e.durationHours==='number');
+    if(!entries.length){
+      svg.innerHTML = '';
+      if(emptyMsg) emptyMsg.style.display = 'block';
+      if(avgLabel) avgLabel.textContent = '';
+      return;
+    }
+    if(emptyMsg) emptyMsg.style.display = 'none';
+    const RECOMMENDED_HOURS = 8;
+    const avg = entries.reduce((s,e)=>s+e.durationHours,0) / entries.length;
+    if(avgLabel){
+      const diff = avg - RECOMMENDED_HOURS;
+      const diffTxt = Math.abs(diff) < 0.05 ? 'right at the 8h recommendation' : (diff > 0 ? `${diff.toFixed(1)}h over the 8h recommendation` : `${Math.abs(diff).toFixed(1)}h under the 8h recommendation`);
+      avgLabel.textContent = `Averaging ${avg.toFixed(1)}h · ${diffTxt}`;
+    }
+
+    const W = 320, H = 112, padBottom = 14, padTop = 6;
+    const chartH = H - padBottom - padTop;
+    const barW = W / days.length;
+    const maxHours = 12; // scale ceiling
+    let svgContent = '';
+
+    days.forEach((d, i)=>{
+      const x = i*barW + barW*0.18;
+      const w = barW*0.64;
+      svgContent += `<rect class="sleep-bar-track" x="${x}" y="${padTop}" width="${w}" height="${chartH}" rx="2"></rect>`;
+      const entry = this.sleepLog[d];
+      if(entry && typeof entry.durationHours === 'number'){
+        const hrs = Math.max(0, Math.min(maxHours, entry.durationHours));
+        const barH = (hrs/maxHours) * chartH;
+        const y = padTop + (chartH - barH);
+        const cls = entry.durationHours < 6 ? 'short' : (entry.durationHours > 9.5 ? 'long' : '');
+        svgContent += `<rect class="sleep-bar ${cls}" x="${x}" y="${y}" width="${w}" height="${Math.max(barH,2)}" rx="2"></rect>`;
+        if(i%2===0 || days.length<=8){
+          svgContent += `<text class="sleep-value-label" x="${x+w/2}" y="${y-3<padTop+8?y+10:y-3}" text-anchor="middle">${entry.durationHours.toFixed(1)}</text>`;
+        }
+      }
+      const dLabel = new Date(d+'T00:00:00').toLocaleDateString(undefined,{weekday:'narrow'});
+      svgContent += `<text class="sleep-axis-label" x="${x+w/2}" y="${H-3}" text-anchor="middle">${dLabel}</text>`;
+    });
+
+    // 8-hour recommended reference line, drawn on top of the bars
+    const recY = padTop + (chartH - (RECOMMENDED_HOURS/maxHours)*chartH);
+    svgContent += `<line class="sleep-target-line" x1="0" y1="${recY}" x2="${W}" y2="${recY}"></line>`;
+    svgContent += `<text class="sleep-target-label" x="${W-2}" y="${recY-3}" text-anchor="end">8h target</text>`;
+
+    svg.innerHTML = svgContent;
+  },
+  saveSettingsState(){ localStorage.setItem('productivityapp_settings', JSON.stringify(this.settings)); },
+
+  /* ---------- Tabs ---------- */
+  switchTab(name){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+name).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+    try{
+      if(name==='calendar') this.renderCalendar();
+      if(name==='weather'){
+        this.renderWxLocationsRow();
+        this.renderWeather();
+        if(!this._wxLocationsLoadedOnce){ this._wxLocationsLoadedOnce = true; this.loadOtherLocationsWeather(); }
+      }
+      if(name==='tasks') this.renderPlanner();
+      if(name==='datecalc') this.initDateCalc();
+      if(name==='news' && !this._newsLoadedOnce){ this._newsLoadedOnce = true; this.loadNews(this.newsCat || 'global'); }
+      if(name==='health') this.initHealth();
+    }catch(e){ console.error(`switchTab(${name}) render failed`, e); }
+  },
+
+  /* ---------- Live clock / sky / bed countdown ---------- */
+  tick(){
+    const now = new Date();
+    const todayStr = dstr(now);
+    document.getElementById('todayHeaderDate').textContent = now.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'});
+
+    // day progress
+    document.getElementById('dayOfYearLabel').textContent = `Day ${dayOfYear(now)} of ${isLeap(now.getFullYear())?366:365} · Week ${getISOWeek(now)}`;
+
+    const midnight = startOfDay(now);
+    const nextMidnight = addDays(midnight,1);
+    const totalSecs = Math.round((nextMidnight - midnight)/1000);
+    const elapsed = (now - midnight)/1000;
+    const secsLeft = Math.max(0, Math.round(totalSecs - elapsed));
+    const totalMins = Math.round(totalSecs/60);
+    const minsLeft = Math.floor(secsLeft/60);
+    document.getElementById('secsLeft').innerHTML = `${secsLeft.toLocaleString()}<span class="num-total"> / ${totalSecs.toLocaleString()}</span>`;
+    document.getElementById('minsLeft').innerHTML = `${minsLeft.toLocaleString()}<span class="num-total"> / ${totalMins.toLocaleString()}</span>`;
+
+    const remFraction = Math.max(0, Math.min(1, secsLeft/totalSecs));
+    const PIE_C = 2*Math.PI*42;
+    const pieFillEl = document.getElementById('pieFill');
+    pieFillEl.style.strokeDasharray = `${PIE_C}`;
+    pieFillEl.style.strokeDashoffset = `${PIE_C*(1-remFraction)}`;
+    document.getElementById('pieCenterLabel').textContent = `${Math.round(remFraction*100)}%`;
+
+    document.getElementById('nowTimeChip').textContent = `${now.toLocaleTimeString()} · ${this.settings.city}`;
+
+    const sun = getSunTimes(now, this.settings.lat, this.settings.lon);
+    document.getElementById('sunriseChip').textContent = fmtHM(sun.sunrise);
+    document.getElementById('sunsetChip').textContent = fmtHM(sun.sunset);
+    const daylenMs = sun.sunset - sun.sunrise;
+    const dh = Math.floor(daylenMs/3600000), dm = Math.round((daylenMs%3600000)/60000);
+    document.getElementById('daylenChip').textContent = `☀️ ${dh}h ${dm}m daylight`;
+
+    this.updateSky(now, sun);
+
+    // bed / wake countdown
+    const [wh,wm] = this.settings.wake.split(':').map(Number);
+    const [bh,bm] = this.settings.bed.split(':').map(Number);
+    document.getElementById('wakeTimeShow').textContent = this.settings.wake;
+    document.getElementById('bedTimeShow').textContent = this.settings.bed;
+    let bedToday = new Date(now); bedToday.setHours(bh,bm,0,0);
+    let wakeToday = new Date(now); wakeToday.setHours(wh,wm,0,0);
+    let bedLabel, bedDiff, emoji;
+    if(bedToday <= wakeToday){ // bedtime after midnight (e.g. bed 23:00 wake 07:00 fine; if bed < wake numerically crosses midnight case handled below)
+    }
+    if(now < wakeToday){
+      bedDiff = wakeToday - now; bedLabel = "Time until wake-up"; emoji="⏰";
+    } else if(now < bedToday){
+      bedDiff = bedToday - now; bedLabel = "Remaining time before bed"; emoji="🛏️";
+    } else {
+      const wakeTomorrow = addDays(wakeToday,1);
+      bedDiff = wakeTomorrow - now; bedLabel = "Past bedtime — wake-up in"; emoji="🌙";
+    }
+    const bh_ = Math.floor(bedDiff/3600000), bm_ = Math.floor((bedDiff%3600000)/60000), bs_ = Math.floor((bedDiff%60000)/1000);
+    document.getElementById('bedLabelTop').textContent = bedLabel;
+    document.getElementById('bedCountdown').textContent = `${bh_}h ${bm_}m ${bs_}s`;
+    document.getElementById('bedEmoji').textContent = emoji;
+
+    // panchang
+    const tithi = getTithi(now);
+    document.getElementById('tithiName').textContent = tithi.name;
+    document.getElementById('pakshaLabel').textContent = `${tithi.paksha} Paksha · Tithi ${tithi.num}`;
+    document.getElementById('tithiTags').innerHTML = tithi.auspicious ? `<span class="tag">✨ Auspicious / observance day</span>` : '';
+
+    // precise tithi start/end (throttled — only recompute every ~60s, it's a heavier calc)
+    if(!this._lastPreciseTick || now - this._lastPreciseTick > 60000){
+      this._lastPreciseTick = now;
+      const pt = getPreciseTithi(now);
+      this._precise = pt;
+    }
+    if(this._precise){
+      const pt = this._precise;
+      const rangeLabel = `${pt.name} runs ${fmtHM(pt.startTime)} → ${fmtHM(pt.endTime)}`;
+      document.getElementById('tithiTimeRange').textContent = rangeLabel;
+    }
+    const brahma = brahmaMuhurta(sun.sunrise);
+    document.getElementById('brahmaMuhurtaRange').textContent = `🌅 Brahma Muhurta ${fmtHM(brahma.start)} – ${fmtHM(brahma.end)}`;
+
+    // holidays today
+    const hs = holidaysFor(todayStr);
+    const hbox = document.getElementById('holidayBox');
+    if(hs.length){
+      hbox.innerHTML = hs.map(h=>`<span class="tag holiday ${h.country==='NL'?'nl':''}">${h.country==='IN'?'🇮🇳':'🇳🇱'} ${h.name}</span>`).join(' ');
+    } else {
+      hbox.innerHTML = `<div class="stat-sub">No holidays today</div>`;
+    }
+
+    // today's tasks
+    this.renderTaskListInto('todayTaskList', todayStr);
+
+    // weather now (from cached data if available)
+    this.renderWeatherNow(todayStr);
+  },
+
+  updateSky(now, sun){
+    const stops = [
+      {t: startOfDay(now).getTime(), c1:[11,16,38], c2:[26,27,75]},
+      {t: sun.sunrise.getTime()-70*60000, c1:[11,16,38], c2:[45,47,107]},
+      {t: sun.sunrise.getTime(), c1:[255,154,86], c2:[255,201,71]},
+      {t: sun.sunrise.getTime()+70*60000, c1:[79,172,254], c2:[15,191,166]},
+      {t: sun.noon.getTime(), c1:[58,160,255], c2:[94,231,200]},
+      {t: sun.sunset.getTime()-70*60000, c1:[79,172,254], c2:[255,201,71]},
+      {t: sun.sunset.getTime(), c1:[255,107,107], c2:[196,69,105]},
+      {t: sun.sunset.getTime()+70*60000, c1:[48,57,82], c2:[26,27,75]},
+      {t: addDays(startOfDay(now),1).getTime(), c1:[11,16,38], c2:[26,27,75]}
+    ];
+    const nowT = now.getTime();
+    let lo = stops[0], hi = stops[stops.length-1];
+    for(let i=0;i<stops.length-1;i++){
+      if(nowT >= stops[i].t && nowT <= stops[i+1].t){ lo = stops[i]; hi = stops[i+1]; break; }
+    }
+    const span = hi.t - lo.t || 1;
+    const f = Math.max(0, Math.min(1, (nowT - lo.t)/span));
+    const lerp = (a,b)=>Math.round(a+(b-a)*f);
+    const c1 = [0,1,2].map(i=>lerp(lo.c1[i], hi.c1[i]));
+    const c2 = [0,1,2].map(i=>lerp(lo.c2[i], hi.c2[i]));
+    document.getElementById('skyHero').style.setProperty('--sky1', `rgb(${c1.join(',')})`);
+    document.getElementById('skyHero').style.setProperty('--sky2', `rgb(${c2.join(',')})`);
+
+    const isNight = nowT < sun.sunrise.getTime() || nowT > sun.sunset.getTime();
+    document.getElementById('orbEmoji').textContent = isNight ? "🌙" : "☀️";
+    document.getElementById('arcDot').textContent = isNight ? "🌙" : "☀️";
+    document.body.classList.toggle('dim-mode', isNight);
+    document.getElementById('skyHero').classList.toggle('sky-night', isNight);
+
+    // arc position across sunrise->sunset (or night span)
+    let pct;
+    if(!isNight){
+      pct = (nowT - sun.sunrise.getTime())/(sun.sunset.getTime()-sun.sunrise.getTime());
+    } else if(nowT > sun.sunset.getTime()){
+      const nightSpan = addDays(startOfDay(now),1).getTime() + (sun.sunrise.getTime()-startOfDay(now).getTime()) - sun.sunset.getTime();
+      pct = (nowT - sun.sunset.getTime())/nightSpan;
+    } else {
+      pct = 1 + (nowT - startOfDay(now).getTime())/(sun.sunrise.getTime()-startOfDay(now).getTime()) - 1;
+      pct = (nowT - startOfDay(now).getTime())/(sun.sunrise.getTime()-startOfDay(now).getTime());
+    }
+    pct = Math.max(0, Math.min(1, pct));
+    document.getElementById('arcFill').style.width = (pct*100)+'%';
+    document.getElementById('arcDot').style.left = (pct*100)+'%';
+  },
+
+  /* ---------- Weather ---------- */
+  async fetchWeather(){
+    try{
+      const {lat, lon} = this.settings;
+      const {data, sourceLabel} = await loadWeatherData(lat, lon, 9000);
+      this.wxData = data;
+      this.wxSourceLabel = sourceLabel;
+      this.wxError = null;
+      this.wxLocData['primary'] = {data, error:null, sourceLabel, loading:false};
+      const today = dstr(new Date());
+      this.renderWeatherNow(today);
+      this.renderWxLocationsRow();
+      this.renderWeather();
+    }catch(e){
+      this.wxError = (e && e.message) || 'Unknown error';
+      this.wxLocData['primary'] = {data:null, error:this.wxError, loading:false};
+      document.getElementById('wxDescNow').textContent = `Weather unavailable — all sources failed`;
+      document.getElementById('wxIconNow').textContent = '⚠️';
+      document.getElementById('wxTempNow').textContent = '—';
+      this.renderWxLocationsRow();
+      this.renderWeather();
+    }
+  },
+  async fetchWeatherForLocation(loc){
+    this.wxLocData[loc.id] = Object.assign({}, this.wxLocData[loc.id], {loading:true});
+    try{
+      const {data, sourceLabel} = await loadWeatherData(loc.lat, loc.lon, 9000);
+      this.wxLocData[loc.id] = {data, error:null, sourceLabel, loading:false};
+    }catch(e){
+      this.wxLocData[loc.id] = {data:null, error:(e&&e.message)||'Unknown error', loading:false};
+    }
+    this.renderWxLocationsRow();
+    if(this.activeWxLocId === loc.id) this.renderWeather();
+  },
+  loadOtherLocationsWeather(){
+    this.ensurePrimaryLocation();
+    (this.settings.locations||[]).forEach(loc=>{
+      if(loc.id !== 'primary') this.fetchWeatherForLocation(loc);
+    });
+  },
+  renderWeatherNow(todayStr){
+    if(!this.wxData) return;
+    const cw = this.wxData.current_weather;
+    if(cw){
+      const [icon, desc] = wmoInfo(cw.weathercode);
+      document.getElementById('wxIconNow').textContent = icon;
+      document.getElementById('wxTempNow').textContent = Math.round(cw.temperature)+'°C';
+      document.getElementById('wxDescNow').textContent = desc + ' · ' + this.settings.city;
+    }
+    const idx = this.wxData.daily.time.indexOf(todayStr);
+    if(idx>=0){
+      const tips = clothingTips(
+        this.wxData.daily.temperature_2m_max[idx],
+        this.wxData.daily.temperature_2m_min[idx],
+        this.wxData.daily.precipitation_probability_max[idx],
+        this.wxData.daily.windspeed_10m_max[idx]
+      );
+      document.getElementById('wxTipsNow').innerHTML = tips.map(t=>`<span>${t}</span>`).join('');
+    }
+  },
+  setWxRange(n, btn){
+    this.wxRange = n;
+    document.querySelectorAll('#view-weather .forecast-toggle button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    this.renderWeather();
+  },
+  getActiveWxEntry(){
+    if(!this.activeWxLocId || this.activeWxLocId === 'primary'){
+      return {data:this.wxData, error:this.wxError, sourceLabel:this.wxSourceLabel};
+    }
+    return this.wxLocData[this.activeWxLocId] || {};
+  },
+  getActiveWxLocation(){
+    return (this.settings.locations||[]).find(l=>l.id===this.activeWxLocId) || (this.settings.locations||[])[0];
+  },
+  selectWeatherLocation(id){
+    this.activeWxLocId = id;
+    this.renderWxLocationsRow();
+    const loc = (this.settings.locations||[]).find(l=>l.id===id);
+    document.getElementById('wxLocLabel').textContent = loc ? `Live forecast for ${loc.label}.` : 'Live forecast.';
+    const entry = this.getActiveWxEntry();
+    if(!entry.data && !entry.error && loc) this.fetchWeatherForLocation(loc);
+    else this.renderWeather();
+  },
+  removeWeatherLocation(id){
+    if(id === 'primary') return;
+    this.settings.locations = (this.settings.locations||[]).filter(l=>l.id!==id);
+    delete this.wxLocData[id];
+    if(this.activeWxLocId === id) this.activeWxLocId = 'primary';
+    this.saveSettingsState();
+    this.renderWxLocationsRow();
+    this.renderWeather();
+  },
+  async addWeatherLocation(){
+    const input = document.getElementById('wxAddLocationInput');
+    const status = document.getElementById('wxAddLocationStatus');
+    const q = input.value.trim();
+    if(!q) return;
+    this.ensurePrimaryLocation();
+    if((this.settings.locations||[]).length >= 8){
+      status.textContent = 'You can add up to 8 locations — remove one first.';
+      return;
+    }
+    status.textContent = 'Searching…';
+    try{
+      const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1`;
+      const res = await fetchWithTimeout(geoUrl, 8000);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if(!data.results || !data.results.length) throw new Error('city not found');
+      const r = data.results[0];
+      const label = `${r.name}${r.country_code ? ', '+r.country_code : ''}`;
+      const dup = (this.settings.locations||[]).some(l=> Math.abs(l.lat-r.latitude)<0.05 && Math.abs(l.lon-r.longitude)<0.05);
+      if(dup){ status.textContent = `${label} is already in your list.`; return; }
+      const id = 'loc_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      const loc = {id, label, lat:r.latitude, lon:r.longitude};
+      this.settings.locations.push(loc);
+      this.saveSettingsState();
+      input.value = '';
+      status.textContent = `Added ${label}.`;
+      this.renderWxLocationsRow();
+      await this.fetchWeatherForLocation(loc);
+      this.selectWeatherLocation(loc.id);
+    }catch(e){
+      const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
+      status.textContent = `Couldn't add that city — ${reason}.`;
+    }
+  },
+  renderWxLocationsRow(){
+    const row = document.getElementById('wxLocationsRow');
+    if(!row) return;
+    const locs = this.settings.locations || [];
+    row.innerHTML = locs.map(loc=>{
+      const entry = this.wxLocData[loc.id] || (loc.id==='primary' ? {data:this.wxData, error:this.wxError} : {});
+      let tempHtml = '···', iconHtml = '';
+      if(entry.data && entry.data.current_weather){
+        const cw = entry.data.current_weather;
+        const [icon] = wmoInfo(cw.weathercode);
+        tempHtml = Math.round(cw.temperature)+'°';
+        iconHtml = icon;
+      } else if(entry.error){
+        tempHtml = '⚠️';
+      } else if(entry.loading){
+        tempHtml = '…';
+      }
+      const removeBtn = loc.id==='primary' ? '' : `<button class="wlc-remove" onclick="event.stopPropagation();App.removeWeatherLocation('${loc.id}')">✕</button>`;
+      return `<div class="wx-loc-card ${this.activeWxLocId===loc.id?'active':''}" onclick="App.selectWeatherLocation('${loc.id}')">
+        <div class="wlc-icon">${iconHtml}</div>
+        <div class="wlc-name">${escapeHtml(loc.label)}</div>
+        <div class="wlc-temp">${tempHtml}</div>
+        ${removeBtn}
+      </div>`;
+    }).join('');
+  },
+  renderWeather(){
+    const activeLoc = this.getActiveWxLocation();
+    document.getElementById('wxLocLabel').textContent = activeLoc ? `Live forecast for ${activeLoc.label}.` : 'Live forecast.';
+    const list = document.getElementById('wxList');
+    const entry = this.getActiveWxEntry();
+    if(!entry.data){
+      if(entry.error){
+        list.innerHTML = `<div class="news-error">Every weather source failed: ${escapeHtml(entry.error)}. This usually means outbound requests aren't reaching the network at all (offline, blocked, or a very strict preview sandbox) — try opening this file directly in a regular browser tab.</div>
+          <button class="btn ghost news-retry" onclick="App.selectWeatherLocation('${this.activeWxLocId}')">Try again</button>`;
+      } else {
+        list.innerHTML = '<div class="stat-sub">Loading forecast…</div>';
+      }
+      return;
+    }
+    const d = entry.data.daily;
+    const n = Math.min(this.wxRange, d.time.length);
+    let html = '';
+    for(let i=0;i<n;i++){
+      const date = new Date(d.time[i]+'T00:00:00');
+      const [icon, desc] = wmoInfo(d.weathercode[i]);
+      const tips = clothingTips(d.temperature_2m_max[i], d.temperature_2m_min[i], d.precipitation_probability_max[i], d.windspeed_10m_max[i]);
+      html += `<div class="weather-day-row">
+        <div class="wd-date"><div class="wd-d">${date.toLocaleDateString(undefined,{day:'numeric',month:'short'})}</div><div class="wd-w">${date.toLocaleDateString(undefined,{weekday:'short'})}</div></div>
+        <div class="wd-icon">${icon}</div>
+        <div class="wd-temp">${Math.round(d.temperature_2m_min[i])}°–${Math.round(d.temperature_2m_max[i])}° · ${d.precipitation_probability_max[i]}%💧</div>
+        <div class="wd-tips">${tips.map(t=>`<span>${t}</span>`).join('')}</div>
+      </div>`;
+    }
+    list.innerHTML = html;
+  },
+
+  /* ---------- Settings ---------- */
+  openSettings(){
+    this.renderSettingsForm();
+    document.getElementById('settingsModal').classList.add('open');
+  },
+  renderSettingsForm(){
+    document.getElementById('cityInput').value = this.settings.city;
+    document.getElementById('wakeInput').value = this.settings.wake;
+    document.getElementById('bedInput').value = this.settings.bed;
+    document.getElementById('locStatus').textContent = `Current: ${this.settings.city} (${this.settings.lat.toFixed(2)}, ${this.settings.lon.toFixed(2)})`;
+  },
+  useGeolocation(){
+    document.getElementById('locStatus').textContent = "Locating…";
+    if(!navigator.geolocation){ document.getElementById('locStatus').textContent = "Geolocation not supported."; return; }
+    navigator.geolocation.getCurrentPosition(pos=>{
+      this.settings.lat = pos.coords.latitude;
+      this.settings.lon = pos.coords.longitude;
+      this.settings.city = "My location";
+      document.getElementById('cityInput').value = this.settings.city;
+      document.getElementById('locStatus').textContent = `Located: ${this.settings.lat.toFixed(2)}, ${this.settings.lon.toFixed(2)}`;
+    }, err=>{
+      document.getElementById('locStatus').textContent = "Couldn't get location — enter a city instead.";
+    });
+  },
+  async searchCity(){
+    const q = document.getElementById('cityInput').value.trim();
+    if(!q) return;
+    document.getElementById('locStatus').textContent = "Searching…";
+    try{
+      const res = await fetchWithTimeout(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1`, 8000);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if(data.results && data.results.length){
+        const r = data.results[0];
+        this.settings.lat = r.latitude; this.settings.lon = r.longitude;
+        this.settings.city = `${r.name}, ${r.country_code||''}`.trim();
+        document.getElementById('cityInput').value = this.settings.city;
+        document.getElementById('locStatus').textContent = `Found: ${this.settings.city}`;
+      } else {
+        document.getElementById('locStatus').textContent = "City not found.";
+      }
+    }catch(e){
+      const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
+      document.getElementById('locStatus').textContent = `Search failed — ${reason}.`;
+    }
+  },
+  saveSettings(){
+    this.settings.wake = document.getElementById('wakeInput').value || this.settings.wake;
+    this.settings.bed = document.getElementById('bedInput').value || this.settings.bed;
+    this.ensurePrimaryLocation();
+    this.saveSettingsState();
+    this.closeModal('settingsModal');
+    this.fetchWeather();
+    this.renderCalendar();
+    this.renderWxLocationsRow();
+  },
+  closeModal(id){ document.getElementById(id).classList.remove('open'); },
+
+  /* ---------- Tasks (shared helpers) ---------- */
+  addTask(dateStr, text, time){
+    if(!text || !text.trim()) return;
+    if(!this.tasks[dateStr]) this.tasks[dateStr] = [];
+    this.tasks[dateStr].push({id: Date.now()+Math.random().toString(36).slice(2), text: text.trim(), done:false, time: time||null});
+    this.saveTasks();
+  },
+  toggleTask(dateStr, id){
+    const arr = this.tasks[dateStr]||[];
+    const t = arr.find(x=>x.id===id);
+    if(t) t.done = !t.done;
+    this.saveTasks();
+  },
+  deleteTask(dateStr, id){
+    this.tasks[dateStr] = (this.tasks[dateStr]||[]).filter(x=>x.id!==id);
+    this.saveTasks();
+  },
+  rescheduleTask(oldDate, id, newDate){
+    const arr = this.tasks[oldDate]||[];
+    const idx = arr.findIndex(x=>x.id===id);
+    if(idx<0) return;
+    const [t] = arr.splice(idx,1);
+    if(!this.tasks[newDate]) this.tasks[newDate]=[];
+    this.tasks[newDate].push(t);
+    this.saveTasks();
+  },
+  // Sort: incomplete before done; within each, timed items first (by time), then untimed.
+  sortTasksForDisplay(arr){
+    return arr.slice().sort((a,b)=>{
+      if(a.done !== b.done) return a.done - b.done;
+      if(a.time && b.time) return a.time.localeCompare(b.time);
+      if(a.time && !b.time) return -1;
+      if(!a.time && b.time) return 1;
+      return 0;
+    });
+  },
+  renderTaskListInto(elId, dateStr){
+    const el = document.getElementById(elId);
+    const arr = this.sortTasksForDisplay(this.tasks[dateStr]||[]);
+    if(!arr.length){ el.innerHTML = `<div class="task-empty">Nothing planned yet.</div>`; return; }
+    el.innerHTML = arr.map(t=>`
+      <div class="task-item ${t.done?'done':''}">
+        <button class="task-check" onclick="App.toggleTaskUI('${dateStr}','${t.id}')">${t.done?'✓':''}</button>
+        ${t.time?`<span class="task-time-badge">${escapeHtml(t.time)}</span>`:''}
+        <div class="task-text">${escapeHtml(t.text)}</div>
+        <button class="task-del" onclick="App.deleteTaskUI('${dateStr}','${t.id}')">✕</button>
+      </div>`).join('');
+  },
+  toggleTaskUI(dateStr,id){ this.toggleTask(dateStr,id); this.refreshAllTaskViews(); },
+  deleteTaskUI(dateStr,id){ this.deleteTask(dateStr,id); this.refreshAllTaskViews(); },
+  refreshAllTaskViews(){
+    const today = dstr(new Date());
+    this.renderTaskListInto('todayTaskList', today);
+    if(document.getElementById('view-tasks').classList.contains('active')) this.renderPlanner();
+    if(this.modalDate) this.renderModalTasks();
+    this.renderCalendar();
+  },
+  addTaskForToday(){
+    const inp = document.getElementById('todayTaskInput');
+    const timeInp = document.getElementById('todayTaskTimeInput');
+    this.addTask(dstr(new Date()), inp.value, timeInp.value);
+    inp.value=''; timeInp.value='';
+    this.refreshAllTaskViews();
+  },
+
+  /* ---------- Planner tab ---------- */
+  bindQuickDates(){
+    const wrap = document.getElementById('quickDates');
+    wrap.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        wrap.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        document.getElementById('customDate').value = '';
+        wrap.dataset.selected = b.dataset.q;
+      });
+    });
+    document.getElementById('customDate').addEventListener('change', ()=>{
+      wrap.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+      wrap.dataset.selected = 'custom';
+    });
+  },
+  resolveQuickDate(){
+    const wrap = document.getElementById('quickDates');
+    const sel = wrap.dataset.selected;
+    const custom = document.getElementById('customDate').value;
+    const now = new Date();
+    if(custom) return custom;
+    switch(sel){
+      case 'tomorrow': return dstr(addDays(now,1));
+      case 'week': return dstr(addDays(now,7));
+      case 'month': return dstr(addMonths(now,1));
+      default: return dstr(now);
+    }
+  },
+  addTaskFromPlanner(){
+    const inp = document.getElementById('plannerTaskInput');
+    const timeInp = document.getElementById('plannerTaskTimeInput');
+    const dateStr = this.resolveQuickDate();
+    this.addTask(dateStr, inp.value, timeInp.value);
+    inp.value=''; timeInp.value='';
+    this.refreshAllTaskViews();
+  },
+  bindTaskFilters(){
+    document.getElementById('taskFilterRow').querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        document.querySelectorAll('#taskFilterRow button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        this.taskFilter = b.dataset.f;
+        this.renderPlanner();
+      });
+    });
+  },
+  renderPlanner(){
+    const today = dstr(new Date());
+    const entries = [];
+    Object.keys(this.tasks).forEach(dateStr=>{
+      (this.tasks[dateStr]||[]).forEach(t=>entries.push({dateStr, t}));
+    });
+    entries.sort((a,b)=> a.dateStr.localeCompare(b.dateStr) || (a.t.time||'').localeCompare(b.t.time||''));
+    const groups = {overdue:[], today:[], upcoming:[], done:[]};
+    entries.forEach(e=>{
+      if(e.t.done){ groups.done.push(e); return; }
+      if(e.dateStr < today) groups.overdue.push(e);
+      else if(e.dateStr === today) groups.today.push(e);
+      else groups.upcoming.push(e);
+    });
+    const filter = this.taskFilter;
+    const order = filter==='all' ? ['overdue','today','upcoming','done'] : [filter];
+    const labels = {overdue:'Overdue', today:'Today', upcoming:'Upcoming', done:'Completed'};
+    let html = '';
+    order.forEach(key=>{
+      const list = groups[key];
+      if(!list || !list.length) return;
+      html += `<div class="group-label">${labels[key]} (${list.length})</div>`;
+      list.forEach(e=>{
+        html += `<div class="task-item ${e.t.done?'done':''}">
+          <button class="task-check" onclick="App.toggleTaskUI('${e.dateStr}','${e.t.id}')">${e.t.done?'✓':''}</button>
+          ${e.t.time?`<span class="task-time-badge">${escapeHtml(e.t.time)}</span>`:''}
+          <div style="flex:1;">
+            <div class="task-text">${escapeHtml(e.t.text)}</div>
+            <div class="task-date">${e.dateStr}</div>
+          </div>
+          ${(!e.t.done && key==='overdue') ? `<button class="task-del" title="Bump to tomorrow" onclick="App.bumpTask('${e.dateStr}','${e.t.id}')">↷</button>` : ''}
+          <button class="task-del" onclick="App.deleteTaskUI('${e.dateStr}','${e.t.id}')">✕</button>
+        </div>`;
+      });
+    });
+    document.getElementById('plannerList').innerHTML = html || `<div class="task-empty">Nothing here yet.</div>`;
+  },
+  bumpTask(dateStr, id){
+    const newDate = dstr(addDays(new Date(),1));
+    this.rescheduleTask(dateStr, id, newDate);
+    this.refreshAllTaskViews();
+  },
+
+  /* ---------- Calendar ---------- */
+  changeYear(delta){
+    this.calYear += delta;
+    this.renderCalendar();
+  },
+  renderCalendar(){
+    document.getElementById('calYearLabel').textContent = this.calYear;
+    const grid = document.getElementById('monthsGrid');
+    const todayStr = dstr(new Date());
+    let html = '';
+    for(let m=0;m<12;m++){
+      html += `<div class="month-card"><div class="month-title">${MONTH_NAMES[m]} ${this.calYear}</div>`;
+      html += `<div class="dow-row">${DOW.map(d=>`<span>${d}</span>`).join('')}</div>`;
+      html += `<div class="days-grid">`;
+      const first = new Date(this.calYear, m, 1);
+      const startPad = first.getDay();
+      const daysInMonth = new Date(this.calYear, m+1, 0).getDate();
+      for(let i=0;i<startPad;i++) html += `<div class="day-cell"></div>`;
+      for(let day=1; day<=daysInMonth; day++){
+        const d = new Date(this.calYear, m, day);
+        const ds = dstr(d);
+        const isToday = ds===todayStr;
+        const hs = holidaysFor(ds);
+        const hasHoliday = hs.length>0;
+        const hasTasks = (this.tasks[ds]||[]).some(t=>!t.done) || (this.tasks[ds]||[]).length>0;
+        const tithi = getTithi(d);
+        const classes = ['day-cell','in-month'];
+        if(isToday) classes.push('today');
+        if(hasHoliday) classes.push('has-holiday');
+        if(hasTasks) classes.push('has-tasks');
+        if(tithi.auspicious) classes.push('auspicious');
+        html += `<div class="${classes.join(' ')}" onclick="App.openDayModal('${ds}')">${day}</div>`;
+      }
+      html += `</div></div>`;
+    }
+    grid.innerHTML = html;
+  },
+
+  /* ---------- Day detail modal ---------- */
+  openDayModal(dateStr){
+    this.modalDate = dateStr;
+    const d = new Date(dateStr+'T00:00:00');
+    document.getElementById('dayModalTitle').textContent = d.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'});
+
+    const sun = getSunTimes(d, this.settings.lat, this.settings.lon);
+    document.getElementById('dayModalSun').textContent = `🌅 Rise ${fmtHM(sun.sunrise)} · 🌇 Set ${fmtHM(sun.sunset)}`;
+    const bm = brahmaMuhurta(sun.sunrise);
+    document.getElementById('dayModalBrahma').textContent = `🌅 Brahma Muhurta ${fmtHM(bm.start)} – ${fmtHM(bm.end)}`;
+
+    const tithi = getTithi(d);
+    document.getElementById('dayModalTithi').textContent = tithi.name + (tithi.auspicious ? ' ✨' : '');
+    document.getElementById('dayModalPaksha').textContent = `${tithi.paksha} Paksha · Tithi ${tithi.num}`;
+    const ptDay = getPreciseTithi(new Date(d.getTime() + 12*3600000)); // sample midday for this date's active tithi
+    document.getElementById('dayModalTithiRange').textContent = `${ptDay.name} runs ${fmtHM(ptDay.startTime)} → ${fmtHM(ptDay.endTime)}`;
+
+    const hs = holidaysFor(dateStr);
+    const hCard = document.getElementById('dayModalHolidayCard');
+    if(hs.length){
+      hCard.style.display='block';
+      document.getElementById('dayModalHolidays').innerHTML = hs.map(h=>`<span class="tag holiday ${h.country==='NL'?'nl':''}">${h.country==='IN'?'🇮🇳':'🇳🇱'} ${h.name}</span>`).join(' ');
+    } else { hCard.style.display='none'; }
+
+    const wxCard = document.getElementById('dayModalWxCard');
+    if(this.wxData){
+      const idx = this.wxData.daily.time.indexOf(dateStr);
+      if(idx>=0){
+        wxCard.style.display='block';
+        const [icon,desc] = wmoInfo(this.wxData.daily.weathercode[idx]);
+        document.getElementById('dayModalWx').textContent = `${icon} ${desc} · ${Math.round(this.wxData.daily.temperature_2m_min[idx])}°–${Math.round(this.wxData.daily.temperature_2m_max[idx])}°C · ${this.wxData.daily.precipitation_probability_max[idx]}% rain`;
+        const tips = clothingTips(this.wxData.daily.temperature_2m_max[idx], this.wxData.daily.temperature_2m_min[idx], this.wxData.daily.precipitation_probability_max[idx], this.wxData.daily.windspeed_10m_max[idx]);
+        document.getElementById('dayModalWxTips').innerHTML = tips.map(t=>`<span>${t}</span>`).join('');
+      } else {
+        wxCard.style.display='block';
+        document.getElementById('dayModalWx').textContent = 'Beyond 16-day live forecast range.';
+        document.getElementById('dayModalWxTips').innerHTML='';
+      }
+    } else { wxCard.style.display='none'; }
+
+    this.renderModalTasks();
+    document.getElementById('dayModal').classList.add('open');
+  },
+  renderModalTasks(){
+    this.renderTaskListInto('dayModalTasks', this.modalDate);
+  },
+  addTaskForModalDay(){
+    const inp = document.getElementById('dayModalTaskInput');
+    const timeInp = document.getElementById('dayModalTaskTimeInput');
+    this.addTask(this.modalDate, inp.value, timeInp.value);
+    inp.value=''; timeInp.value='';
+    this.renderModalTasks();
+    this.renderCalendar();
+  },
+
+  /* ---------- Photo-scan → task (OCR) ----------
+     Uses Tesseract.js, loaded on demand from CDN only when this feature
+     is first used (keeps normal page load light). Runs entirely in the
+     browser — the photo never leaves the device. Accuracy is genuinely
+     limited: good for printed/clear writing, unreliable for cursive. */
+  ensureTesseractLoaded(){
+    if(window.Tesseract) return Promise.resolve();
+    if(this._tesseractLoadPromise) return this._tesseractLoadPromise;
+    this._tesseractLoadPromise = this.loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    return this._tesseractLoadPromise;
+  },
+  async handleScanFile(event){
+    const file = event.target.files && event.target.files[0];
+    if(!file) return;
+    const status = document.getElementById('scanStatus');
+    const review = document.getElementById('scanReview');
+    review.style.display = 'none';
+    status.textContent = 'Loading text recognition…';
+    try{
+      await this.ensureTesseractLoaded();
+      status.textContent = 'Reading image… this can take a few seconds.';
+      const result = await window.Tesseract.recognize(file, 'eng');
+      const text = (result && result.data && result.data.text) || '';
+      const dateGuess = extractDateFromText(text) || dstr(new Date());
+      const timeGuess = extractTimeFromText(text) || '';
+      const titleGuess = suggestTaskTextFromOCR(text);
+      document.getElementById('scanTaskText').value = titleGuess;
+      document.getElementById('scanTaskDate').value = dateGuess;
+      document.getElementById('scanTaskTime').value = timeGuess;
+      document.getElementById('scanFullText').textContent = text.trim() || '(no text detected)';
+      review.style.display = 'block';
+      status.textContent = text.trim() ? 'Text extracted — review and edit below before adding.' : 'No clear text detected — you can still type the task manually below.';
+    }catch(e){
+      status.textContent = `Couldn't read the image — ${(e&&e.message)||'unknown error'}. Try a clearer, well-lit, less-blurry photo.`;
+    } finally {
+      event.target.value = '';
+    }
+  },
+  confirmScanTask(){
+    const text = document.getElementById('scanTaskText').value;
+    const dateStr = document.getElementById('scanTaskDate').value || dstr(new Date());
+    const time = document.getElementById('scanTaskTime').value;
+    const status = document.getElementById('scanStatus');
+    if(!text || !text.trim()){ status.textContent = 'Add some task text first.'; return; }
+    this.addTask(dateStr, text, time);
+    this.refreshAllTaskViews();
+    document.getElementById('scanReview').style.display = 'none';
+    status.textContent = `Added "${text}" to ${dateStr}${time?' at '+time:''}.`;
+  },
+
+  /* ---------- Health: shared helpers ---------- */
+  loadScript(src){
+    return new Promise((resolve,reject)=>{
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = ()=>resolve();
+      s.onerror = ()=>reject(new Error('failed to load '+src));
+      document.head.appendChild(s);
+    });
+  },
+  initHealth(){
+    if(!this._healthSubBound){
+      this._healthSubBound = true;
+      document.getElementById('healthSubNav').querySelectorAll('button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          document.querySelectorAll('#healthSubNav button').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          const sub = b.dataset.sub;
+          document.getElementById('healthSteps').style.display = sub==='steps' ? 'block' : 'none';
+          document.getElementById('healthCalories').style.display = sub==='calories' ? 'block' : 'none';
+          document.getElementById('healthWater').style.display = sub==='water' ? 'block' : 'none';
+          document.getElementById('healthScreen').style.display = sub==='screen' ? 'block' : 'none';
+          document.getElementById('healthRadiation').style.display = sub==='radiation' ? 'block' : 'none';
+          if(sub==='calories') this.renderFoodDb();
+          if(sub==='water') this.renderWaterSection();
+          if(sub==='screen') this.renderScreenSection();
+          if(sub==='radiation') this.renderRadiationSection();
+        });
+      });
+      document.getElementById('foodDbNav').querySelectorAll('button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          document.querySelectorAll('#foodDbNav button').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          this.foodDbView = b.dataset.db;
+          this.renderFoodDb();
+        });
+      });
+    }
+    document.getElementById('stepGoalInput').value = this.health.stepGoal;
+    document.getElementById('calorieGoalInput').value = this.health.calorieGoal;
+    document.getElementById('stepSensitivityInput').value = this.health.stepSensitivity || 0.8;
+    this.renderStepsSection();
+    this.renderWeightGraph();
+    this.renderFoodDb();
+    this.renderFoodLog();
+  },
+
+  /* ---------- Steps & route ---------- */
+  renderStepsSection(){
+    const today = dstr(new Date());
+    const count = this.health.steps[today] || 0;
+    document.getElementById('stepsTodayCount').textContent = count.toLocaleString();
+    document.getElementById('stepsGoalLabel').textContent = `Goal: ${this.health.stepGoal.toLocaleString()} (${Math.min(100, Math.round(count/this.health.stepGoal*100))}%)`;
+    const strideM = this.health.strideM || 0.7; // calibrated from a GPS-tracked walk once available, generic estimate until then
+    const distanceKm = count * (strideM/1000);
+    document.getElementById('stepsDistanceLabel').textContent = `${distanceKm.toFixed(1)} km`;
+    const weightKg = this.getLatestWeightKg();
+    const walkedCalories = estimateCaloriesBurned(count, distanceKm, weightKg, null);
+    const loggedBurn = (this.health.calorieBurnLog && this.health.calorieBurnLog[today]) || 0;
+    const totalCalories = Math.max(walkedCalories, loggedBurn);
+    document.getElementById('stepsCaloriesLabel').textContent = `~${totalCalories} kcal burned (est.)${weightKg ? '' : ' — add your weight below for a more personal estimate'}`;
+    if(document.getElementById('strideCalibrationNote')){
+      document.getElementById('strideCalibrationNote').textContent = this.health.strideM
+        ? `Distance uses your calibrated stride (${strideM.toFixed(2)}m/step, learned from a past GPS-tracked walk).`
+        : `Distance uses a generic 0.7m/step assumption until you complete one GPS-tracked walk to calibrate it to you.`;
+    }
+  },
+  saveManualSteps(){
+    const val = parseInt(document.getElementById('manualStepsInput').value, 10);
+    if(isNaN(val) || val < 0) return;
+    this.health.steps[dstr(new Date())] = val;
+    this.saveHealthState();
+    this.renderStepsSection();
+    document.getElementById('manualStepsInput').value = '';
+  },
+  saveStepGoal(){
+    const val = parseInt(document.getElementById('stepGoalInput').value, 10);
+    if(isNaN(val) || val < 500) return;
+    this.health.stepGoal = val;
+    this.saveHealthState();
+    this.renderStepsSection();
+  },
+  saveStepSensitivity(){
+    const val = parseFloat(document.getElementById('stepSensitivityInput').value);
+    if(isNaN(val) || val <= 0) return;
+    this.health.stepSensitivity = val;
+    this.saveHealthState();
+    document.getElementById('sensitivitySaveStatus').textContent = 'Saved — takes effect on your next walk.';
+  },
+  saveWeightLog(){
+    const val = parseFloat(document.getElementById('weightLogInput').value);
+    const status = document.getElementById('weightLogStatus');
+    if(isNaN(val) || val < 20 || val > 400){ status.textContent = 'Enter a weight in kg.'; return; }
+    if(!this.health.weightLog) this.health.weightLog = {};
+    this.health.weightLog[dstr(new Date())] = val;
+    this.saveHealthState();
+    status.textContent = `Saved: ${val} kg.`;
+    document.getElementById('weightLogInput').value = '';
+    this.renderWeightGraph();
+    this.renderStepsSection(); // calorie estimate depends on latest weight
+  },
+  renderWeightGraph(){
+    const svg = document.getElementById('weightGraphSvg');
+    const emptyMsg = document.getElementById('weightGraphEmpty');
+    const avgLabel = document.getElementById('weightGraphAvg');
+    if(!svg) return;
+    const days = [];
+    const today = new Date();
+    for(let i=13;i>=0;i--) days.push(dstr(addDays(today,-i)));
+    const log = this.health.weightLog || {};
+    const entries = days.map(d=>log[d]).filter(v=>typeof v==='number');
+    if(!entries.length){
+      svg.innerHTML = '';
+      if(emptyMsg) emptyMsg.style.display = 'block';
+      if(avgLabel) avgLabel.textContent = '';
+      return;
+    }
+    if(emptyMsg) emptyMsg.style.display = 'none';
+    const latest = entries[entries.length-1];
+    const first = entries[0];
+    const change = latest - first;
+    if(avgLabel){
+      avgLabel.textContent = entries.length > 1
+        ? `Latest: ${latest.toFixed(1)}kg · ${change>=0?'+':''}${change.toFixed(1)}kg over this period`
+        : `Latest: ${latest.toFixed(1)}kg`;
+    }
+    const minV = Math.min(...entries), maxV = Math.max(...entries);
+    const range = Math.max(maxV - minV, 2); // avoid a flat/degenerate scale for near-constant weight
+    const W = 320, H = 100, padTop = 10, padBottom = 14;
+    const chartH = H - padTop - padBottom;
+    const stepX = W / days.length;
+    let points = [];
+    days.forEach((d,i)=>{
+      if(typeof log[d] === 'number'){
+        const frac = (log[d]-minV)/range;
+        const y = padTop + (chartH - frac*chartH);
+        const x = i*stepX + stepX/2;
+        points.push([x,y]);
+      }
+    });
+    let svgContent = '';
+    if(points.length > 1){
+      const pathD = points.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+      svgContent += `<path d="${pathD}" fill="none" stroke="var(--saffron)" stroke-width="2"></path>`;
+    }
+    points.forEach(p=>{ svgContent += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="var(--saffron)"></circle>`; });
+    days.forEach((d,i)=>{
+      const dLabel = new Date(d+'T00:00:00').toLocaleDateString(undefined,{weekday:'narrow'});
+      svgContent += `<text class="sleep-axis-label" x="${i*stepX+stepX/2}" y="${H-3}" text-anchor="middle">${dLabel}</text>`;
+    });
+    svg.innerHTML = svgContent;
+  },
+  async startWalkTracking(){
+    const status = document.getElementById('walkStatus');
+    if(this.walkSession && this.walkSession.active){ return; }
+    if(!('geolocation' in navigator)){
+      status.textContent = 'Geolocation is not available in this browser.';
+      return;
+    }
+    // iOS Safari requires an explicit user-gesture permission prompt for motion data.
+    try{
+      if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
+        const perm = await DeviceMotionEvent.requestPermission();
+        if(perm !== 'granted'){
+          status.textContent = 'Motion permission denied — step counting needs it. You can still track distance via GPS, or use manual entry above.';
+        }
+      }
+    }catch(e){
+      status.textContent = 'Could not request motion permission on this device — falling back to GPS-only distance tracking.';
+    }
+
+    const sensitivity = this.health.stepSensitivity || 0.8;
+    const session = {
+      active: true, steps: 0, distanceKm: 0, startTime: Date.now(),
+      lastFix: null, detector: createStepDetector({threshold: sensitivity}), map: null, polyline: null,
+      pathLatLngs: [], geoWatchId: null, motionHandler: null, timerInterval: null,
+      rejectedFixCount: 0
+    };
+    this.walkSession = session;
+
+    document.getElementById('startWalkBtn').style.display = 'none';
+    document.getElementById('stopWalkBtn').style.display = 'inline-block';
+    document.getElementById('walkLiveStats').style.display = 'grid';
+    const mapEl = document.getElementById('walkMap');
+    mapEl.style.display = 'block';
+    status.textContent = 'Tracking… keep this tab open and your phone with you. GPS typically takes 5-15 seconds to lock on.';
+
+    this.ensureLeafletLoaded().then(()=>{
+      if(!this.walkSession || !this.walkSession.active) return; // stopped before this resolved
+      const map = window.L.map(mapEl).setView([this.settings.lat, this.settings.lon], 16);
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
+      }).addTo(map);
+      const polyline = window.L.polyline([], {color: '#FF8A26', weight: 4}).addTo(map);
+      session.map = map;
+      session.polyline = polyline;
+    }).catch(()=>{ status.textContent += ' (Map failed to load — tracking still works without it.)'; });
+
+    session.motionHandler = (ev)=>{
+      const acc = ev.accelerationIncludingGravity || ev.acceleration;
+      if(!acc) return;
+      const gx = acc.x||0, gy = acc.y||0, gz = acc.z||0;
+      const magnitude = Math.sqrt(gx*gx + gy*gy + gz*gz) - 9.81; // remove gravity baseline
+      if(session.detector.feed(Math.abs(magnitude), Date.now())){
+        session.steps++;
+        document.getElementById('walkStepsLive').textContent = session.steps.toLocaleString();
+      }
+    };
+    window.addEventListener('devicemotion', session.motionHandler);
+
+    session.geoWatchId = navigator.geolocation.watchPosition((pos)=>{
+      const nextFix = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy, timestamp: pos.timestamp || Date.now() };
+      if(!isPlausibleGpsFix(session.lastFix, nextFix)){
+        session.rejectedFixCount++;
+        return; // drop this fix — poor accuracy or an implausible jump; don't corrupt the route/distance
+      }
+      if(session.lastFix){
+        session.distanceKm += haversineDistanceKm(session.lastFix.lat, session.lastFix.lon, nextFix.lat, nextFix.lon);
+        document.getElementById('walkDistLive').textContent = session.distanceKm.toFixed(2)+' km';
+      }
+      session.lastFix = nextFix;
+      session.pathLatLngs.push([nextFix.lat, nextFix.lon]);
+      if(session.map && session.polyline){
+        session.polyline.addLatLng([nextFix.lat, nextFix.lon]);
+        session.map.panTo([nextFix.lat, nextFix.lon]);
+      }
+    }, (err)=>{
+      status.textContent = `GPS error: ${err.message || 'permission denied or unavailable'}. Step counting continues without a route.`;
+    }, { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
+
+    session.timerInterval = setInterval(()=>{
+      const elapsedSec = Math.floor((Date.now()-session.startTime)/1000);
+      const mm = Math.floor(elapsedSec/60), ss = elapsedSec%60;
+      document.getElementById('walkTimeLive').textContent = `${mm}:${String(ss).padStart(2,'0')}`;
+    }, 1000);
+  },
+  stopWalkTracking(){
+    const session = this.walkSession;
+    if(!session) return;
+    session.active = false;
+    if(session.motionHandler) window.removeEventListener('devicemotion', session.motionHandler);
+    if(session.geoWatchId != null && navigator.geolocation) navigator.geolocation.clearWatch(session.geoWatchId);
+    if(session.timerInterval) clearInterval(session.timerInterval);
+
+    const today = dstr(new Date());
+    this.health.steps[today] = (this.health.steps[today]||0) + session.steps;
+
+    // Stride calibration: if this walk had a decent number of steps and a
+    // GPS-tracked distance, use the ratio to replace the generic ~0.7m/step
+    // assumption for future distance estimates on days with only a manual
+    // or sensor step count (no GPS). Small/noisy walks are skipped so a
+    // fluke short walk can't badly miscalibrate future estimates.
+    let calibrationNote = '';
+    if(session.steps >= 200 && session.distanceKm >= 0.1){
+      const strideM = (session.distanceKm*1000) / session.steps;
+      if(strideM >= 0.3 && strideM <= 1.3){ // sanity range for a human stride
+        this.health.strideM = strideM;
+        calibrationNote = ` Stride length calibrated to ${strideM.toFixed(2)}m/step from this walk's GPS distance.`;
+      }
+    }
+    const durationHours = (Date.now()-session.startTime)/3600000;
+    const weightKg = this.getLatestWeightKg();
+    const calories = estimateCaloriesBurned(session.steps, session.distanceKm, weightKg, durationHours);
+    if(!this.health.calorieBurnLog) this.health.calorieBurnLog = {};
+    this.health.calorieBurnLog[today] = (this.health.calorieBurnLog[today]||0) + calories;
+    this.saveHealthState();
+    this.renderStepsSection();
+
+    document.getElementById('startWalkBtn').style.display = 'inline-block';
+    document.getElementById('stopWalkBtn').style.display = 'none';
+    const accuracyNote = session.rejectedFixCount > 0 ? ` (${session.rejectedFixCount} low-quality GPS reading${session.rejectedFixCount===1?'':'s'} filtered out.)` : '';
+    document.getElementById('walkStatus').textContent =
+      `Walk saved: ${session.steps} steps, ${session.distanceKm.toFixed(2)} km, ~${calories} kcal added to today's total.${accuracyNote}${calibrationNote}`;
+    this.walkSession = null;
+  },
+  getLatestWeightKg(){
+    const dates = Object.keys(this.health.weightLog||{}).sort();
+    if(!dates.length) return null;
+    return this.health.weightLog[dates[dates.length-1]];
+  },
+  ensureLeafletLoaded(){
+    if(window.L) return Promise.resolve();
+    if(this._leafletLoadPromise) return this._leafletLoadPromise;
+    const cssLink = document.createElement('link');
+    cssLink.rel = 'stylesheet';
+    cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(cssLink);
+    this._leafletLoadPromise = this.loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+    return this._leafletLoadPromise;
+  },
+
+  /* ---------- Calories ---------- */
+  saveCalorieGoal(){
+    const val = parseInt(document.getElementById('calorieGoalInput').value, 10);
+    if(isNaN(val) || val < 500) return;
+    this.health.calorieGoal = val;
+    this.saveHealthState();
+    this.renderFoodLog();
+  },
+  getFoodListForView(){
+    if(this.foodDbView === 'custom') return this.health.customFoods || [];
+    return FOOD_DATABASE[this.foodDbView] || [];
+  },
+  renderFoodDb(){
+    const list = document.getElementById('foodDbList');
+    const customForm = document.getElementById('customFoodForm');
+    customForm.style.display = this.foodDbView === 'custom' ? 'block' : 'none';
+    const items = this.getFoodListForView();
+    if(!items.length){
+      list.innerHTML = this.foodDbView === 'custom'
+        ? `<div class="stat-sub" style="padding:8px 2px;">No custom foods yet — add one below.</div>`
+        : `<div class="stat-sub" style="padding:8px 2px;">No items.</div>`;
+      return;
+    }
+    list.innerHTML = items.map(f=>`
+      <div class="food-row">
+        <div class="fr-name">${escapeHtml(f.name)}</div>
+        <input type="number" class="fr-cal" id="fr-cal-${f.id}" value="${f.calories}" min="0" title="Calories per serving — edit if yours differs">
+        <input type="number" class="fr-qty" id="fr-qty-${f.id}" value="1" min="0.25" step="0.25" title="Servings">
+        <button onclick="App.logFoodFromDb('${f.id}')">Log</button>
+      </div>
+    `).join('');
+  },
+  logFoodFromDb(foodId){
+    const item = this.getFoodListForView().find(f=>f.id===foodId);
+    if(!item) return;
+    const calInput = document.getElementById(`fr-cal-${foodId}`);
+    const qtyInput = document.getElementById(`fr-qty-${foodId}`);
+    const calories = parseFloat(calInput.value) || 0;
+    const qty = parseFloat(qtyInput.value) || 1;
+    // Editing the calorie value here also updates the database display
+    // going forward for custom foods (base IN/NL tables reset per session —
+    // only the log entry itself carries the edited value permanently).
+    if(this.foodDbView === 'custom'){
+      item.calories = calories;
+      this.saveHealthState();
+    }
+    this.logFoodEntry(item.name, calories, qty);
+  },
+  logFoodEntry(name, caloriesPerServing, qty){
+    const today = dstr(new Date());
+    if(!this.health.foodLog[today]) this.health.foodLog[today] = [];
+    this.health.foodLog[today].push({
+      id: Date.now()+Math.random().toString(36).slice(2),
+      name, calories: caloriesPerServing, qty: qty||1
+    });
+    this.saveHealthState();
+    this.renderFoodLog();
+  },
+  removeFoodLogEntry(id){
+    const today = dstr(new Date());
+    this.health.foodLog[today] = (this.health.foodLog[today]||[]).filter(e=>e.id!==id);
+    this.saveHealthState();
+    this.renderFoodLog();
+  },
+  addCustomFood(){
+    const name = document.getElementById('customFoodName').value.trim();
+    const calories = parseFloat(document.getElementById('customFoodCalories').value);
+    if(!name || isNaN(calories)) return;
+    this.health.customFoods.push({id:'custom-'+Date.now().toString(36), name, calories});
+    this.saveHealthState();
+    document.getElementById('customFoodName').value = '';
+    document.getElementById('customFoodCalories').value = '';
+    this.renderFoodDb();
+  },
+  renderFoodLog(){
+    const today = dstr(new Date());
+    const entries = this.health.foodLog[today] || [];
+    const total = entries.reduce((s,e)=>s + e.calories*e.qty, 0);
+    document.getElementById('calorieTodayTotal').textContent = `${Math.round(total).toLocaleString()} kcal`;
+    document.getElementById('calorieGoalLabel').textContent = `Goal: ${this.health.calorieGoal.toLocaleString()} kcal (${Math.min(100, Math.round(total/this.health.calorieGoal*100))}%)`;
+    const listEl = document.getElementById('foodLogList');
+    if(!entries.length){ listEl.innerHTML = `<div class="task-empty">Nothing logged yet today.</div>`; return; }
+    listEl.innerHTML = entries.map(e=>`
+      <div class="food-log-item">
+        <div class="fl-name">${escapeHtml(e.name)} ${e.qty!==1?`× ${e.qty}`:''}</div>
+        <div class="fl-cal">${Math.round(e.calories*e.qty)} kcal</div>
+        <button class="task-del" onclick="App.removeFoodLogEntry('${e.id}')">✕</button>
+      </div>
+    `).join('');
+  },
+
+  /* ---------- Meal photo → calorie estimate (best-effort ML) ---------- */
+  ensureMobileNetLoaded(){
+    if(window.mobilenet && window.tf) return Promise.resolve();
+    if(this._mobilenetLoadPromise) return this._mobilenetLoadPromise;
+    this._mobilenetLoadPromise = this.loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest')
+      .then(()=> this.loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@latest'));
+    return this._mobilenetLoadPromise;
+  },
+  matchFoodMLLabel(className){
+    if(!className) return null;
+    const parts = className.split(',').map(s=>s.trim().toLowerCase());
+    for(const p of parts){ if(FOOD_ML_CALORIE_MAP[p] != null) return {label:p, calories:FOOD_ML_CALORIE_MAP[p]}; }
+    return {label: parts[0], calories: null};
+  },
+  async handleMealPhoto(event){
+    const file = event.target.files && event.target.files[0];
+    if(!file) return;
+    const status = document.getElementById('mealScanStatus');
+    const review = document.getElementById('mealScanReview');
+    review.style.display = 'none';
+    status.textContent = 'Loading image model…';
+    try{
+      await this.ensureMobileNetLoaded();
+      status.textContent = 'Analyzing photo…';
+      const img = await new Promise((resolve, reject)=>{
+        const el = new Image();
+        el.onload = ()=>resolve(el);
+        el.onerror = ()=>reject(new Error('could not load that image file'));
+        el.src = URL.createObjectURL(file);
+      });
+      if(!this._mobilenetModel) this._mobilenetModel = await window.mobilenet.load();
+      const preds = await this._mobilenetModel.classify(img);
+      const top = preds && preds[0];
+      const match = top ? this.matchFoodMLLabel(top.className) : null;
+      document.getElementById('mealScanName').value = match ? match.label : 'unknown';
+      document.getElementById('mealScanCalories').value = (match && match.calories!=null) ? match.calories : '';
+      review.style.display = 'block';
+      status.textContent = (match && match.calories!=null)
+        ? `Best guess: "${match.label}" (~${match.calories} kcal typical serving) — please confirm or adjust.`
+        : `Best guess was "${(match&&match.label)||'unrecognized'}" — not in my food-calorie table, so calories are left blank. Fill it in manually below.`;
+    }catch(e){
+      status.textContent = `Couldn't analyze the photo — ${(e&&e.message)||'unknown error'}.`;
+    } finally {
+      event.target.value = '';
+    }
+  },
+  confirmMealScan(){
+    const name = document.getElementById('mealScanName').value;
+    const calories = parseFloat(document.getElementById('mealScanCalories').value) || 0;
+    const status = document.getElementById('mealScanStatus');
+    if(!name || !name.trim()){ status.textContent = 'Add a food name first.'; return; }
+    this.logFoodEntry(name.trim(), calories, 1);
+    document.getElementById('mealScanReview').style.display = 'none';
+    status.textContent = `Logged "${name}" (${calories} kcal).`;
+  },
+
+  /* ---------- Water intake ---------- */
+  renderWaterSection(){
+    const today = dstr(new Date());
+    const glasses = (this.health.waterLog && this.health.waterLog[today]) || 0;
+    const ml = glasses * this.health.waterGlassMl;
+    document.getElementById('waterTodayTotal').textContent = `${ml.toLocaleString()} ml`;
+    document.getElementById('waterGoalLabel').textContent = `Goal: ${this.health.waterGoalMl.toLocaleString()} ml (${Math.min(100, Math.round(ml/this.health.waterGoalMl*100))}%)`;
+    document.getElementById('waterGlassesCount').textContent = glasses;
+    document.getElementById('waterGlassSizeLabel').textContent = `1 glass = ${this.health.waterGlassMl} ml`;
+    document.getElementById('waterGlassMlInput').value = this.health.waterGlassMl;
+    document.getElementById('waterGoalMlInput').value = this.health.waterGoalMl;
+  },
+  addWaterGlass(delta){
+    const today = dstr(new Date());
+    if(!this.health.waterLog) this.health.waterLog = {};
+    const current = this.health.waterLog[today] || 0;
+    this.health.waterLog[today] = Math.max(0, current + delta);
+    this.saveHealthState();
+    this.renderWaterSection();
+    document.getElementById('waterLogStatus').textContent = `Updated — ${this.health.waterLog[today]} glass${this.health.waterLog[today]===1?'':'es'} today.`;
+  },
+  saveWaterSettings(){
+    const glassMl = parseInt(document.getElementById('waterGlassMlInput').value, 10);
+    const goalMl = parseInt(document.getElementById('waterGoalMlInput').value, 10);
+    if(!isNaN(glassMl) && glassMl >= 50) this.health.waterGlassMl = glassMl;
+    if(!isNaN(goalMl) && goalMl >= 500) this.health.waterGoalMl = goalMl;
+    this.saveHealthState();
+    this.renderWaterSection();
+  },
+
+  /* ---------- Screen time ----------
+     Honest scope: only THIS app's tab time is genuinely measurable from a
+     website. Cross-app / whole-device usage is deliberately inaccessible to
+     web pages (a real, load-bearing browser privacy boundary, not a gap in
+     this app) — so that data is offered as manual entry from the phone's
+     own OS-level tracker instead of being faked. */
+  initScreenTimeTracking(){
+    if(this._screenTimeInit) return;
+    this._screenTimeInit = true;
+    this._screenSessionStart = Date.now();
+    this._screenSessionDate = dstr(new Date());
+    const flush = ()=>{
+      if(document.visibilityState !== 'visible' && this._screenSessionStart == null) return;
+      const now = Date.now();
+      const elapsedMin = (now - this._screenSessionStart) / 60000;
+      const today = dstr(new Date());
+      if(!this.health.screenTimeLog[this._screenSessionDate]) this.health.screenTimeLog[this._screenSessionDate] = {appSessionMinutes:0, manualMinutes:null};
+      this.health.screenTimeLog[this._screenSessionDate].appSessionMinutes += elapsedMin;
+      this.saveHealthState();
+      this._screenSessionStart = document.visibilityState === 'visible' ? now : null;
+      this._screenSessionDate = today;
+    };
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.visibilityState === 'hidden'){ flush(); }
+      else { this._screenSessionStart = Date.now(); this._screenSessionDate = dstr(new Date()); }
+    });
+    window.addEventListener('beforeunload', flush);
+    setInterval(flush, 60000); // periodic flush so long sessions aren't lost if the tab is killed
+  },
+  renderScreenSection(){
+    this.initScreenTimeTracking();
+    const today = dstr(new Date());
+    const entry = this.health.screenTimeLog[today] || {appSessionMinutes:0, manualMinutes:null};
+    let liveMinutes = entry.appSessionMinutes;
+    if(this._screenSessionStart && document.visibilityState === 'visible'){
+      liveMinutes += (Date.now() - this._screenSessionStart) / 60000;
+    }
+    document.getElementById('screenAppSessionLabel').textContent = liveMinutes < 60
+      ? `${Math.round(liveMinutes)}m`
+      : `${Math.floor(liveMinutes/60)}h ${Math.round(liveMinutes%60)}m`;
+    document.getElementById('screenManualLabel').textContent = entry.manualMinutes != null
+      ? (entry.manualMinutes < 60 ? `${entry.manualMinutes}m` : `${Math.floor(entry.manualMinutes/60)}h ${entry.manualMinutes%60}m`)
+      : 'Not logged';
+    document.getElementById('screenGoalInput').value = this.health.screenGoalHours;
+  },
+  saveManualScreenTime(){
+    const val = parseInt(document.getElementById('manualScreenMinutesInput').value, 10);
+    const status = document.getElementById('screenManualStatus');
+    if(isNaN(val) || val < 0){ status.textContent = 'Enter total minutes as a number.'; return; }
+    const today = dstr(new Date());
+    if(!this.health.screenTimeLog[today]) this.health.screenTimeLog[today] = {appSessionMinutes:0, manualMinutes:null};
+    this.health.screenTimeLog[today].manualMinutes = val;
+    this.saveHealthState();
+    status.textContent = 'Saved.';
+    document.getElementById('manualScreenMinutesInput').value = '';
+    this.renderScreenSection();
+  },
+  saveScreenGoal(){
+    const val = parseFloat(document.getElementById('screenGoalInput').value);
+    if(isNaN(val) || val <= 0) return;
+    this.health.screenGoalHours = val;
+    this.saveHealthState();
+  },
+
+  /* ---------- Radiation: honest explanation + genuine (non-EMF) network info ---------- */
+  renderRadiationSection(){
+    const typeEl = document.getElementById('netConnType');
+    const downEl = document.getElementById('netDownlink');
+    const rttEl = document.getElementById('netRtt');
+    const noteEl = document.getElementById('netInfoNote');
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if(!conn){
+      typeEl.textContent = '—'; downEl.textContent = '—'; rttEl.textContent = '—';
+      noteEl.textContent = 'Your browser doesn\'t expose even this much network info (Safari and some browsers don\'t implement the Network Information API) — this is a browser limitation, not something this app can work around.';
+      return;
+    }
+    typeEl.textContent = conn.effectiveType || '—';
+    downEl.textContent = conn.downlink != null ? conn.downlink : '—';
+    rttEl.textContent = conn.rtt != null ? conn.rtt : '—';
+    noteEl.textContent = 'This reflects your connection speed/quality only. It is not a radiation measurement and says nothing about RF exposure or safety.';
+  },
+
+  /* ---------- Date & time calculator ---------- */
+  initDateCalc(){
+    if(this._dcInit) return;
+    this._dcInit = true;
+    const today = dstr(new Date());
+    document.getElementById('dcStart').value = today;
+    document.getElementById('dcEnd').value = dstr(addDays(new Date(),7));
+    document.getElementById('dcBaseDate').value = today;
+  },
+  runDateDiff(){
+    const sVal = document.getElementById('dcStart').value;
+    const eVal = document.getElementById('dcEnd').value;
+    const holidayFilter = document.getElementById('dcCountrySelect').value;
+    const includeWeekdays = document.getElementById('dcIncludeWeekdays').checked;
+    const includeWeekends = document.getElementById('dcIncludeWeekends').checked;
+    const out = document.getElementById('dcResult');
+    if(!sVal || !eVal){ out.innerHTML = `<div class="news-error">Pick both a start and end date.</div>`; return; }
+    let start = new Date(sVal+'T00:00:00');
+    let end = new Date(eVal+'T00:00:00');
+    const reversed = end < start;
+    if(reversed){ const tmp = start; start = end; end = tmp; }
+    const totalDays = Math.round((end - start)/DAY_MS);
+    let weekdays = 0, weekends = 0;
+    for(let d = new Date(start); d < end; d = addDays(d,1)){
+      const dow = d.getDay();
+      if(dow===0 || dow===6) weekends++; else weekdays++;
+    }
+    const weeks = Math.floor(totalDays/7);
+    const remDays = totalDays % 7;
+    const selectedDays = (includeWeekdays?weekdays:0) + (includeWeekends?weekends:0);
+    const filterActive = !(includeWeekdays && includeWeekends);
+
+    const inclusiveEnd = totalDays>0 ? addDays(end,-1) : end;
+    let holidays = [];
+    let workingDaysExclHolidays = weekdays;
+    if(holidayFilter !== 'none'){
+      holidays = holidaysInRange(dstr(start), dstr(inclusiveEnd), holidayFilter);
+      const weekdayHolidays = holidays.filter(h=>{
+        const dow = new Date(h.date+'T00:00:00').getDay();
+        return dow!==0 && dow!==6;
+      });
+      workingDaysExclHolidays = weekdays - weekdayHolidays.length;
+    }
+    const spansOutside2026 = start.getFullYear()!==2026 || inclusiveEnd.getFullYear()!==2026;
+
+    let statsHtml = `
+      <div class="dc-stat-grid">
+        <div class="dc-stat"><div class="num">${totalDays.toLocaleString()}</div><div class="lbl">Total days</div></div>
+        <div class="dc-stat"><div class="num">${weekdays.toLocaleString()}</div><div class="lbl">Working days</div></div>
+        <div class="dc-stat"><div class="num">${weekends.toLocaleString()}</div><div class="lbl">Weekend days</div></div>
+        <div class="dc-stat"><div class="num">${weeks}</div><div class="lbl">Full weeks</div></div>`;
+    if(filterActive){
+      statsHtml += `
+        <div class="dc-stat"><div class="num">${selectedDays.toLocaleString()}</div><div class="lbl">Selected days (${includeWeekdays?'weekdays':''}${includeWeekdays&&includeWeekends?' + ':''}${includeWeekends?'weekends':''}${!includeWeekdays&&!includeWeekends?'none':''})</div></div>`;
+    }
+    if(holidayFilter !== 'none'){
+      statsHtml += `
+        <div class="dc-stat"><div class="num">${holidays.length}</div><div class="lbl">Public holidays</div></div>
+        <div class="dc-stat"><div class="num">${workingDaysExclHolidays}</div><div class="lbl">Working days (excl. holidays)</div></div>`;
+    }
+    statsHtml += `</div>`;
+
+    let holidayListHtml = '';
+    if(holidayFilter !== 'none'){
+      if(holidays.length){
+        holidayListHtml = `<div class="dc-holiday-list">` + holidays.map(h=>
+          `<div class="hitem"><span>${h.country==='IN'?'🇮🇳':'🇳🇱'} ${escapeHtml(h.name)}</span><span>${new Date(h.date+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</span></div>`
+        ).join('') + `</div>`;
+      } else {
+        holidayListHtml = `<div class="stat-sub" style="margin-top:8px;">No public holidays in this range.</div>`;
+      }
+      if(spansOutside2026){
+        holidayListHtml += `<div class="approx-note" style="margin-top:8px;">Holiday data currently only covers 2026 — counts for dates outside 2026 will be incomplete.</div>`;
+      }
+    }
+
+    out.innerHTML = statsHtml + `
+      <div class="dc-plain">${weeks} week${weeks===1?'':'s'}${remDays?` and ${remDays} day${remDays===1?'':'s'}`:''} between ${start.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})} and ${end.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}.${reversed?' (Dates were swapped — end was before start.)':''}</div>
+    ` + holidayListHtml;
+  },
+  resetDateDiff(){
+    document.getElementById('dcStart').value = '';
+    document.getElementById('dcEnd').value = '';
+    document.getElementById('dcCountrySelect').value = 'none';
+    document.getElementById('dcIncludeWeekdays').checked = true;
+    document.getElementById('dcIncludeWeekends').checked = true;
+    document.getElementById('dcResult').innerHTML = '';
+  },
+  resetDateOffset(){
+    document.getElementById('dcBaseDate').value = dstr(new Date());
+    document.getElementById('dcOffsetDays').value = '30';
+    document.getElementById('dcOffsetResult').innerHTML = '';
+  },
+  runDateOffset(){
+    const baseVal = document.getElementById('dcBaseDate').value;
+    const offset = parseInt(document.getElementById('dcOffsetDays').value, 10) || 0;
+    const out = document.getElementById('dcOffsetResult');
+    if(!baseVal){ out.innerHTML = `<div class="news-error">Pick a base date.</div>`; return; }
+    const base = new Date(baseVal+'T00:00:00');
+    const result = addDays(base, offset);
+    out.innerHTML = `
+      <div class="dc-stat-grid">
+        <div class="dc-stat"><div class="num">${result.toLocaleDateString(undefined,{weekday:'short'})}</div><div class="lbl">Day of week</div></div>
+        <div class="dc-stat"><div class="num">${result.getDate()}</div><div class="lbl">${MONTH_NAMES[result.getMonth()]} ${result.getFullYear()}</div></div>
+      </div>
+      <div class="dc-plain">${offset>=0?'+':''}${offset} day${Math.abs(offset)===1?'':'s'} from ${base.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})} is <b>${result.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'})}</b>.</div>
+    `;
+  },
+
+  /* ---------- News ---------- */
+  bindNewsFilters(){
+    document.getElementById('newsCatRow').querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        document.querySelectorAll('#newsCatRow button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        this.newsCat = b.dataset.cat;
+        this.loadNews(this.newsCat);
+      });
+    });
+  },
+  async loadNews(cat){
+    const list = document.getElementById('newsList');
+    list.innerHTML = `<div class="stat-sub">Loading headlines…</div>`;
+    try{
+      const { items, sourceLabel } = await loadNewsItems(cat, 9000);
+      list.innerHTML = items.map(item=>{
+        const clean = (item.description||'').replace(/<[^>]*>/g,'').trim();
+        const parsedDate = parsePubDate(item.pubDate);
+        const when = parsedDate ? parsedDate.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+        const img = item.enclosure && item.enclosure.link ? item.enclosure.link : (item.thumbnail || '');
+        return `<div class="news-item">
+          ${img ? `<img class="news-thumb" src="${img}" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <div class="news-body">
+            <a class="news-title" href="${item.link}" target="_blank" rel="noopener">${escapeHtml(item.title||'')}</a>
+            <div class="news-meta">${when}${clean ? ' · '+escapeHtml(clean.slice(0,110)) : ''}</div>
+          </div>
+        </div>`;
+      }).join('') + `<div class="stat-sub" style="margin-top:10px;opacity:0.65;">Source: ${escapeHtml(sourceLabel)}</div>`;
+    }catch(e){
+      list.innerHTML = `<div class="news-error">Every source failed: ${escapeHtml(e.message)}. This usually means outbound requests aren't reaching the network at all (offline, blocked, or a very strict preview sandbox) — try opening this file directly in a regular browser tab.</div>
+        <button class="btn ghost news-retry" onclick="App.loadNews('${cat}')">Try again</button>`;
+    }
+  }
+};
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+App.init();
+
+// Registers the companion service worker for offline app-shell loading and
+// "Add to Home Screen" installability. This only works when the file is
+// served over http/https (GitHub Pages, Netlify, Vercel, etc.) — browsers
+// block service workers on file:// origins by design, so this quietly
+// no-ops there instead of showing an error.
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* optional enhancement — safe to ignore */ });
+  });
+}
+</script>
+</body>
+</html>
