@@ -618,7 +618,12 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
     <!-- ---- Steps & Route ---- -->
     <div id="healthSteps">
       <div class="card" style="margin-bottom:14px;">
-        <div class="stat-sub">Honest limits, upfront: this tracks steps using your <b>phone's</b> motion sensor and GPS, only while this page is open in a mobile browser. It cannot read an Apple Watch or Wear OS watch directly — smartwatches don't run web pages, that needs a native watch app. If your watch already counts your steps well, the manual entry below is the most reliable option. The live tracker uses noise-filtering and GPS-quality checks to stay as accurate as a phone-based sensor genuinely can be, but no browser-based pedometer or consumer GPS can be perfectly glitch-free — phone placement, walking style, and satellite conditions all cause real variance.</div>
+        <div class="stat-sub">Honest limits, upfront: this tracks steps using your <b>phone's</b> motion sensor and GPS, only while this page is open in a mobile browser. It cannot read an Apple Watch or Wear OS watch directly — smartwatches don't run web pages, that needs a native watch app. If your watch already counts your steps well, the manual entry below is the most reliable option. Tracking uses noise-filtering and GPS-quality checks to stay as accurate as a phone-based sensor genuinely can be, but no browser-based pedometer or consumer GPS can be perfectly glitch-free — phone placement, walking style, and satellite conditions all cause real variance.</div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <div class="stat-sub" id="stepTrackerStatus">Checking for a motion sensor…</div>
+        <div style="margin-top:8px;"><button class="btn" id="enableAutoTrackingBtn" onclick="App.enableAutoStepTrackingTap()" style="display:none;">👆 Tap to enable automatic tracking</button></div>
       </div>
 
       <div class="grid2">
@@ -637,13 +642,22 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
 
       <div class="card" style="margin-bottom:14px;">
         <h3>✍️ Manual entry</h3>
-        <div class="stat-sub">Enter today's step count from your phone/watch's own health app for the most accurate number.</div>
+        <div class="stat-sub">Enter today's step count from your phone/watch's own health app for the most accurate number — this overrides the automatically-tracked count for today.</div>
         <div class="add-row" style="margin-top:8px;">
           <input type="number" id="manualStepsInput" placeholder="e.g. 8500" min="0">
           <button onclick="App.saveManualSteps()">Save</button>
         </div>
         <div class="dc-field" style="margin-top:10px; max-width:200px;"><label>Daily step goal</label><input type="number" id="stepGoalInput" min="1000" step="500"></div>
         <div style="margin-top:8px;"><button class="btn ghost" onclick="App.saveStepGoal()">Update goal</button></div>
+        <div class="dc-field" style="margin-top:14px; max-width:280px;">
+          <label>Step sensitivity <span style="font-weight:400; text-transform:none;">(lower = more sensitive)</span></label>
+          <input type="number" id="stepSensitivityInput" min="0.2" max="3" step="0.1" value="0.8">
+        </div>
+        <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
+          <button class="btn ghost" onclick="App.saveStepSensitivity()">Save sensitivity</button>
+          <span class="stat-sub" id="sensitivitySaveStatus"></span>
+        </div>
+        <div class="stat-sub" style="margin-top:6px;">If your phone under-counts steps, lower this number; if it over-counts, raise it. Different phone models genuinely have different accelerometer sensitivity — there's no single correct value for every device. Takes effect immediately, without losing today's count.</div>
       </div>
 
       <div class="card" style="margin-bottom:14px;">
@@ -660,20 +674,11 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
       </div>
 
       <div class="card">
-        <h3>📍 Live walk tracker</h3>
-        <div class="stat-sub">Uses your phone's accelerometer (noise-smoothed) to count steps, and GPS (with poor-accuracy readings filtered out) to draw your route. Keep this tab open and your phone with you — it stops if you leave the page. Completing one walk with GPS also calibrates your personal stride length for more accurate distance on days you don't use GPS.</div>
-        <div class="dc-field" style="margin-top:10px; max-width:240px;">
-          <label>Step sensitivity <span style="font-weight:400; text-transform:none;">(lower = more sensitive)</span></label>
-          <input type="number" id="stepSensitivityInput" min="0.2" max="3" step="0.1" value="0.8">
-        </div>
-        <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
-          <button class="btn ghost" onclick="App.saveStepSensitivity()">Save sensitivity</button>
-          <span class="stat-sub" id="sensitivitySaveStatus"></span>
-        </div>
-        <div class="stat-sub" style="margin-top:6px;">If your phone under-counts steps, lower this number; if it over-counts (counts steps when it shouldn't), raise it. Different phone models genuinely have different accelerometer sensitivity — there's no single correct value for every device.</div>
+        <h3>🗺️ Optional: map this walk's route</h3>
+        <div class="stat-sub">Steps and distance are already tracking automatically above — this adds a live GPS map of your route for a specific walk, if you want one. Keep this tab open and your phone with you; it stops if you leave the page.</div>
         <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn" id="startWalkBtn" onclick="App.startWalkTracking()">▶️ Start walk</button>
-          <button class="btn ghost" id="stopWalkBtn" onclick="App.stopWalkTracking()" style="display:none;">⏹️ Stop walk</button>
+          <button class="btn" id="startWalkBtn" onclick="App.startGpsWalk()">🗺️ Start route map</button>
+          <button class="btn ghost" id="stopWalkBtn" onclick="App.stopGpsWalk()" style="display:none;">⏹️ Stop route map</button>
         </div>
         <div class="stat-sub" id="walkStatus" style="margin-top:8px;"></div>
         <div class="dc-stat-grid" id="walkLiveStats" style="margin-top:10px; display:none;">
@@ -1637,7 +1642,15 @@ const App = {
     screenTimeLog: {} // 'YYYY-MM-DD' -> {appSessionMinutes, manualMinutes}
   },
   foodDbView: 'IN',
-  walkSession: null, // {active, steps, distanceKm, startTime, lastFix, detector, map, polyline, geoWatchId, motionHandler, timerInterval}
+  // Always-on passive step counter — this is the thing that should "just
+  // run" without a manual start. Separate from gpsWalk below, which is
+  // purely opt-in for people who also want a route map.
+  stepTracker: {
+    active: false, detector: null, motionHandler: null,
+    permissionState: 'unknown', // 'unknown' | 'granted' | 'needs-gesture' | 'unavailable' | 'no-sensor-detected'
+    sawAnyEvent: false
+  },
+  gpsWalk: null, // {active, startTime, startStepCount, distanceKm, lastFix, map, polyline, pathLatLngs, geoWatchId, timerInterval, rejectedFixCount}
 
   init(){
     const steps = [
@@ -1649,6 +1662,7 @@ const App = {
       ['renderWxLocationsRow', ()=>this.renderWxLocationsRow()],
       ['initSleepLogInputs', ()=>this.initSleepLogInputs()],
       ['initScreenTimeTracking', ()=>this.initScreenTimeTracking()],
+      ['startAutoStepTracking', ()=>this.startAutoStepTracking()],
       ['tick', ()=>this.tick()],
       ['renderCalendar', ()=>this.renderCalendar()],
       ['fetchWeather', ()=>this.fetchWeather()]
@@ -1887,6 +1901,11 @@ const App = {
 
     // weather now (from cached data if available)
     this.renderWeatherNow(todayStr);
+
+    // steps/distance — event-driven updates already happen per detected
+    // step; this is a redundant once-a-second refresh so the numbers never
+    // look stale even if no step has landed in the last moment.
+    if(document.getElementById('stepsTodayCount')) this.renderStepsSection();
   },
 
   updateSky(now, sun){
@@ -2543,6 +2562,29 @@ const App = {
         ? `Distance uses your calibrated stride (${strideM.toFixed(2)}m/step, learned from a past GPS-tracked walk).`
         : `Distance uses a generic 0.7m/step assumption until you complete one GPS-tracked walk to calibrate it to you.`;
     }
+    this.renderStepTrackerStatus();
+  },
+  renderStepTrackerStatus(){
+    const el = document.getElementById('stepTrackerStatus');
+    const btn = document.getElementById('enableAutoTrackingBtn');
+    if(!el) return;
+    const st = this.stepTracker.permissionState;
+    if(st === 'granted'){
+      el.innerHTML = `🟢 Automatic tracking is <b>on</b> — steps count in real time as you carry your phone, no need to press anything.`;
+      if(btn) btn.style.display = 'none';
+    } else if(st === 'needs-gesture'){
+      el.innerHTML = `🟡 One tap needed to enable automatic tracking on this device (iPhone requires this for privacy — it's a one-time tap per visit, not a "start walk" button).`;
+      if(btn) btn.style.display = 'inline-block';
+    } else if(st === 'no-sensor-detected'){
+      el.innerHTML = `⚪ No motion sensor detected on this device (likely a laptop/desktop) — automatic tracking isn't possible here. Use manual entry below, or open this on a phone.`;
+      if(btn) btn.style.display = 'none';
+    } else if(st === 'unavailable'){
+      el.innerHTML = `⚪ This browser doesn't support motion sensor access — automatic tracking isn't available. Use manual entry below.`;
+      if(btn) btn.style.display = 'none';
+    } else {
+      el.innerHTML = `Checking for a motion sensor…`;
+      if(btn) btn.style.display = 'none';
+    }
   },
   saveManualSteps(){
     const val = parseInt(document.getElementById('manualStepsInput').value, 10);
@@ -2564,7 +2606,93 @@ const App = {
     if(isNaN(val) || val <= 0) return;
     this.health.stepSensitivity = val;
     this.saveHealthState();
-    document.getElementById('sensitivitySaveStatus').textContent = 'Saved — takes effect on your next walk.';
+    document.getElementById('sensitivitySaveStatus').textContent = 'Saved — takes effect immediately.';
+    // Re-arm the live detector with the new sensitivity without losing today's count.
+    if(this.stepTracker.active) this.attachStepListener(true);
+  },
+
+  /* ---------- Automatic, always-on step tracking ----------
+     This is the part that should "just work": as soon as the app is open
+     (and, on iPhone, after one required tap — Apple gates motion-sensor
+     access behind a user gesture; there's no way around that from any
+     website), every detected step immediately updates today's count and
+     distance. No "start walk" button involved — that button is reserved
+     for the separate, optional GPS route map below. */
+  startAutoStepTracking(){
+    if(typeof window === 'undefined' || typeof DeviceMotionEvent === 'undefined'){
+      this.stepTracker.permissionState = 'unavailable';
+      this.renderStepTrackerStatus();
+      return;
+    }
+    if(typeof DeviceMotionEvent.requestPermission === 'function'){
+      // iOS Safari: cannot start without a tap. Surface the one-tap button and wait.
+      this.stepTracker.permissionState = 'needs-gesture';
+      this.renderStepTrackerStatus();
+      return;
+    }
+    // Android / most other browsers: no gesture-gated permission API exists,
+    // so we can genuinely start listening immediately, with zero taps.
+    this.attachStepListener();
+    this.stepTracker.permissionState = 'granted';
+    this.renderStepTrackerStatus();
+    // If we never actually receive a motion event within a few seconds,
+    // this is almost certainly a device with no accelerometer (a laptop) —
+    // say so plainly instead of silently doing nothing forever.
+    setTimeout(()=>this.checkForSensorData(), 6000);
+  },
+  checkForSensorData(){
+    if(!this.stepTracker.sawAnyEvent){
+      this.stepTracker.permissionState = 'no-sensor-detected';
+      this.renderStepTrackerStatus();
+    }
+  },
+  async enableAutoStepTrackingTap(){
+    // The one required tap on iOS — this IS the user gesture Apple requires;
+    // there is no way to skip it, on any website, for privacy reasons.
+    try{
+      const perm = await DeviceMotionEvent.requestPermission();
+      if(perm === 'granted'){
+        this.attachStepListener();
+        this.stepTracker.permissionState = 'granted';
+      } else {
+        this.stepTracker.permissionState = 'unavailable';
+        document.getElementById('stepTrackerStatus').innerHTML = '🔴 Motion access denied — automatic tracking needs it. You can re-enable it in your iPhone\'s Settings → Safari → Motion & Orientation Access, or use manual entry below.';
+        return;
+      }
+    }catch(e){
+      this.stepTracker.permissionState = 'unavailable';
+    }
+    this.renderStepTrackerStatus();
+  },
+  attachStepListener(replace){
+    if(this.stepTracker.active && !replace) return;
+    if(this.stepTracker.motionHandler) window.removeEventListener('devicemotion', this.stepTracker.motionHandler);
+    const sensitivity = this.health.stepSensitivity || 0.8;
+    this.stepTracker.detector = createStepDetector({threshold: sensitivity});
+    this.stepTracker.motionHandler = (ev)=>{
+      this.stepTracker.sawAnyEvent = true;
+      const acc = ev.accelerationIncludingGravity || ev.acceleration;
+      if(!acc) return;
+      const gx = acc.x||0, gy = acc.y||0, gz = acc.z||0;
+      const magnitude = Math.sqrt(gx*gx + gy*gy + gz*gz) - 9.81; // remove gravity baseline
+      if(this.stepTracker.detector.feed(Math.abs(magnitude), Date.now())){
+        this.registerStep();
+      }
+    };
+    window.addEventListener('devicemotion', this.stepTracker.motionHandler);
+    this.stepTracker.active = true;
+  },
+  registerStep(){
+    const today = dstr(new Date());
+    this.health.steps[today] = (this.health.steps[today]||0) + 1;
+    this.saveHealthState();
+    this.renderStepsSection();
+    // If a GPS walk is also running, reflect the live count there too.
+    if(this.gpsWalk && this.gpsWalk.active){
+      const delta = this.health.steps[today] - this.gpsWalk.startStepCount;
+      const liveEl = document.getElementById('walkStepsLive');
+      if(liveEl) liveEl.textContent = Math.max(0,delta).toLocaleString();
+    }
   },
   saveWeightLog(){
     const val = parseFloat(document.getElementById('weightLogInput').value);
@@ -2629,117 +2757,94 @@ const App = {
     });
     svg.innerHTML = svgContent;
   },
-  async startWalkTracking(){
+  async startGpsWalk(){
     const status = document.getElementById('walkStatus');
-    if(this.walkSession && this.walkSession.active){ return; }
+    if(this.gpsWalk && this.gpsWalk.active){ return; }
     if(!('geolocation' in navigator)){
       status.textContent = 'Geolocation is not available in this browser.';
       return;
     }
-    // iOS Safari requires an explicit user-gesture permission prompt for motion data.
-    try{
-      if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
-        const perm = await DeviceMotionEvent.requestPermission();
-        if(perm !== 'granted'){
-          status.textContent = 'Motion permission denied — step counting needs it. You can still track distance via GPS, or use manual entry above.';
-        }
-      }
-    }catch(e){
-      status.textContent = 'Could not request motion permission on this device — falling back to GPS-only distance tracking.';
-    }
-
-    const sensitivity = this.health.stepSensitivity || 0.8;
-    const session = {
-      active: true, steps: 0, distanceKm: 0, startTime: Date.now(),
-      lastFix: null, detector: createStepDetector({threshold: sensitivity}), map: null, polyline: null,
-      pathLatLngs: [], geoWatchId: null, motionHandler: null, timerInterval: null,
-      rejectedFixCount: 0
+    // Steps are already being counted automatically in the background (see
+    // the status above) — this button only adds a GPS route map on top.
+    const today = dstr(new Date());
+    const walk = {
+      active: true, startTime: Date.now(), startStepCount: this.health.steps[today]||0,
+      distanceKm: 0, lastFix: null, map: null, polyline: null,
+      pathLatLngs: [], geoWatchId: null, timerInterval: null, rejectedFixCount: 0
     };
-    this.walkSession = session;
+    this.gpsWalk = walk;
 
     document.getElementById('startWalkBtn').style.display = 'none';
     document.getElementById('stopWalkBtn').style.display = 'inline-block';
     document.getElementById('walkLiveStats').style.display = 'grid';
+    document.getElementById('walkStepsLive').textContent = '0';
     const mapEl = document.getElementById('walkMap');
     mapEl.style.display = 'block';
-    status.textContent = 'Tracking… keep this tab open and your phone with you. GPS typically takes 5-15 seconds to lock on.';
+    status.textContent = 'Mapping your route… keep this tab open and your phone with you. GPS typically takes 5-15 seconds to lock on. Steps keep counting automatically as before.';
 
     this.ensureLeafletLoaded().then(()=>{
-      if(!this.walkSession || !this.walkSession.active) return; // stopped before this resolved
+      if(!this.gpsWalk || !this.gpsWalk.active) return; // stopped before this resolved
       const map = window.L.map(mapEl).setView([this.settings.lat, this.settings.lon], 16);
       window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
       }).addTo(map);
       const polyline = window.L.polyline([], {color: '#FF8A26', weight: 4}).addTo(map);
-      session.map = map;
-      session.polyline = polyline;
-    }).catch(()=>{ status.textContent += ' (Map failed to load — tracking still works without it.)'; });
+      walk.map = map;
+      walk.polyline = polyline;
+    }).catch(()=>{ status.textContent += ' (Map failed to load — route distance still tracks without it.)'; });
 
-    session.motionHandler = (ev)=>{
-      const acc = ev.accelerationIncludingGravity || ev.acceleration;
-      if(!acc) return;
-      const gx = acc.x||0, gy = acc.y||0, gz = acc.z||0;
-      const magnitude = Math.sqrt(gx*gx + gy*gy + gz*gz) - 9.81; // remove gravity baseline
-      if(session.detector.feed(Math.abs(magnitude), Date.now())){
-        session.steps++;
-        document.getElementById('walkStepsLive').textContent = session.steps.toLocaleString();
-      }
-    };
-    window.addEventListener('devicemotion', session.motionHandler);
-
-    session.geoWatchId = navigator.geolocation.watchPosition((pos)=>{
+    walk.geoWatchId = navigator.geolocation.watchPosition((pos)=>{
       const nextFix = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy, timestamp: pos.timestamp || Date.now() };
-      if(!isPlausibleGpsFix(session.lastFix, nextFix)){
-        session.rejectedFixCount++;
+      if(!isPlausibleGpsFix(walk.lastFix, nextFix)){
+        walk.rejectedFixCount++;
         return; // drop this fix — poor accuracy or an implausible jump; don't corrupt the route/distance
       }
-      if(session.lastFix){
-        session.distanceKm += haversineDistanceKm(session.lastFix.lat, session.lastFix.lon, nextFix.lat, nextFix.lon);
-        document.getElementById('walkDistLive').textContent = session.distanceKm.toFixed(2)+' km';
+      if(walk.lastFix){
+        walk.distanceKm += haversineDistanceKm(walk.lastFix.lat, walk.lastFix.lon, nextFix.lat, nextFix.lon);
+        document.getElementById('walkDistLive').textContent = walk.distanceKm.toFixed(2)+' km';
       }
-      session.lastFix = nextFix;
-      session.pathLatLngs.push([nextFix.lat, nextFix.lon]);
-      if(session.map && session.polyline){
-        session.polyline.addLatLng([nextFix.lat, nextFix.lon]);
-        session.map.panTo([nextFix.lat, nextFix.lon]);
+      walk.lastFix = nextFix;
+      walk.pathLatLngs.push([nextFix.lat, nextFix.lon]);
+      if(walk.map && walk.polyline){
+        walk.polyline.addLatLng([nextFix.lat, nextFix.lon]);
+        walk.map.panTo([nextFix.lat, nextFix.lon]);
       }
     }, (err)=>{
-      status.textContent = `GPS error: ${err.message || 'permission denied or unavailable'}. Step counting continues without a route.`;
+      status.textContent = `GPS error: ${err.message || 'permission denied or unavailable'}. Steps keep counting; only the route map is affected.`;
     }, { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
 
-    session.timerInterval = setInterval(()=>{
-      const elapsedSec = Math.floor((Date.now()-session.startTime)/1000);
+    walk.timerInterval = setInterval(()=>{
+      const elapsedSec = Math.floor((Date.now()-walk.startTime)/1000);
       const mm = Math.floor(elapsedSec/60), ss = elapsedSec%60;
       document.getElementById('walkTimeLive').textContent = `${mm}:${String(ss).padStart(2,'0')}`;
     }, 1000);
   },
-  stopWalkTracking(){
-    const session = this.walkSession;
-    if(!session) return;
-    session.active = false;
-    if(session.motionHandler) window.removeEventListener('devicemotion', session.motionHandler);
-    if(session.geoWatchId != null && navigator.geolocation) navigator.geolocation.clearWatch(session.geoWatchId);
-    if(session.timerInterval) clearInterval(session.timerInterval);
+  stopGpsWalk(){
+    const walk = this.gpsWalk;
+    if(!walk) return;
+    walk.active = false;
+    if(walk.geoWatchId != null && navigator.geolocation) navigator.geolocation.clearWatch(walk.geoWatchId);
+    if(walk.timerInterval) clearInterval(walk.timerInterval);
 
     const today = dstr(new Date());
-    this.health.steps[today] = (this.health.steps[today]||0) + session.steps;
+    const stepsThisWalk = Math.max(0, (this.health.steps[today]||0) - walk.startStepCount);
 
     // Stride calibration: if this walk had a decent number of steps and a
     // GPS-tracked distance, use the ratio to replace the generic ~0.7m/step
-    // assumption for future distance estimates on days with only a manual
-    // or sensor step count (no GPS). Small/noisy walks are skipped so a
-    // fluke short walk can't badly miscalibrate future estimates.
+    // assumption for future distance estimates on days without GPS. Small/
+    // noisy walks are skipped so a fluke short walk can't badly miscalibrate
+    // future estimates.
     let calibrationNote = '';
-    if(session.steps >= 200 && session.distanceKm >= 0.1){
-      const strideM = (session.distanceKm*1000) / session.steps;
+    if(stepsThisWalk >= 200 && walk.distanceKm >= 0.1){
+      const strideM = (walk.distanceKm*1000) / stepsThisWalk;
       if(strideM >= 0.3 && strideM <= 1.3){ // sanity range for a human stride
         this.health.strideM = strideM;
         calibrationNote = ` Stride length calibrated to ${strideM.toFixed(2)}m/step from this walk's GPS distance.`;
       }
     }
-    const durationHours = (Date.now()-session.startTime)/3600000;
+    const durationHours = (Date.now()-walk.startTime)/3600000;
     const weightKg = this.getLatestWeightKg();
-    const calories = estimateCaloriesBurned(session.steps, session.distanceKm, weightKg, durationHours);
+    const calories = estimateCaloriesBurned(stepsThisWalk, walk.distanceKm, weightKg, durationHours);
     if(!this.health.calorieBurnLog) this.health.calorieBurnLog = {};
     this.health.calorieBurnLog[today] = (this.health.calorieBurnLog[today]||0) + calories;
     this.saveHealthState();
@@ -2747,10 +2852,10 @@ const App = {
 
     document.getElementById('startWalkBtn').style.display = 'inline-block';
     document.getElementById('stopWalkBtn').style.display = 'none';
-    const accuracyNote = session.rejectedFixCount > 0 ? ` (${session.rejectedFixCount} low-quality GPS reading${session.rejectedFixCount===1?'':'s'} filtered out.)` : '';
+    const accuracyNote = walk.rejectedFixCount > 0 ? ` (${walk.rejectedFixCount} low-quality GPS reading${walk.rejectedFixCount===1?'':'s'} filtered out.)` : '';
     document.getElementById('walkStatus').textContent =
-      `Walk saved: ${session.steps} steps, ${session.distanceKm.toFixed(2)} km, ~${calories} kcal added to today's total.${accuracyNote}${calibrationNote}`;
-    this.walkSession = null;
+      `Route saved: ${stepsThisWalk} steps, ${walk.distanceKm.toFixed(2)} km, ~${calories} kcal for this walk.${accuracyNote}${calibrationNote}`;
+    this.gpsWalk = null;
   },
   getLatestWeightKg(){
     const dates = Object.keys(this.health.weightLog||{}).sort();
