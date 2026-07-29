@@ -55,7 +55,14 @@ body{
 }
 ::selection{background:var(--gold); color:#241a00;}
 button{font-family:inherit; cursor:pointer;}
-input, select{font-family:inherit;}
+input, select{font-family:inherit; transition:border-color 0.15s ease, box-shadow 0.15s ease;}
+input:focus, select:focus, textarea:focus{
+  outline:none; border-color:var(--saffron) !important;
+  box-shadow:0 0 0 3px rgba(222,143,75,0.20);
+}
+button:focus-visible, a:focus-visible{
+  outline:2px solid var(--saffron); outline-offset:2px;
+}
 .app{max-width:900px; margin:0 auto; padding: 18px 16px 100px;}
 
 /* ---------- Top bar ---------- */
@@ -104,21 +111,33 @@ input, select{font-family:inherit;}
 .meta-chip{background:rgba(255,255,255,0.4); border-radius:12px; padding:8px 12px; font-size:12.5px; color:rgba(13,17,32,0.85); display:flex; gap:6px; align-items:center; font-weight:600;}
 
 /* ---------- Cards ---------- */
-.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; align-items:start;}
 .card{
   background:var(--card);
   backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
   border:1px solid var(--card-line); border-radius:var(--radius);
-  padding:15px 16px; box-shadow:var(--card-shadow);
-  transition:background 1s ease, border-color 1s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  padding:13px 15px; box-shadow:var(--card-shadow);
+  transition:background 1s ease, border-color 1s ease, transform 0.25s ease, box-shadow 0.25s ease, padding 0.3s ease;
 }
 .card:hover{ transform:translateY(-2px); box-shadow:0 12px 40px rgba(var(--tint-rgb),0.18), inset 0 1px 0 rgba(255,255,255,0.35); }
-.card h3{font-family:var(--font-display); font-size:14.5px; font-weight:600; letter-spacing:0.2px; margin-bottom:9px; display:flex; align-items:center; gap:8px;}
-.card .eyebrow{font-size:10px; text-transform:uppercase; letter-spacing:1.6px; color:var(--text-lo); margin-bottom:4px; font-weight:600;}
+.card h3{font-family:var(--font-display); font-size:14px; font-weight:600; letter-spacing:0.2px; margin-bottom:8px; display:flex; align-items:center; gap:7px; transition:margin 0.3s ease;}
+.card .eyebrow{font-size:9.5px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-lo); margin-bottom:4px; font-weight:600;}
 .stat-big{font-family:var(--font-mono); font-size:21px; font-weight:600; letter-spacing:-0.2px;}
-.stat-sub{font-size:12px; color:var(--text-lo); margin-top:3px; line-height:1.45;}
+.stat-sub{font-size:12px; color:var(--text-lo); margin-top:3px; line-height:1.42;}
 
-.bedcard{margin-bottom:14px;}
+/* Dynamic/sparse-content collapse: applied via JS when a card's real
+   content is empty, null, or trivial (e.g. "no holidays today"). Cuts
+   padding and header spacing so the box visually shrinks to match how
+   little it actually has to show, instead of reserving a full card's
+   worth of empty space. Height itself is intentionally NOT fixed/forced —
+   letting padding + line-height collapse is what makes it auto-size
+   correctly for any content length, including a future entry that's
+   longer than one line. */
+.card.card-compact{ padding:9px 13px; }
+.card.card-compact h3{ margin-bottom:3px; font-size:12.5px; }
+.card.card-compact .stat-sub{ margin-top:1px; }
+
+.bedcard{margin-bottom:12px;}
 .bed-row{display:flex; justify-content:space-between; align-items:center;}
 .bed-countdown{font-family:var(--font-mono); font-size:26px; font-weight:600; color:var(--coral);}
 .bed-times{display:flex; gap:18px; margin-top:10px; font-size:12.5px; color:var(--text-lo);}
@@ -308,6 +327,9 @@ input, select{font-family:inherit;}
 .news-title{font-size:13.5px; font-weight:600; line-height:1.35; display:block; color:var(--text-hi); text-decoration:none;}
 .news-title:hover{text-decoration:underline;}
 .news-meta{font-size:11px; color:var(--text-lo); margin-top:5px;}
+.news-top-row{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:3px;}
+.news-cat-pill{font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; background:rgba(var(--tint-rgb),0.08); color:var(--text-hi); white-space:nowrap;}
+.news-meta-date{font-size:10.5px; color:var(--text-lo); font-family:var(--font-mono); white-space:nowrap;}
 .news-error{font-size:13px; color:var(--text-lo); padding:10px 2px;}
 .news-retry{margin-top:10px;}
 
@@ -477,7 +499,7 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
         <div class="stat-sub" id="brahmaMuhurtaRange" style="margin-top:8px;">🌅 Brahma Muhurta —</div>
         <div class="approx-note" style="margin-top:6px;">Rashi (sidereal sign) uses the standard Lahiri ayanamsha, same basis as most Hindu Panchang software. Moon disc reflects real illumination fraction, updated live.</div>
       </div>
-      <div class="card">
+      <div class="card" id="holidayCard">
         <h3>🎉 Today</h3>
         <div id="holidayBox"><div class="stat-sub">No holidays today</div></div>
       </div>
@@ -829,7 +851,7 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="foodLogCard">
         <h3>📝 Today's food log</h3>
         <div id="foodLogList"></div>
       </div>
@@ -1556,19 +1578,49 @@ function buildNewsAttempts(cat){
 // but never filters down to too few items — if filtering would leave
 // fewer than 3 results, the unfiltered list is used instead so a strict
 // keyword miss never means an empty tab.
-const NEWS_RELEVANCE_KEYWORDS = {
+// Strict, whole-category keyword sets — covers ALL categories now (not
+// just ai/entrepreneur/it), matched over title + description combined.
+// Naive substring matching was tried first and found to false-positive
+// badly (e.g. "ai" matching inside "Mumbai"/"chain", "raise" matching
+// inside "raises") — keywordRegex() below enforces real word boundaries
+// instead, which is what makes "strict" filtering actually strict.
+const NEWS_CATEGORY_KEYWORDS = {
+  global: ['world','global','international','foreign','diplomat','united nations','geopolit','summit','treaty','ceasefire','election'],
+  business: ['business','market','economy','stock','finance','trade','earnings','company','industry','bank','ipo','merger','revenue','shares','corporate'],
+  local_nl: ['netherlands','dutch','amsterdam','rotterdam','the hague','holland'],
+  local_in: ['india','indian','delhi','mumbai','bengaluru','modi','rupee'],
+  entrepreneur: ['startup','founder','entrepreneur','funding round','venture capital','raised funding','seed round','series a','series b','bootstrapp'],
   ai: ['ai','artificial intelligence','machine learning','llm','gpt','neural','openai','anthropic','chatbot','generative','deep learning','claude','gemini'],
-  entrepreneur: ['startup','founder','entrepreneur','funding','venture','raise','seed round','series a','series b','ipo','acquisition','bootstrapp'],
-  it: ['software','cloud','enterprise','cyber','data center','saas','network','infrastructure','security','it ','sysadmin','devops']
+  tech: ['tech','technology','software','app','device','gadget','computer','internet','digital','gizmo'],
+  it: ['cloud','enterprise','cyber','data center','saas','network','infrastructure','security','sysadmin','devops','server']
 };
+function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+const _keywordRegexCache = {};
+function keywordRegex(keyword){
+  if(!_keywordRegexCache[keyword]) _keywordRegexCache[keyword] = new RegExp('\\b'+escapeRegExp(keyword)+'\\b', 'i');
+  return _keywordRegexCache[keyword];
+}
+// Strict: keeps ONLY items matching this category's keywords. No soft
+// fallback to "show everything if too few match" — a category tab that
+// genuinely has no on-topic items shows that honestly (loadNewsItems
+// below treats zero-after-filter as a failure and tries the next
+// fallback source) rather than silently mixing in other categories.
 function filterByRelevance(items, cat){
-  const keywords = NEWS_RELEVANCE_KEYWORDS[cat];
+  const keywords = NEWS_CATEGORY_KEYWORDS[cat];
   if(!keywords || !keywords.length) return items;
-  const filtered = items.filter(it=>{
-    const t = (it.title||'').toLowerCase();
-    return keywords.some(k=>t.includes(k));
+  return items.filter(it=>{
+    const haystack = (it.title||'') + ' ' + (it.description||'');
+    return keywords.some(k=>keywordRegex(k).test(haystack));
   });
-  return filtered.length >= 3 ? filtered : items;
+}
+function sortNewsChronological(items){
+  return items.slice().sort((a,b)=>{
+    const da = parsePubDate(a.pubDate), db = parsePubDate(b.pubDate);
+    if(da && db) return db.getTime() - da.getTime();
+    if(da && !db) return -1;
+    if(!da && db) return 1;
+    return 0;
+  });
 }
 
 async function loadNewsItems(cat, timeoutMs){
@@ -1599,6 +1651,8 @@ async function loadNewsItems(cat, timeoutMs){
         }));
       }
       items = filterByRelevance(items, cat);
+      if(!items.length) throw new Error('no on-topic items after strict category filtering');
+      items = sortNewsChronological(items);
       return { items, sourceLabel: attempt.label };
     }catch(e){
       const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
@@ -1951,6 +2005,61 @@ function createStepDetector(opts){
     reset(){ lastStepTime = -Infinity; wasAboveThreshold = false; smoothed = 0; primed = false; }
   };
 }
+/**
+ * Gates raw candidate pulses (from createStepDetector) through a
+ * continuity + cadence + rotation check before confirming them as real
+ * steps — this is what actually distinguishes real walking/running from
+ * stray hand jitter, sitting fidgets, or picking up the phone, rather
+ * than just reacting to any single acceleration spike.
+ *
+ * Rules: consecutive pulses must be minGapMs-maxGapMs apart (a plausible
+ * cadence), each gap must be within gapToleranceRatio of the previous
+ * gap (real gait is rhythmic; jitter isn't), and a pulse accompanied by
+ * high rotation rate is treated as handling the phone, not gait. Nothing
+ * is confirmed until confirmAfter (5) consecutive pulses all pass —
+ * a broken streak resets to zero.
+ */
+function createWalkingGate(opts){
+  opts = opts || {};
+  const minGapMs = opts.minGapMs != null ? opts.minGapMs : 250;
+  const maxGapMs = opts.maxGapMs != null ? opts.maxGapMs : 1200;
+  const gapToleranceRatio = opts.gapToleranceRatio != null ? opts.gapToleranceRatio : 0.55;
+  const confirmAfter = opts.confirmAfter != null ? opts.confirmAfter : 5;
+  const maxRotationDegPerSec = opts.maxRotationDegPerSec != null ? opts.maxRotationDegPerSec : 150;
+  let lastPulseTime = null;
+  let lastGap = null;
+  let streak = 0;
+  return {
+    feedPulse(timestampMs, rotationDegPerSec){
+      if(rotationDegPerSec != null && rotationDegPerSec > maxRotationDegPerSec){
+        lastPulseTime = timestampMs; lastGap = null; streak = 0;
+        return false;
+      }
+      if(lastPulseTime == null){
+        lastPulseTime = timestampMs; streak = 1; lastGap = null;
+        return false;
+      }
+      const gap = timestampMs - lastPulseTime;
+      lastPulseTime = timestampMs;
+      if(gap < minGapMs || gap > maxGapMs){
+        streak = 1; lastGap = null;
+        return false;
+      }
+      if(lastGap != null){
+        const delta = Math.abs(gap - lastGap) / lastGap;
+        if(delta > gapToleranceRatio){
+          streak = 1; lastGap = gap;
+          return false;
+        }
+      }
+      lastGap = gap;
+      streak += 1;
+      return streak >= confirmAfter;
+    },
+    reset(){ lastPulseTime = null; lastGap = null; streak = 0; },
+    get currentStreak(){ return streak; }
+  };
+}
 // Standard great-circle distance between two lat/lon points, in km.
 function haversineDistanceKm(lat1, lon1, lat2, lon2){
   const R = 6371;
@@ -2262,10 +2371,12 @@ const App = {
     const entries = days.map(d=>this.sleepLog[d]).filter(e=>e && typeof e.durationHours==='number');
     if(!entries.length){
       svg.innerHTML = '';
+      svg.style.display = 'none';
       if(emptyMsg) emptyMsg.style.display = 'block';
       if(avgLabel) avgLabel.textContent = '';
       return;
     }
+    svg.style.display = 'block';
     if(emptyMsg) emptyMsg.style.display = 'none';
     const RECOMMENDED_HOURS = 8;
     const avg = entries.reduce((s,e)=>s+e.durationHours,0) / entries.length;
@@ -2429,6 +2540,7 @@ const App = {
     } else {
       hbox.innerHTML = `<div class="stat-sub">No holidays today</div>`;
     }
+    this.setCardCompact('holidayCard', hs.length === 0);
 
     // today's tasks
     this.renderTaskListInto('todayTaskList', todayStr);
@@ -2786,6 +2898,16 @@ const App = {
       const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
       document.getElementById('locStatus').textContent = `Search failed — ${reason}.`;
     }
+  },
+  // Toggles the compact/collapsed visual state on a card by id, based on
+  // whether it currently has real content to show. Used anywhere a box can
+  // legitimately be empty/sparse (holidays, task lists, logs, graphs) so it
+  // visually shrinks instead of reserving a full card's worth of dead
+  // space. Safe to call with an id that isn't in the DOM yet (no-op).
+  setCardCompact(elId, isCompact){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.classList.toggle('card-compact', !!isCompact);
   },
   renderQuote(){
     const q = getDailyQuote(new Date(), this.quoteOffset);
@@ -3371,6 +3493,7 @@ const App = {
     if(this.stepTracker.motionHandler) window.removeEventListener('devicemotion', this.stepTracker.motionHandler);
     const sensitivity = this.health.stepSensitivity || 0.8;
     this.stepTracker.detector = createStepDetector({threshold: sensitivity});
+    this.stepTracker.gate = createWalkingGate();
     this.stepTracker.motionHandler = (ev)=>{
       // Devices/browsers are inconsistent about which of these two fields
       // is populated — some only fill accelerationIncludingGravity, some
@@ -3391,7 +3514,23 @@ const App = {
         return; // no usable acceleration data in this event
       }
       this.stepTracker.sawAnyEvent = true;
-      if(this.stepTracker.detector.feed(Math.abs(magnitude), Date.now())){
+      const now = Date.now();
+      // Raw candidate pulse (could still be a false positive on its own).
+      if(!this.stepTracker.detector.feed(Math.abs(magnitude), now)) return;
+      // Gyroscope rotation rate, when available, distinguishes carrying
+      // the phone while walking (low/moderate, rhythmic rotation) from
+      // picking it up or fidgeting with it (sharp, high rotation spikes).
+      // Not every browser/device reports rotationRate — gracefully
+      // degrade to cadence-only gating when it's unavailable.
+      let rotationMagnitude = null;
+      if(ev.rotationRate){
+        const ra = ev.rotationRate.alpha||0, rb = ev.rotationRate.beta||0, rg = ev.rotationRate.gamma||0;
+        rotationMagnitude = Math.sqrt(ra*ra+rb*rb+rg*rg);
+      }
+      // Only a run of 5+ consistent, plausible-cadence pulses confirms an
+      // actual step — a lone bump or a few seconds of hand jitter never
+      // reaches this, so it can never register as walking.
+      if(this.stepTracker.gate.feedPulse(now, rotationMagnitude)){
         this.registerStep();
       }
     };
@@ -3462,10 +3601,12 @@ const App = {
     const entries = days.map(d=>log[d]).filter(v=>typeof v==='number');
     if(!entries.length){
       svg.innerHTML = '';
+      svg.style.display = 'none';
       if(emptyMsg) emptyMsg.style.display = 'block';
       if(avgLabel) avgLabel.textContent = '';
       return;
     }
+    svg.style.display = 'block';
     if(emptyMsg) emptyMsg.style.display = 'none';
     const latest = entries[entries.length-1];
     const first = entries[0];
@@ -3705,6 +3846,7 @@ const App = {
     document.getElementById('calorieTodayTotal').textContent = `${Math.round(total).toLocaleString()} kcal`;
     document.getElementById('calorieGoalLabel').textContent = `Goal: ${this.health.calorieGoal.toLocaleString()} kcal (${Math.min(100, Math.round(total/this.health.calorieGoal*100))}%)`;
     const listEl = document.getElementById('foodLogList');
+    this.setCardCompact('foodLogCard', entries.length === 0);
     if(!entries.length){ listEl.innerHTML = `<div class="task-empty">Nothing logged yet today.</div>`; return; }
     listEl.innerHTML = entries.map(e=>`
       <div class="food-log-item">
@@ -4103,21 +4245,31 @@ const App = {
   async loadNews(cat){
     const list = document.getElementById('newsList');
     list.innerHTML = `<div class="stat-sub">Loading headlines…</div>`;
+    const NEWS_CAT_LABELS = {
+      global:'🌍 International', local_nl:'🇳🇱 Netherlands', local_in:'🇮🇳 India',
+      business:'💼 Business', entrepreneur:'🚀 Entrepreneur', ai:'🤖 AI', tech:'💻 Tech', it:'🖥️ IT'
+    };
     try{
       const { items, sourceLabel } = await loadNewsItems(cat, 9000);
+      const catLabel = NEWS_CAT_LABELS[cat] || cat;
       list.innerHTML = items.map(item=>{
         const clean = (item.description||'').replace(/<[^>]*>/g,'').trim();
+        const snippet = clean.length > 140 ? clean.slice(0,140).trim()+'…' : clean;
         const parsedDate = parsePubDate(item.pubDate);
-        const when = parsedDate ? parsedDate.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+        const when = parsedDate ? parsedDate.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Unknown date';
         const img = item.enclosure && item.enclosure.link ? item.enclosure.link : (item.thumbnail || '');
         return `<div class="news-item">
           ${img ? `<img class="news-thumb" src="${img}" loading="lazy" onerror="this.style.display='none'">` : ''}
           <div class="news-body">
+            <div class="news-top-row">
+              <span class="news-cat-pill">${catLabel}</span>
+              <span class="news-meta-date">${escapeHtml(when)}</span>
+            </div>
             <a class="news-title" href="${item.link}" target="_blank" rel="noopener">${escapeHtml(item.title||'')}</a>
-            <div class="news-meta">${when}${clean ? ' · '+escapeHtml(clean.slice(0,110)) : ''}</div>
+            <div class="news-meta">${escapeHtml(sourceLabel)}${snippet ? ' · '+escapeHtml(snippet) : ''}</div>
           </div>
         </div>`;
-      }).join('') + `<div class="stat-sub" style="margin-top:10px;opacity:0.65;">Source: ${escapeHtml(sourceLabel)}</div>`;
+      }).join('') + `<div class="stat-sub" style="margin-top:10px;opacity:0.65;">Sorted newest first · Source: ${escapeHtml(sourceLabel)}</div>`;
     }catch(e){
       list.innerHTML = `<div class="news-error">Every source failed: ${escapeHtml(e.message)}. This usually means outbound requests aren't reaching the network at all (offline, blocked, or a very strict preview sandbox) — try opening this file directly in a regular browser tab.</div>
         <button class="btn ghost news-retry" onclick="App.loadNews('${cat}')">Try again</button>`;
