@@ -22,16 +22,18 @@ button, .day-cell, .tab-btn, .wx-loc-card, a{ -webkit-tap-highlight-color: trans
 </style>
 <style>
 :root{
-  --bg1:#FFF4DA; --bg2:#DDF3FF; --bg3:#FFE3EC;
-  --ink:#171A3D; --paper:#fffdf8;
+  --bg1:#FBE8C6; --bg2:#CDE7F7; --bg3:#F6D9E6;
+  --ink:#1B1E38; --paper:#fffdf8;
   --tint-rgb:23,26,61;
-  --card: rgba(255,255,255,0.78);
-  --card-line: rgba(var(--tint-rgb),0.10);
-  --card-shadow: 0 6px 22px rgba(var(--tint-rgb),0.07);
-  --gold:#FFC130; --saffron:#FF8A26; --coral:#FF5D73; --teal:#00BFA6;
-  --good:#12b981; --warn:#ff9f1c; --bad:#ff4d5e;
-  --text-hi:#171A3D; --text-lo:rgba(var(--tint-rgb),0.60);
-  --radius:18px;
+  --glass-tint:255,255,255;
+  --card: linear-gradient(135deg, rgba(255,255,255,0.30), rgba(255,255,255,0.10));
+  --card-line: rgba(255,255,255,0.45);
+  --card-shadow: 0 8px 32px rgba(23,26,61,0.14), inset 0 1px 0 rgba(255,255,255,0.35);
+  --glass-blur: blur(22px) saturate(160%);
+  --gold:#E8C879; --saffron:#DE8F4B; --coral:#DD6B80; --teal:#1FA396;
+  --good:#12b981; --warn:#ff9f1c; --bad:#e0526a;
+  --text-hi:#1B1E38; --text-lo:rgba(var(--tint-rgb),0.62);
+  --radius:20px;
   --font-display:'Fraunces', serif;
   --font-body:'Inter', sans-serif;
   --font-mono:'JetBrains Mono', monospace;
@@ -41,9 +43,9 @@ html,body{height:100%;}
 body{
   font-family:var(--font-body);
   background:
-    radial-gradient(circle at 8% 6%, rgba(255,193,48,0.35), transparent 40%),
-    radial-gradient(circle at 96% 18%, rgba(0,191,166,0.28), transparent 42%),
-    radial-gradient(circle at 50% 100%, rgba(255,93,115,0.20), transparent 45%),
+    radial-gradient(circle at 8% 6%, rgba(232,200,121,0.38), transparent 40%),
+    radial-gradient(circle at 96% 18%, rgba(31,163,150,0.26), transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(221,107,128,0.20), transparent 45%),
     linear-gradient(155deg, var(--bg1), var(--bg2) 60%, var(--bg3));
   background-attachment:fixed;
   color:var(--text-hi);
@@ -63,7 +65,8 @@ input, select{font-family:inherit;}
 .brand .sub{font-size:11px; color:var(--text-lo); letter-spacing:1.5px; text-transform:uppercase; margin-top:4px;}
 .icon-btn{
   width:40px; height:40px; border-radius:50%; border:1px solid var(--card-line);
-  background:var(--card); color:var(--text-hi); font-size:18px; box-shadow:var(--card-shadow);
+  background:var(--card); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+  color:var(--text-hi); font-size:18px; box-shadow:var(--card-shadow);
   display:flex; align-items:center; justify-content:center;
 }
 
@@ -71,8 +74,8 @@ input, select{font-family:inherit;}
 .sky{
   position:relative; border-radius:24px; overflow:hidden;
   padding:26px 22px 22px; margin-bottom:16px;
-  border:1px solid rgba(255,255,255,0.5);
-  box-shadow:0 10px 32px rgba(var(--tint-rgb),0.14);
+  border:1px solid rgba(255,255,255,0.55);
+  box-shadow:0 12px 36px rgba(var(--tint-rgb),0.16), inset 0 1px 0 rgba(255,255,255,0.4);
   background: linear-gradient(135deg, var(--sky1,#4FACFE), var(--sky2,#00C9B7));
   transition: background 2s ease;
 }
@@ -103,13 +106,17 @@ input, select{font-family:inherit;}
 /* ---------- Cards ---------- */
 .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
 .card{
-  background:var(--card); border:1px solid var(--card-line); border-radius:var(--radius);
-  padding:16px; box-shadow:var(--card-shadow);
+  background:var(--card);
+  backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--card-line); border-radius:var(--radius);
+  padding:15px 16px; box-shadow:var(--card-shadow);
+  transition:background 1s ease, border-color 1s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
-.card h3{font-family:var(--font-display); font-size:15px; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
-.card .eyebrow{font-size:10.5px; text-transform:uppercase; letter-spacing:1.3px; color:var(--text-lo); margin-bottom:4px; font-weight:600;}
-.stat-big{font-family:var(--font-mono); font-size:22px; font-weight:600;}
-.stat-sub{font-size:12px; color:var(--text-lo); margin-top:4px;}
+.card:hover{ transform:translateY(-2px); box-shadow:0 12px 40px rgba(var(--tint-rgb),0.18), inset 0 1px 0 rgba(255,255,255,0.35); }
+.card h3{font-family:var(--font-display); font-size:14.5px; font-weight:600; letter-spacing:0.2px; margin-bottom:9px; display:flex; align-items:center; gap:8px;}
+.card .eyebrow{font-size:10px; text-transform:uppercase; letter-spacing:1.6px; color:var(--text-lo); margin-bottom:4px; font-weight:600;}
+.stat-big{font-family:var(--font-mono); font-size:21px; font-weight:600; letter-spacing:-0.2px;}
+.stat-sub{font-size:12px; color:var(--text-lo); margin-top:3px; line-height:1.45;}
 
 .bedcard{margin-bottom:14px;}
 .bed-row{display:flex; justify-content:space-between; align-items:center;}
@@ -131,6 +138,16 @@ input, select{font-family:inherit;}
 /* Panchang */
 .panchang-row{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;}
 .panchang-tithi{font-family:var(--font-display); font-size:19px; font-weight:600; color:var(--saffron);}
+.moon-header{display:flex; gap:14px; align-items:center;}
+.moon-header-text{flex:1; min-width:0;}
+.moon-disc-wrap{flex:none; width:64px; height:64px; position:relative;}
+.moon-disc{width:64px; height:64px; border-radius:50%; position:relative; overflow:hidden;
+  background:radial-gradient(circle at 35% 32%, #FFFBEF, #F0DDA8 55%, #D9BE7E 100%);
+  box-shadow: inset -6px -6px 14px rgba(60,40,10,0.28), inset 3px 3px 8px rgba(255,255,255,0.5), 0 6px 18px rgba(0,0,0,0.28);}
+.moon-shadow{position:absolute; top:-4%; left:-4%; width:108%; height:108%; border-radius:50%;
+  background:radial-gradient(circle at 65% 68%, #2b3050, #12141f 70%);
+  transition:transform 1.4s cubic-bezier(.4,0,.2,1);}
+.moon-glow{position:absolute; inset:0; border-radius:50%; box-shadow:0 0 22px 4px rgba(255,236,190,0.35); pointer-events:none;}
 .tag{display:inline-block; font-size:11px; padding:3px 9px; border-radius:20px; background:rgba(255,193,48,0.20); color:#a3690a; border:1px solid rgba(255,193,48,0.45); font-weight:700; margin-top:6px;}
 .tag.holiday{background:rgba(255,93,115,0.16); color:#c23350; border-color:rgba(255,93,115,0.4);}
 .tag.holiday.nl{background:rgba(0,191,166,0.16); color:#0a8b78; border-color:rgba(0,191,166,0.4);}
@@ -157,6 +174,11 @@ input, select{font-family:inherit;}
 .add-row{display:flex; gap:8px; margin-top:12px;}
 .add-row input[type=text]{flex:1; background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); border-radius:10px; padding:10px 12px; color:var(--text-hi); font-size:13.5px;}
 .add-row-time{width:92px; flex:none; background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); border-radius:10px; padding:10px 8px; color:var(--text-hi); font-size:12.5px; font-family:var(--font-mono);}
+.add-row-cat{flex:none; background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); border-radius:10px; padding:9px 8px; color:var(--text-hi); font-size:12px;}
+.task-cat-badge{font-size:12px; flex:none; padding:2px 5px; border-radius:6px; background:rgba(var(--tint-rgb),0.07);}
+.task-cat-badge.cat-professional{background:rgba(63,131,196,0.16);}
+.task-cat-badge.cat-home{background:rgba(31,163,150,0.16);}
+.task-cat-badge.cat-private{background:rgba(221,107,128,0.16);}
 .add-row input::placeholder{color:var(--text-lo);}
 .add-row button{background:linear-gradient(120deg,var(--gold),var(--saffron)); color:#241a00; border:none; border-radius:10px; padding:0 16px; font-weight:700; font-size:13px;}
 .quick-dates{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
@@ -171,7 +193,7 @@ input, select{font-family:inherit;}
   background:linear-gradient(0deg, rgba(255,248,232,0.97), rgba(255,248,232,0.55));
   backdrop-filter:blur(10px);
 }
-.tabbar-inner{display:flex; gap:4px; background:rgba(255,255,255,0.6); border:1px solid var(--card-line); border-radius:20px; padding:6px; max-width:900px; width:100%; box-shadow:var(--card-shadow); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+.tabbar-inner{display:flex; gap:4px; background:var(--card); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--card-line); border-radius:20px; padding:6px; max-width:900px; width:100%; box-shadow:var(--card-shadow); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
 .tabbar-inner::-webkit-scrollbar{display:none;}
 .tab-btn{flex:0 0 auto; min-width:56px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 6px; border:none; background:none; color:var(--text-lo); border-radius:14px; font-size:9.5px; font-weight:600; letter-spacing:0.2px;}
 .tab-btn .ticon{font-size:16px;}
@@ -189,12 +211,14 @@ input, select{font-family:inherit;}
 .year-switch button{background:var(--card); border:1px solid var(--card-line); color:var(--text-hi); border-radius:10px; width:32px; height:32px; box-shadow:var(--card-shadow);}
 .year-switch .yr{font-family:var(--font-mono); font-weight:700; font-size:16px;}
 .months-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px;}
-.month-card{background:var(--card); border:1px solid var(--card-line); border-radius:16px; padding:12px; box-shadow:var(--card-shadow);}
+.month-card{background:var(--card); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--card-line); border-radius:16px; padding:12px; box-shadow:var(--card-shadow);}
 .month-title{font-family:var(--font-display); font-weight:600; font-size:14px; margin-bottom:8px;}
 .dow-row{display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:3px;}
 .dow-row span{font-size:9px; text-align:center; color:var(--text-lo);}
 .days-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
-.day-cell{aspect-ratio:1; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:10.5px; position:relative; background:rgba(var(--tint-rgb),0.025); color:var(--text-lo);}
+.day-cell{aspect-ratio:1; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:10.5px; position:relative; background:rgba(var(--tint-rgb),0.025); color:var(--text-lo); transition:transform 0.12s ease, background 0.15s ease; cursor:pointer;}
+.day-cell:hover{background:rgba(var(--tint-rgb),0.09); transform:scale(1.08);}
+.day-cell:active{transform:scale(0.95);}
 .day-cell.in-month{color:var(--text-hi); background:rgba(var(--tint-rgb),0.055);}
 .day-cell.today{background:linear-gradient(135deg,var(--gold),var(--saffron)); color:#241a00; font-weight:800;}
 .day-cell.has-holiday::after{content:''; position:absolute; bottom:2px; width:4px; height:4px; border-radius:50%; background:var(--coral);}
@@ -204,7 +228,7 @@ input, select{font-family:inherit;}
 /* modal */
 .modal-back{position:fixed; inset:0; background:rgba(var(--tint-rgb),0.38); backdrop-filter:blur(4px); z-index:100; display:none; align-items:flex-end; justify-content:center;}
 .modal-back.open{display:flex;}
-.modal{background:var(--paper); border:1px solid var(--card-line); border-radius:22px 22px 0 0; max-width:560px; width:100%; max-height:86vh; overflow-y:auto; padding:20px 20px calc(24px + env(safe-area-inset-bottom)); box-shadow:0 -14px 44px rgba(var(--tint-rgb),0.20);}
+.modal{background:var(--card); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--card-line); border-radius:22px 22px 0 0; max-width:560px; width:100%; max-height:86vh; overflow-y:auto; padding:20px 20px calc(24px + env(safe-area-inset-bottom)); box-shadow:0 -14px 44px rgba(var(--tint-rgb),0.20);}
 @media(min-width:640px){ .modal-back{align-items:center;} .modal{border-radius:22px; max-height:80vh;} }
 .modal-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
 .modal-head h2{font-family:var(--font-display); font-size:20px; font-weight:600;}
@@ -227,7 +251,9 @@ input, select{font-family:inherit;}
 
 /* Multi-location weather */
 .wx-locations-row{display:flex; gap:10px; overflow-x:auto; padding:2px 2px 10px; -webkit-overflow-scrolling:touch;}
-.wx-loc-card{flex:none; min-width:112px; max-width:132px; background:var(--card); border:1.5px solid var(--card-line); border-radius:14px; padding:10px 30px 10px 12px; box-shadow:var(--card-shadow); cursor:pointer; position:relative; touch-action:manipulation;}
+.wx-loc-card{flex:none; min-width:112px; max-width:132px; background:var(--card); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1.5px solid var(--card-line); border-radius:14px; padding:10px 30px 10px 12px; box-shadow:var(--card-shadow); cursor:pointer; position:relative; touch-action:manipulation; transition:transform 0.2s ease;}
+.wx-loc-card:hover{transform:translateY(-2px);}
+.wx-loc-card:active{transform:scale(0.97);}
 .wx-loc-card.active{border-color:var(--saffron);}
 .wx-loc-card .wlc-name{font-size:11.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .wx-loc-card .wlc-temp{font-family:var(--font-mono); font-size:19px; font-weight:700; margin-top:5px;}
@@ -242,8 +268,12 @@ input, select{font-family:inherit;}
 .settings-row:last-child{border:none;}
 .settings-row label{font-size:13.5px;}
 .settings-row input[type=time], .settings-row input[type=text], .settings-row input[type=number]{background:rgba(var(--tint-rgb),0.045); border:1px solid var(--card-line); color:var(--text-hi); border-radius:8px; padding:7px 10px; font-size:13px;}
-.btn{background:linear-gradient(120deg,var(--gold),var(--saffron)); color:#241a00; border:none; border-radius:10px; padding:9px 16px; font-weight:700; font-size:13px;}
-.btn.ghost{background:rgba(var(--tint-rgb),0.055); color:var(--text-hi); border:1px solid var(--card-line);}
+.btn{background:linear-gradient(120deg,var(--gold),var(--saffron)); color:#241a00; border:none; border-radius:10px; padding:9px 16px; font-weight:700; font-size:13px; transition:transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;}
+.btn:hover{filter:brightness(1.06); box-shadow:0 4px 14px rgba(var(--tint-rgb),0.18); transform:translateY(-1px);}
+.btn:active{transform:translateY(0) scale(0.97); filter:brightness(0.97);}
+.btn.ghost{background:rgba(var(--tint-rgb),0.055); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); color:var(--text-hi); border:1px solid var(--card-line); transition:transform 0.15s ease, background 0.15s ease;}
+.btn.ghost:hover{background:rgba(var(--tint-rgb),0.10); transform:translateY(-1px);}
+.btn.ghost:active{transform:translateY(0) scale(0.97);}
 .loc-status{font-size:12px; color:var(--text-lo); margin-top:6px;}
 
 /* Filters (planner) */
@@ -265,7 +295,7 @@ input, select{font-family:inherit;}
 .dc-holiday-list .hitem{font-size:12.5px; display:flex; justify-content:space-between; gap:8px; padding:6px 10px; background:rgba(var(--tint-rgb),0.04); border-radius:8px;}
 .dc-result{margin-top:14px;}
 .dc-stat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(110px,1fr)); gap:10px;}
-.dc-stat{background:rgba(var(--tint-rgb),0.05); border:1px solid var(--card-line); border-radius:12px; padding:12px;}
+.dc-stat{background:rgba(var(--tint-rgb),0.05); border:1px solid var(--card-line); border-radius:12px; padding:10px 12px;}
 .dc-stat .num{font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--saffron);}
 .dc-stat .lbl{font-size:11px; color:var(--text-lo); text-transform:uppercase; letter-spacing:0.6px; margin-top:4px;}
 .dc-plain{font-size:14px; margin-top:4px;}
@@ -293,9 +323,9 @@ input, select{font-family:inherit;}
    ============================================================ */
 body.dim-mode{
   --tint-rgb:255,225,190;
-  --card: rgba(48,36,26,0.55);
-  --card-line: rgba(255,225,190,0.12);
-  --card-shadow: 0 6px 22px rgba(0,0,0,0.30);
+  --card: linear-gradient(135deg, rgba(255,225,190,0.16), rgba(255,225,190,0.05));
+  --card-line: rgba(255,225,190,0.22);
+  --card-shadow: 0 8px 30px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,225,190,0.14);
   --text-hi:#F5DDBF; --text-lo:rgba(245,221,191,0.58);
   --paper:#241a12;
   --gold:#E8A94D; --saffron:#E07A38; --coral:#D8636E; --teal:#3FA394;
@@ -314,8 +344,8 @@ body.dim-mode .modal-back{ background:rgba(0,0,0,0.55); }
 body.dim-mode .tabbar{
   background:linear-gradient(0deg, rgba(20,15,10,0.97), rgba(20,15,10,0.55));
 }
-body.dim-mode .tabbar-inner{ background:rgba(255,225,190,0.06); }
 body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
+body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inset 3px 3px 8px rgba(255,240,210,0.18), 0 6px 20px rgba(0,0,0,0.45); }
 
 /* Living Sky hero flips to a dark, glare-free surface at night —
    text and accents recolor for contrast against it. */
@@ -382,6 +412,15 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
       </div>
     </div>
 
+    <div class="card" style="margin-bottom:14px;">
+      <div class="eyebrow">💡 Today's thought</div>
+      <div id="quoteText" style="font-family:var(--font-display); font-size:15.5px; line-height:1.45; margin-top:6px; font-style:italic;">—</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+        <div class="stat-sub" id="quoteAuthor">—</div>
+        <button class="task-del" onclick="App.nextQuote()" title="Show another">🔀</button>
+      </div>
+    </div>
+
     <div class="card bedcard">
       <div class="bed-row">
         <div>
@@ -418,11 +457,25 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
     <div class="grid2">
       <div class="card">
         <h3>🪔 Panchang</h3>
-        <div class="panchang-tithi" id="tithiName">—</div>
-        <div class="stat-sub" id="pakshaLabel">—</div>
-        <div class="stat-sub" id="tithiTimeRange" style="margin-top:2px;">—</div>
-        <div id="tithiTags"></div>
+        <div class="moon-header">
+          <div class="moon-disc-wrap">
+            <div class="moon-disc" id="moonPhaseVisual">
+              <div class="moon-shadow" id="moonShadowOverlay"></div>
+              <div class="moon-glow"></div>
+            </div>
+          </div>
+          <div class="moon-header-text">
+            <div class="panchang-tithi" id="tithiName">—</div>
+            <div class="stat-sub" id="pakshaLabel">—</div>
+            <div class="stat-sub" id="tithiTimeRange" style="margin-top:2px;">—</div>
+            <div id="tithiTags"></div>
+          </div>
+        </div>
+        <div class="stat-sub" id="moonPhaseLabel" style="margin-top:10px;">🌙 —</div>
+        <div class="stat-sub" id="sunRashiLabel" style="margin-top:2px;">☀️ Sun in —</div>
+        <div class="stat-sub" id="moonRashiLabel" style="margin-top:2px;">🌙 Moon in —</div>
         <div class="stat-sub" id="brahmaMuhurtaRange" style="margin-top:8px;">🌅 Brahma Muhurta —</div>
+        <div class="approx-note" style="margin-top:6px;">Rashi (sidereal sign) uses the standard Lahiri ayanamsha, same basis as most Hindu Panchang software. Moon disc reflects real illumination fraction, updated live.</div>
       </div>
       <div class="card">
         <h3>🎉 Today</h3>
@@ -431,6 +484,12 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
     </div>
 
     <div class="card" style="margin-bottom:14px;">
+      <h3>🪔 Ekadashi, Trayodashi &amp; more — always visible</h3>
+      <div class="stat-sub">Exact start/end times for nearby Ekadashi, Trayodashi, Purnima and Amavasya — shown here regardless of which one is active today, so you don't need to catch it on the exact day.</div>
+      <div id="significantTithiList" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card weather-now-card" id="weatherNowCard" style="margin-bottom:14px;">
       <h3>🌤️ Weather now</h3>
       <div class="weather-mini">
         <div class="wicon" id="wxIconNow">—</div>
@@ -448,6 +507,12 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
       <div class="add-row">
         <input type="text" id="todayTaskInput" placeholder="Add a task or event for today…">
         <input type="time" id="todayTaskTimeInput" class="add-row-time" title="Optional time">
+        <select id="todayTaskCatInput" class="add-row-cat" title="Category">
+          <option value="none">No category</option>
+          <option value="professional">💼 Professional</option>
+          <option value="home">🏠 Home</option>
+          <option value="private">🔒 Private</option>
+        </select>
         <button onclick="App.addTaskForToday()">Add</button>
       </div>
     </div>
@@ -469,6 +534,14 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
   <div class="view" id="view-weather">
     <div class="section-title">Plan around the sky</div>
     <div class="section-sub">Genuine forecast data blended from ECMWF, NOAA, DWD and other national weather services via Open-Meteo — tap a city to see its forecast, or add up to 8.</div>
+
+    <div class="card rain-nowcast-card" id="rainNowcastCard" style="margin-bottom:14px; display:none;">
+      <div class="rain-nowcast-icon" id="rainNowcastIcon">🌧️</div>
+      <div class="rain-nowcast-text">
+        <div class="rain-nowcast-headline" id="rainNowcastHeadline">—</div>
+        <div class="stat-sub" id="rainNowcastSub">—</div>
+      </div>
+    </div>
 
     <div class="wx-locations-row" id="wxLocationsRow"></div>
     <div class="wx-add-location">
@@ -507,7 +580,15 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
         <button data-q="month">Next month</button>
         <input type="date" id="customDate">
       </div>
-      <div style="margin-top:12px;"><button class="btn" onclick="App.addTaskFromPlanner()">Add task</button></div>
+      <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <select id="plannerTaskCatInput" class="add-row-cat" title="Category">
+          <option value="none">No category</option>
+          <option value="professional">💼 Professional</option>
+          <option value="home">🏠 Home</option>
+          <option value="private">🔒 Private</option>
+        </select>
+        <button class="btn" onclick="App.addTaskFromPlanner()">Add task</button>
+      </div>
     </div>
 
     <div class="card" style="margin-bottom:14px;">
@@ -529,6 +610,16 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
       </div>
     </div>
 
+    <div class="group-label">Category</div>
+    <div class="filter-row" id="taskCategoryFilterRow">
+      <button class="active" data-cat="all">All</button>
+      <button data-cat="professional">💼 Professional</button>
+      <button data-cat="home">🏠 Home</button>
+      <button data-cat="private">🔒 Private</button>
+      <button data-cat="none">No category</button>
+    </div>
+
+    <div class="group-label">Status</div>
     <div class="filter-row" id="taskFilterRow">
       <button class="active" data-f="all">All</button>
       <button data-f="overdue">Overdue</button>
@@ -612,7 +703,6 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
       <button data-sub="calories">🍽️ Calories</button>
       <button data-sub="water">💧 Water</button>
       <button data-sub="screen">📱 Screen Time</button>
-      <button data-sub="radiation">📡 Radiation</button>
     </div>
 
     <!-- ---- Steps & Route ---- -->
@@ -674,19 +764,17 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
       </div>
 
       <div class="card">
-        <h3>🗺️ Optional: map this walk's route</h3>
-        <div class="stat-sub">Steps and distance are already tracking automatically above — this adds a live GPS map of your route for a specific walk, if you want one. Keep this tab open and your phone with you; it stops if you leave the page.</div>
-        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn" id="startWalkBtn" onclick="App.startGpsWalk()">🗺️ Start route map</button>
-          <button class="btn ghost" id="stopWalkBtn" onclick="App.stopGpsWalk()" style="display:none;">⏹️ Stop route map</button>
+        <h3>🗺️ Today's route</h3>
+        <div class="stat-sub">Tracks automatically alongside your steps — no button needed, as long as location access is allowed (your browser will ask once). Keep this tab open and your phone with you; it pauses if you leave the page and resumes when you return.</div>
+        <div style="margin-top:12px;">
+          <button class="btn ghost" onclick="App.clearTodayRoute()">🗑️ Clear today's route</button>
         </div>
         <div class="stat-sub" id="walkStatus" style="margin-top:8px;"></div>
         <div class="dc-stat-grid" id="walkLiveStats" style="margin-top:10px; display:none;">
-          <div class="dc-stat"><div class="num" id="walkStepsLive">0</div><div class="lbl">Steps this walk</div></div>
-          <div class="dc-stat"><div class="num" id="walkDistLive">0.00 km</div><div class="lbl">Distance</div></div>
-          <div class="dc-stat"><div class="num" id="walkTimeLive">0:00</div><div class="lbl">Duration</div></div>
+          <div class="dc-stat"><div class="num" id="walkStepsLive">0</div><div class="lbl">Steps today</div></div>
+          <div class="dc-stat"><div class="num" id="walkDistLive">0.00 km</div><div class="lbl">Distance (GPS)</div></div>
         </div>
-        <div id="walkMap" class="walk-map" style="display:none;"></div>
+        <div id="walkMap" class="walk-map"></div>
       </div>
     </div>
 
@@ -829,16 +917,48 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
       </div>
     </div>
 
-    <!-- ---- Radiation ---- -->
-    <div id="healthRadiation" style="display:none;">
+  </div>
+  <!-- ===================== NETWORK ===================== -->
+  <div class="view" id="view-network">
+    <div class="section-title">Network</div>
+    <div class="section-sub">Real speed test, honest signal/SAR explanations, and how to check if a VPN is affecting you.</div>
       <div class="card" style="margin-bottom:14px;">
-        <h3>📡 About EMF / radiation "detection"</h3>
-        <div class="stat-sub">Being straightforward instead of building something fake: a phone's web browser has <b>no access</b> to any sensor that measures RF, cellular, or WiFi radiation. Even native phone apps that claim to be "EMF meters" can only read the phone's magnetometer (the compass sensor) — which detects magnetic fields (like from a nearby speaker or fridge magnet), not the radio/cellular/WiFi radiation people usually mean by "EMF." There is no standard phone hardware, and no web technology, that can genuinely measure ambient electromagnetic radiation in a room. Any app — this one included — that showed you a "safety score" here would be making up a number, not measuring anything real. I'm not willing to do that for a topic people have genuine safety questions about.</div>
+        <h3>🚀 Speed test</h3>
+        <div class="stat-sub">A real measurement — actual data is downloaded and uploaded and timed, the same way any speed test works. Uses Cloudflare's purpose-built speed-test network as the primary source, with fallbacks if that's unreachable. It's a genuine reading, though a single-connection browser test typically measures a bit under what multi-connection tools like Ookla Speedtest report on very fast lines (100+ Mbps) — that's a real, known limitation of doing this from one browser tab, not an inaccuracy in the measurement itself.</div>
+        <div class="speedtest-gauge-wrap">
+          <svg class="speedtest-gauge" viewBox="0 0 200 120">
+            <path d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke-width="14" stroke-linecap="round" class="gauge-track"/>
+            <path d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke-width="14" stroke-linecap="round" class="gauge-fill" id="speedGaugeFill"/>
+          </svg>
+          <div class="speedtest-gauge-center">
+            <div class="speedtest-gauge-value" id="speedGaugeValue">—</div>
+            <div class="speedtest-gauge-label" id="speedGaugeLabel">Mbps down</div>
+          </div>
+        </div>
+        <div style="text-align:center; margin-top:6px;">
+          <button class="btn" id="runSpeedTestBtn" onclick="App.runSpeedTest()">▶️ Run speed test</button>
+        </div>
+        <div class="stat-sub" id="speedTestStatus" style="margin-top:10px; text-align:center;"></div>
+        <div class="dc-stat-grid" style="margin-top:14px;">
+          <div class="dc-stat"><div class="num" id="speedDownVal">—</div><div class="lbl">Download Mbps</div></div>
+          <div class="dc-stat"><div class="num" id="speedUpVal">—</div><div class="lbl">Upload Mbps</div></div>
+          <div class="dc-stat"><div class="num" id="speedPingVal">—</div><div class="lbl">Ping (ms)</div></div>
+          <div class="dc-stat"><div class="num" id="speedJitterVal">—</div><div class="lbl">Jitter (ms)</div></div>
+        </div>
+        <div class="stat-sub" id="speedTestHistory" style="margin-top:10px;"></div>
       </div>
 
       <div class="card" style="margin-bottom:14px;">
-        <h3>📶 What's actually real: your network connection</h3>
-        <div class="stat-sub">This is genuine data your browser can see about your current internet connection — it's a network-quality reading, <b>not</b> a radiation measurement, and says nothing about RF exposure or safety.</div>
+        <h3>🕵️ Is something (like a VPN) slowing you down?</h3>
+        <div class="stat-sub">Honest answer: a website has no way to detect whether a VPN or any other app is running on your device — that's invisible to browser JavaScript by design, the same privacy boundary covered elsewhere in this app. But there's a genuinely reliable way to find out yourself: <b>run the speed test above with your VPN on, then again with it off, and compare the numbers.</b> Whatever difference you see is the real effect of that VPN on your connection — no guessing needed.</div>
+        <div style="margin-top:10px;"><button class="btn ghost" onclick="App.checkPublicIp()">🌍 Show my public IP &amp; apparent location</button></div>
+        <div class="stat-sub" id="ipInfoStatus" style="margin-top:8px;"></div>
+        <div class="stat-sub" style="margin-top:8px;">If this location doesn't match where you actually are, that's a real, visible sign your traffic is being routed elsewhere (VPN or proxy) — check it with your VPN on vs. off for the clearest picture.</div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📶 What your browser reports about this connection</h3>
+        <div class="stat-sub">Separate from the speed test above — this is your browser's own connection-type estimate, updated automatically, not a fresh measurement.</div>
         <div class="dc-stat-grid" style="margin-top:10px;">
           <div class="dc-stat"><div class="num" id="netConnType">—</div><div class="lbl">Connection type</div></div>
           <div class="dc-stat"><div class="num" id="netDownlink">—</div><div class="lbl">Est. speed (Mbps)</div></div>
@@ -847,17 +967,50 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
         <div class="stat-sub" id="netInfoNote" style="margin-top:8px;"></div>
       </div>
 
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📄 SAR value — why this can't be "measured" live</h3>
+        <div class="stat-sub">Being upfront: SAR (Specific Absorption Rate) is <b>not something any app can read in real time</b>, on this or any device. It's a fixed laboratory value — measured once by the manufacturer under standardized test conditions when a specific phone model is certified, then published as a static regulatory disclosure. There's no sensor for it, no live "SAR reading" exists, and any app claiming to show one in real time is displaying a made-up number.</div>
+        <div class="stat-sub" style="margin-top:8px;">To find the <b>real, official</b> SAR value for your exact phone model:</div>
+        <div class="stat-sub" style="margin-top:4px;">
+          <b>iPhone:</b> Settings → General → Legal &amp; Regulatory → look for the SAR/RF exposure section, or search "[your iPhone model] SAR value" on apple.com.<br>
+          <b>Android:</b> Usually in Settings → About phone → Regulatory labels, or dial <code>*#07#</code> on many models, or check the manufacturer's site.<br>
+          <b>Any phone (most authoritative):</b> find your phone's <b>FCC ID</b> (Settings → About, or printed under the battery/SIM tray on older phones), then look it up at <a href="https://www.fcc.gov/oet/ea/fccid" target="_blank" rel="noopener">fcc.gov/oet/ea/fccid</a> for the official test report.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📡 About EMF / ambient radiation "detection"</h3>
+        <div class="stat-sub">Same honesty here: a phone's web browser has <b>no access</b> to any sensor that measures RF, cellular, or WiFi radiation. Even native phone apps claiming to be "EMF meters" can only read the phone's magnetometer (compass sensor) — which detects magnetic fields, not the radio/cellular/WiFi radiation people usually mean by "EMF." No standard phone hardware, and no web technology, can genuinely measure ambient electromagnetic radiation in a room. I won't show a fabricated "safety score" here.</div>
+      </div>
+
       <div class="card">
         <h3>🔎 If you genuinely want to measure EMF</h3>
-        <div class="stat-sub">Regulatory bodies (like the FCC, ICNIRP, and WHO) already set and enforce exposure limits that phones and cell towers must comply with by law — that's the real safety baseline, already in place before any app gets involved. If you specifically want to measure ambient EMF yourself, that requires dedicated hardware — a real RF/EMF meter (not a phone) — since no phone sensor, and no app, native or web, can substitute for one.</div>
+        <div class="stat-sub">Regulatory bodies (FCC, ICNIRP, WHO) already set and enforce exposure limits that phones and cell towers must comply with by law — that's the real safety baseline, already in place before any app gets involved. To measure ambient EMF yourself, that requires dedicated hardware — a real RF/EMF meter (not a phone) — since no phone sensor, and no app, native or web, can substitute for one.</div>
       </div>
-    </div>
   </div>
+
 
 </div>
 
 <style>
 .walk-map{width:100%; height:220px; border-radius:14px; margin-top:12px; border:1px solid var(--card-line); overflow:hidden;}
+.speedtest-gauge-wrap{position:relative; width:220px; max-width:100%; margin:14px auto 0; height:130px;}
+.speedtest-gauge{width:100%; height:100%; overflow:visible;}
+.gauge-track{stroke:rgba(var(--tint-rgb),0.14);}
+.gauge-fill{stroke:var(--teal); stroke-dasharray:251; stroke-dashoffset:251; transition:stroke-dashoffset 0.6s cubic-bezier(.4,0,.2,1);}
+.speedtest-gauge-center{position:absolute; left:0; right:0; bottom:6px; text-align:center;}
+.speedtest-gauge-value{font-family:var(--font-mono); font-size:28px; font-weight:700; color:var(--text-hi);}
+.speedtest-gauge-label{font-size:11px; color:var(--text-lo); text-transform:uppercase; letter-spacing:1px; margin-top:2px;}
+.weather-now-card{position:relative; overflow:hidden;}
+.weather-now-card::before{
+  content:''; position:absolute; inset:0; z-index:0; opacity:0.30;
+  background:linear-gradient(135deg, var(--wx-mood-1,#6FA8C9), var(--wx-mood-2,#4E7FA6));
+  transition:background 1.4s ease;
+}
+.weather-now-card > *{position:relative; z-index:1;}
+.rain-nowcast-card{display:flex; align-items:center; gap:14px;}
+.rain-nowcast-icon{font-size:34px; flex:none;}
+.rain-nowcast-headline{font-family:var(--font-display); font-size:16px; font-weight:600;}
 .food-row{display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--card-line);}
 .food-row:last-child{border-bottom:none;}
 .food-row .fr-name{flex:1; font-size:13.5px;}
@@ -879,6 +1032,7 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
     <button class="tab-btn" data-view="datecalc" onclick="App.switchTab('datecalc')"><span class="ticon">🧮</span>Dates</button>
     <button class="tab-btn" data-view="news" onclick="App.switchTab('news')"><span class="ticon">📰</span>News</button>
     <button class="tab-btn" data-view="health" onclick="App.switchTab('health')"><span class="ticon">❤️</span>Health</button>
+    <button class="tab-btn" data-view="network" onclick="App.switchTab('network')"><span class="ticon">📡</span>Network</button>
   </div>
 </div>
 
@@ -915,6 +1069,12 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
       <div class="add-row">
         <input type="text" id="dayModalTaskInput" placeholder="Add a task or event…">
         <input type="time" id="dayModalTaskTimeInput" class="add-row-time" title="Optional time">
+        <select id="dayModalTaskCatInput" class="add-row-cat" title="Category">
+          <option value="none">No category</option>
+          <option value="professional">💼 Professional</option>
+          <option value="home">🏠 Home</option>
+          <option value="private">🔒 Private</option>
+        </select>
         <button onclick="App.addTaskForModalDay()">Add</button>
       </div>
     </div>
@@ -943,6 +1103,17 @@ body.dim-mode ::selection{ background:#E8A94D; color:#1B140D; }
       <h3>🛌 Sleep schedule</h3>
       <div class="settings-row"><label>Wake-up time</label><input type="time" id="wakeInput"></div>
       <div class="settings-row"><label>Bedtime</label><input type="time" id="bedInput"></div>
+    </div>
+
+    <div class="card">
+      <h3>💾 Your data</h3>
+      <div class="stat-sub">Everything — tasks, steps, sleep, food log, settings — already saves automatically in this browser and survives closing the tab or reloading the page. It only goes away if you clear this browser's site data, or open the app in a different browser/device. Use these to back it up or move it.</div>
+      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn ghost" onclick="App.exportAllData()">⬇️ Export backup file</button>
+        <button class="btn ghost" onclick="document.getElementById('importFileInput').click()">⬆️ Import backup file</button>
+        <input type="file" id="importFileInput" accept="application/json" style="display:none;" onchange="App.importAllData(event)">
+      </div>
+      <div class="stat-sub" id="backupStatus" style="margin-top:8px;"></div>
     </div>
 
     <div style="margin-top:10px;"><button class="btn" onclick="App.saveSettings()">Save settings</button></div>
@@ -1091,6 +1262,81 @@ function getPreciseTithi(date){
   const auspicious = [4,8,9,11,13,15].includes(num);
   return { name, paksha, num, startTime, endTime, auspicious };
 }
+// Standard 8-phase astronomical moon phase name from the sun-moon elongation
+// angle (0-360°) — the same value already computed for tithi, so this adds
+// no new uncertainty. Boundaries are the conventional ±11.25° windows around
+// New (0°), First Quarter (90°), Full (180°), and Last Quarter (270°).
+function getMoonPhaseName(elong){
+  const e = normalizeAngle(elong);
+  if(e < 11.25 || e >= 348.75) return "New Moon";
+  if(e < 78.75) return "Waxing Crescent";
+  if(e < 101.25) return "First Quarter (Half Moon)";
+  if(e < 168.75) return "Waxing Gibbous";
+  if(e < 191.25) return "Full Moon";
+  if(e < 258.75) return "Waning Gibbous";
+  if(e < 281.25) return "Last Quarter (Half Moon)";
+  return "Waning Crescent";
+}
+// Lahiri (Chitrapaksha) Ayanamsha — the official precession offset used by
+// India's Calendar Reform Committee and standard for Hindu Panchang/Vedic
+// astrology. This is the well-documented linear approximation (~50.29
+// arcsec/year precession, zero at 285 CE): accurate to a small fraction of
+// a degree, which is what nearly all Panchang software actually uses day to
+// day (full IAU precession-nutation models refine this by arcseconds, not
+// enough to change a Rashi except within moments of a sign boundary).
+function getLahiriAyanamsha(date){
+  const year = date.getUTCFullYear();
+  const startOfYear = Date.UTC(year,0,1);
+  const daysInYear = isLeap(year) ? 366 : 365;
+  const fracYear = year + (date.getTime()-startOfYear)/(daysInYear*DAY_MS);
+  return (fracYear - 285) * 50.2388475/3600;
+}
+const RASHI_NAMES = [
+  "Mesha (Aries)","Vrishabha (Taurus)","Mithuna (Gemini)","Karka (Cancer)",
+  "Simha (Leo)","Kanya (Virgo)","Tula (Libra)","Vrischika (Scorpio)",
+  "Dhanu (Sagittarius)","Makara (Capricorn)","Kumbha (Aquarius)","Meena (Pisces)"
+];
+function getRashi(tropicalLongitudeDeg, date){
+  const ayanamsha = getLahiriAyanamsha(date);
+  const sidereal = normalizeAngle(tropicalLongitudeDeg - ayanamsha);
+  return RASHI_NAMES[Math.floor(sidereal/30)];
+}
+// Scans a window of time for every occurrence of specific tithis (by index
+// 1-30) — used to surface Ekadashi/Trayodashi/Purnima/Amavasya persistently,
+// not just whichever tithi happens to be active the moment someone opens
+// the app. Steps in 6-hour increments (a tithi lasts ~23-26h, so this can't
+// skip one) and finds the precise boundary the same tested way getPreciseTithi
+// does, reusing findCrossingTime.
+function getSignificantTithiOccurrences(centerDate, daysBefore, daysAfter, targetIndexes){
+  const results = [];
+  const stepMs = 6*3600000;
+  let t = centerDate.getTime() - daysBefore*DAY_MS;
+  const endT = centerDate.getTime() + daysAfter*DAY_MS;
+  let lastTithiIndex = null;
+  while(t <= endT){
+    const d = new Date(t);
+    const elong = elongationDeg(d);
+    const tithiIndex = Math.max(1, Math.min(30, Math.floor(elong/12)+1));
+    if(tithiIndex !== lastTithiIndex){
+      if(targetIndexes.includes(tithiIndex)){
+        const startDeg = normalizeAngle((tithiIndex-1)*12);
+        const endDeg = normalizeAngle(tithiIndex*12);
+        const startTime = findCrossingTime(d, startDeg);
+        const endTime = findCrossingTime(d, endDeg);
+        const paksha = tithiIndex <= 15 ? "Shukla" : "Krishna";
+        let num = tithiIndex <= 15 ? tithiIndex : tithiIndex - 15;
+        let name = TITHI_NAMES[num-1];
+        if(num === 15) name = paksha === "Shukla" ? "Purnima" : "Amavasya";
+        const already = results.some(r=>Math.abs(r.startTime.getTime()-startTime.getTime()) < 3600000);
+        if(!already) results.push({name, paksha, num, startTime, endTime});
+      }
+      lastTithiIndex = tithiIndex;
+    }
+    t += stepMs;
+  }
+  results.sort((a,b)=>a.startTime - b.startTime);
+  return results;
+}
 function brahmaMuhurta(sunrise){
   // Traditional definition: the 48-minute window ending 48 minutes
   // before sunrise (i.e. starting 1h36m before sunrise).
@@ -1147,6 +1393,17 @@ const WMO = {
   95:["⛈️","Thunderstorm"],96:["⛈️","Thunderstorm + hail"],99:["⛈️","Severe thunderstorm"]
 };
 function wmoInfo(code){ return WMO[code] || ["🌡️","—"]; }
+// Maps a WMO weather code to a mood gradient for the dynamic weather card —
+// purely visual, distinct from the "Living Sky" time-of-day gradient.
+function wmoMoodGradient(code){
+  if(code === 0 || code === 1) return ['#FFC24B','#FF8A5C']; // clear/mostly clear — warm sun
+  if(code === 2 || code === 3) return ['#9FB4C7','#7C8FA6']; // cloudy — cool grey-blue
+  if(code === 45 || code === 48) return ['#B8C4CE','#8B98A5']; // fog — muted grey
+  if(code >= 51 && code <= 67) return ['#5C93C4','#3E6B94']; // rain/drizzle — deep blue
+  if(code >= 71 && code <= 86) return ['#DCEBF5','#A9C6DE']; // snow — icy pale blue
+  if(code >= 95) return ['#4A3F6B','#7B4A6B']; // thunderstorm — deep violet
+  return ['#6FA8C9','#4E7FA6'];
+}
 function clothingTips(tMax, tMin, precipProb, windMax){
   const tips = [];
   if(precipProb >= 40) tips.push("☂️ Umbrella");
@@ -1157,6 +1414,39 @@ function clothingTips(tMax, tMin, precipProb, windMax){
   if(tMax <= 3) tips.push("🧤 Gloves & scarf");
   if(tips.length === 0) tips.push("🙂 Dress as usual");
   return tips;
+}
+// Real-time rain nowcast from 15-minute precipitation data. Genuinely
+// high-resolution (HRRR/ICON-D2/AROME model output) for North America and
+// Central Europe; elsewhere Open-Meteo interpolates from hourly data, so
+// it's still a real forecast but less precise minute-to-minute — the UI
+// notes this honestly rather than implying uniform global precision.
+function summarizeRainNowcast(times, precipValues, now){
+  const RAIN_THRESHOLD = 0.1; // mm per 15-min step
+  const nowMs = now.getTime();
+  let startIdx = -1;
+  for(let i=0;i<times.length;i++){
+    const tMs = new Date(times[i]).getTime();
+    if(tMs + 15*60000 > nowMs){ startIdx = i; break; }
+  }
+  if(startIdx === -1) return { willRain:false };
+
+  const horizon = Math.min(times.length, startIdx+8); // look ahead 2 hours
+  let rainStart = -1;
+  for(let i=startIdx;i<horizon;i++){
+    if(precipValues[i] >= RAIN_THRESHOLD){ rainStart = i; break; }
+  }
+  if(rainStart === -1) return { willRain:false, horizonMinutes: (horizon-startIdx)*15 };
+
+  let rainEnd = rainStart;
+  for(let i=rainStart;i<times.length;i++){
+    if(precipValues[i] >= RAIN_THRESHOLD) rainEnd = i; else break;
+  }
+  const rainStartMs = new Date(times[rainStart]).getTime();
+  const minutesUntilStart = Math.max(0, Math.round((rainStartMs - nowMs) / 60000));
+  const rainEndMs = new Date(times[rainEnd]).getTime() + 15*60000;
+  const durationMinutes = Math.round((rainEndMs - rainStartMs) / 60000);
+  const isRainingNow = (nowMs >= rainStartMs) && (nowMs < rainStartMs + 15*60000);
+  return { willRain:true, isRainingNow, minutesUntilStart, durationMinutes };
 }
 
 /* ============================================================
@@ -1319,7 +1609,7 @@ async function loadNewsItems(cat, timeoutMs){
 }
 
 function buildWeatherAttempts(lat, lon){
-  const directUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,windspeed_10m_max,sunrise,sunset&current_weather=true&timezone=auto&forecast_days=16`;
+  const directUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,windspeed_10m_max,sunrise,sunset&current_weather=true&minutely_15=precipitation,weathercode&timezone=auto&forecast_days=16`;
   return [
     {label:'Open-Meteo', url:directUrl},
     {label:'Open-Meteo (proxy 1)', url:proxyAllOrigins(directUrl)},
@@ -1339,6 +1629,159 @@ async function loadWeatherData(lat, lon, timeoutMs){
       return { data, sourceLabel: attempt.label };
     }catch(e){
       const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
+      errors.push(`${attempt.label}: ${reason}`);
+    }
+  }
+  throw new Error(errors.join(' | '));
+}
+
+/* ============================================================
+   Real network speed test — genuine data transfer measurement,
+   not a simulation. Uses Cloudflare's purpose-built speed-test
+   endpoints (the same infrastructure speed.cloudflare.com itself
+   uses) as primary, with fallback sources since that endpoint has
+   a known history of intermittent third-party CORS issues.
+   ============================================================ */
+function computeMbps(bytes, ms){
+  if(!ms || ms <= 0 || !bytes || bytes <= 0) return 0;
+  return (bytes*8) / (ms/1000) / 1e6;
+}
+// Streams the response instead of waiting for it to fully complete, so a
+// slow connection doesn't force a long wait and a fast one still gets a
+// stable reading. Skips an initial "warmup" window (TCP/TLS handshake and
+// slow-start skew early numbers) and only measures the steady-state rate
+// after that, cutting off once testDurationMs of steady-state data has
+// been collected — same approach real speed-test tools use.
+async function measureDownloadStream(url, opts){
+  opts = opts || {};
+  const testDurationMs = opts.testDurationMs || 4000;
+  const warmupMs = opts.warmupMs || 300;
+  const hardTimeoutMs = opts.hardTimeoutMs || (testDurationMs + 5000);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(()=>controller.abort(), hardTimeoutMs);
+  try{
+    const startTime = performance.now();
+    const res = await fetch(url, {signal: controller.signal, cache:'no-store'});
+    if(!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    const reader = res.body.getReader();
+    let bytesReceived = 0, warmupBytes = 0, warmupTime = null, endTime = startTime;
+    while(true){
+      const {done, value} = await reader.read();
+      endTime = performance.now();
+      const elapsed = endTime - startTime;
+      if(done) break;
+      bytesReceived += value.length;
+      if(warmupTime===null && elapsed >= warmupMs){ warmupTime = elapsed; warmupBytes = bytesReceived; }
+      if(elapsed >= testDurationMs){ try{ reader.cancel(); }catch(e){} break; }
+    }
+    clearTimeout(timeoutId);
+    const measuredBytes = bytesReceived - (warmupTime!==null ? warmupBytes : 0);
+    const measuredMs = (endTime-startTime) - (warmupTime!==null ? warmupTime : 0);
+    if(bytesReceived === 0) throw new Error('no data received');
+    return { mbps: computeMbps(measuredBytes, measuredMs), bytesTotal: bytesReceived, durationMs: endTime-startTime };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+function buildDownloadAttempts(){
+  const cacheBust = () => Date.now()+'-'+Math.random().toString(36).slice(2);
+  return [
+    {label:'Cloudflare', url:`https://speed.cloudflare.com/__down?bytes=50000000&cb=${cacheBust()}`},
+    {label:'Wikimedia (fallback)', url:`https://upload.wikimedia.org/wikipedia/commons/e/e0/Sample_%28cropped%29.jpg?cb=${cacheBust()}`},
+    {label:'jsDelivr (fallback)', url:`https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js?cb=${cacheBust()}`}
+  ];
+}
+async function runDownloadTest(testDurationMs){
+  const attempts = buildDownloadAttempts();
+  const errors = [];
+  for(const attempt of attempts){
+    try{
+      const result = await measureDownloadStream(attempt.url, {testDurationMs: testDurationMs||4000});
+      return { ...result, sourceLabel: attempt.label };
+    }catch(e){
+      const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
+      errors.push(`${attempt.label}: ${reason}`);
+    }
+  }
+  throw new Error(errors.join(' | '));
+}
+async function measureUploadOnce(url, sizeBytes, timeoutMs){
+  const controller = new AbortController();
+  const timeoutId = setTimeout(()=>controller.abort(), timeoutMs||10000);
+  try{
+    const data = new Uint8Array(sizeBytes);
+    const start = performance.now();
+    const res = await fetch(url, {method:'POST', body:data, signal:controller.signal, cache:'no-store'});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    await res.arrayBuffer().catch(()=>{});
+    const end = performance.now();
+    return { mbps: computeMbps(sizeBytes, end-start), bytesTotal: sizeBytes, durationMs: end-start };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+function buildUploadAttempts(sizeBytes){
+  return [
+    {label:'Cloudflare', url:'https://speed.cloudflare.com/__up', size:sizeBytes},
+    {label:'postman-echo (fallback)', url:'https://postman-echo.com/post', size:Math.min(sizeBytes, 5*1024*1024)}
+  ];
+}
+async function runUploadTest(sizeBytes){
+  const attempts = buildUploadAttempts(sizeBytes||4*1024*1024);
+  const errors = [];
+  for(const attempt of attempts){
+    try{
+      const result = await measureUploadOnce(attempt.url, attempt.size, 12000);
+      return { ...result, sourceLabel: attempt.label };
+    }catch(e){
+      const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
+      errors.push(`${attempt.label}: ${reason}`);
+    }
+  }
+  throw new Error(errors.join(' | '));
+}
+async function runLatencyTest(sampleCount){
+  sampleCount = sampleCount || 6;
+  const samples = [];
+  for(let i=0;i<sampleCount;i++){
+    const t0 = performance.now();
+    try{
+      await fetch(`https://speed.cloudflare.com/__down?bytes=0&cb=${Date.now()}-${i}`, {cache:'no-store'});
+      samples.push(performance.now()-t0);
+    }catch(e){ /* skip a failed sample rather than aborting the whole test */ }
+  }
+  if(!samples.length) throw new Error('all latency probes failed');
+  samples.sort((a,b)=>a-b);
+  const median = samples[Math.floor(samples.length/2)];
+  const jitter = samples.length>1 ? (samples[samples.length-1]-samples[0]) : 0;
+  return { medianMs: median, minMs: samples[0], maxMs: samples[samples.length-1], jitterMs: jitter, sampleCount: samples.length };
+}
+async function getPublicIpInfo(timeoutMs){
+  const attempts = [
+    { label:'Cloudflare trace', url:`https://www.cloudflare.com/cdn-cgi/trace`, parse: 'trace' },
+    { label:'ipapi.co', url:'https://ipapi.co/json/', parse:'json' }
+  ];
+  const errors = [];
+  for(const attempt of attempts){
+    try{
+      const res = await fetchWithTimeout(attempt.url, timeoutMs||7000);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      if(attempt.parse === 'trace'){
+        const text = await res.text();
+        const fields = {};
+        text.split('\n').forEach(line=>{
+          const idx = line.indexOf('=');
+          if(idx>0) fields[line.slice(0,idx)] = line.slice(idx+1);
+        });
+        if(!fields.ip) throw new Error('no ip in trace response');
+        return { ip: fields.ip, country: fields.loc || null, city: null, sourceLabel: attempt.label };
+      } else {
+        const data = await res.json();
+        if(!data.ip) throw new Error('no ip in response');
+        return { ip: data.ip, country: data.country_name || data.country || null, city: data.city || null, sourceLabel: attempt.label };
+      }
+    }catch(e){
+      const reason = (e && e.name==='AbortError') ? 'timeout' : ((e && e.message) || 'error');
       errors.push(`${attempt.label}: ${reason}`);
     }
   }
@@ -1606,12 +2049,61 @@ const FOOD_ML_CALORIE_MAP = {
 };
 
 /* ============================================================
+   Daily inspirational quotes — entrepreneurship, business, life
+   lessons. One shown per day (deterministic by date, so it's
+   stable all day and changes tomorrow), with a manual "next" option.
+   ============================================================ */
+const INSPIRATION_QUOTES = [
+  {text:"The way to get started is to quit talking and begin doing.", author:"Walt Disney"},
+  {text:"Your time is limited, so don't waste it living someone else's life.", author:"Steve Jobs"},
+  {text:"Innovation distinguishes between a leader and a follower.", author:"Steve Jobs"},
+  {text:"The only way to do great work is to love what you do.", author:"Steve Jobs"},
+  {text:"It does not matter how slowly you go as long as you do not stop.", author:"Confucius"},
+  {text:"Success is not final, failure is not fatal: it is the courage to continue that counts.", author:"Winston Churchill"},
+  {text:"I have not failed. I've just found 10,000 ways that won't work.", author:"Thomas Edison"},
+  {text:"Whether you think you can or you think you can't, you're right.", author:"Henry Ford"},
+  {text:"If you really look closely, most overnight successes took a long time.", author:"Steve Jobs"},
+  {text:"The customer's perception is your reality.", author:"Kate Zabriskie"},
+  {text:"Business opportunities are like buses — there's always another one coming.", author:"Richard Branson"},
+  {text:"Don't worry about failure; you only have to be right once.", author:"Drew Houston"},
+  {text:"If you are not embarrassed by the first version of your product, you've launched too late.", author:"Reid Hoffman"},
+  {text:"The competitor to be feared is one who never bothers about you at all, but goes on making his own business better all the time.", author:"Henry Ford"},
+  {text:"Ideas are easy. Implementation is hard.", author:"Guy Kawasaki"},
+  {text:"It's fine to celebrate success, but it is more important to heed the lessons of failure.", author:"Bill Gates"},
+  {text:"Your most unhappy customers are your greatest source of learning.", author:"Bill Gates"},
+  {text:"Price is what you pay. Value is what you get.", author:"Warren Buffett"},
+  {text:"It's not about ideas. It's about making ideas happen.", author:"Scott Belsky"},
+  {text:"Opportunities don't happen. You create them.", author:"Chris Grosser"},
+  {text:"Don't be afraid to fail. Be afraid not to try.", author:"Michael Jordan"},
+  {text:"The secret of getting ahead is getting started.", author:"Mark Twain"},
+  {text:"It always seems impossible until it's done.", author:"Nelson Mandela"},
+  {text:"You miss 100% of the shots you don't take.", author:"Wayne Gretzky"},
+  {text:"Believe you can and you're halfway there.", author:"Theodore Roosevelt"},
+  {text:"The only limit to our realization of tomorrow will be our doubts of today.", author:"Franklin D. Roosevelt"},
+  {text:"Do what you can, with what you have, where you are.", author:"Theodore Roosevelt"},
+  {text:"In the middle of difficulty lies opportunity.", author:"Albert Einstein"},
+  {text:"Twenty years from now you will be more disappointed by the things you didn't do than by the ones you did do.", author:"Mark Twain"},
+  {text:"The harder I work, the luckier I get.", author:"Samuel Goldwyn"},
+  {text:"Fall seven times, stand up eight.", author:"Japanese proverb"},
+  {text:"A goal without a plan is just a wish.", author:"Antoine de Saint-Exupéry"},
+  {text:"The only place where success comes before work is in the dictionary.", author:"Vidal Sassoon"},
+  {text:"Do not be afraid to give up the good to go for the great.", author:"John D. Rockefeller"},
+  {text:"Chase the vision, not the money — the money will end up following you.", author:"Tony Hsieh"}
+];
+function getDailyQuote(date, offset){
+  const doy = dayOfYear(date) + (offset||0);
+  const idx = ((doy % INSPIRATION_QUOTES.length) + INSPIRATION_QUOTES.length) % INSPIRATION_QUOTES.length;
+  return INSPIRATION_QUOTES[idx];
+}
+
+/* ============================================================
    App state
    ============================================================ */
 const App = {
   settings: {
     lat: 52.3676, lon: 4.9041, city: "Amsterdam, NL",
-    wake: "07:00", bed: "23:00", tzGuessed:true
+    wake: "07:00", bed: "23:00", tzGuessed:true,
+    locationSource: "default" // 'default' | 'auto' | 'manual' — only 'default' triggers a one-time auto-locate
   },
   tasks: {}, // { 'YYYY-MM-DD': [{id,text,done}] }
   sleepLog: {}, // { 'YYYY-MM-DD' (wake date): {bedTime:'HH:MM', wakeTime:'HH:MM', durationHours:N} }
@@ -1623,6 +2115,7 @@ const App = {
   _wxLocationsLoadedOnce: false,
   modalDate: null,
   taskFilter: "all",
+  taskCategoryFilter: "all",
   newsCat: "global",
   _newsLoadedOnce: false,
   health: {
@@ -1639,30 +2132,36 @@ const App = {
     waterGoalMl: 2500,
     waterLog: {},   // 'YYYY-MM-DD' -> glasses count
     screenGoalHours: 4,
-    screenTimeLog: {} // 'YYYY-MM-DD' -> {appSessionMinutes, manualMinutes}
+    screenTimeLog: {}, // 'YYYY-MM-DD' -> {appSessionMinutes, manualMinutes}
+    speedTestHistory: [] // [{time, down, up, ping}] most recent first, capped at 10
   },
   foodDbView: 'IN',
   // Always-on passive step counter — this is the thing that should "just
-  // run" without a manual start. Separate from gpsWalk below, which is
+  // run" without a manual start. Separate from gpsTrack below, which is
   // purely opt-in for people who also want a route map.
   stepTracker: {
     active: false, detector: null, motionHandler: null,
     permissionState: 'unknown', // 'unknown' | 'granted' | 'needs-gesture' | 'unavailable' | 'no-sensor-detected'
     sawAnyEvent: false
   },
-  gpsWalk: null, // {active, startTime, startStepCount, distanceKm, lastFix, map, polyline, pathLatLngs, geoWatchId, timerInterval, rejectedFixCount}
+  quoteOffset: 0,
+  gpsTrack: null, // {date, distanceKm, lastFix, pathLatLngs, geoWatchId, rejectedFixCount, map, polyline}
 
   init(){
     const steps = [
       ['loadState', ()=>this.loadState()],
       ['bindQuickDates', ()=>this.bindQuickDates()],
       ['bindTaskFilters', ()=>this.bindTaskFilters()],
+      ['bindTaskCategoryFilters', ()=>this.bindTaskCategoryFilters()],
       ['bindNewsFilters', ()=>this.bindNewsFilters()],
       ['renderSettingsForm', ()=>this.renderSettingsForm()],
       ['renderWxLocationsRow', ()=>this.renderWxLocationsRow()],
       ['initSleepLogInputs', ()=>this.initSleepLogInputs()],
       ['initScreenTimeTracking', ()=>this.initScreenTimeTracking()],
       ['startAutoStepTracking', ()=>this.startAutoStepTracking()],
+      ['startAutoGpsTracking', ()=>this.startAutoGpsTracking()],
+      ['autoLocateOnFirstLoad', ()=>this.autoLocateOnFirstLoad()],
+      ['renderQuote', ()=>this.renderQuote()],
       ['tick', ()=>this.tick()],
       ['renderCalendar', ()=>this.renderCalendar()],
       ['fetchWeather', ()=>this.fetchWeather()]
@@ -1714,6 +2213,28 @@ const App = {
       primary.lat = this.settings.lat;
       primary.lon = this.settings.lon;
     }
+  },
+  // Runs once, only for a brand-new install (location still at its coded
+  // default) — silently tries to use the device's real location instead of
+  // the hardcoded default, so sunrise/sunset/panchang/weather are right for
+  // the person without them having to open Settings. A manually-set
+  // location (via Settings, at any point) permanently opts out of this.
+  autoLocateOnFirstLoad(){
+    if(this.settings.locationSource !== 'default') return;
+    if(!('geolocation' in navigator)) return;
+    navigator.geolocation.getCurrentPosition(pos=>{
+      if(this.settings.locationSource !== 'default') return; // user changed it while this was pending
+      this.settings.lat = pos.coords.latitude;
+      this.settings.lon = pos.coords.longitude;
+      this.settings.city = "My location";
+      this.settings.locationSource = "auto";
+      this.ensurePrimaryLocation();
+      this.saveSettingsState();
+      this.fetchWeather();
+      this.renderWxLocationsRow();
+      this.tick();
+    }, ()=>{ /* denied or unavailable — silently keep the default, no error shown for a background attempt */ },
+    { maximumAge: 300000, timeout: 8000 });
   },
   saveTasks(){ localStorage.setItem('productivityapp_tasks', JSON.stringify(this.tasks)); },
   saveSleepLogState(){ localStorage.setItem('productivityapp_sleep_log', JSON.stringify(this.sleepLog)); },
@@ -1804,6 +2325,7 @@ const App = {
       if(name==='datecalc') this.initDateCalc();
       if(name==='news' && !this._newsLoadedOnce){ this._newsLoadedOnce = true; this.loadNews(this.newsCat || 'global'); }
       if(name==='health') this.initHealth();
+      if(name==='network') this.renderRadiationSection();
     }catch(e){ console.error(`switchTab(${name}) render failed`, e); }
   },
 
@@ -1878,6 +2400,11 @@ const App = {
       this._lastPreciseTick = now;
       const pt = getPreciseTithi(now);
       this._precise = pt;
+      const elong = elongationDeg(now);
+      document.getElementById('moonPhaseLabel').textContent = `🌙 ${getMoonPhaseName(elong)}`;
+      document.getElementById('sunRashiLabel').textContent = `☀️ Sun in ${getRashi(sunLongitudeDeg(now), now)}`;
+      document.getElementById('moonRashiLabel').textContent = `🌙 Moon in ${getRashi(moonLongitudeDeg(now), now)}`;
+      this.updateMoonVisual(elong);
     }
     if(this._precise){
       const pt = this._precise;
@@ -1886,6 +2413,13 @@ const App = {
     }
     const brahma = brahmaMuhurta(sun.sunrise);
     document.getElementById('brahmaMuhurtaRange').textContent = `🌅 Brahma Muhurta ${fmtHM(brahma.start)} – ${fmtHM(brahma.end)}`;
+
+    // significant tithis (Ekadashi/Trayodashi/Purnima/Amavasya) — recompute
+    // rarely, it scans a multi-day window with several boundary searches.
+    if(!this._lastTithiListTick || now - this._lastTithiListTick > 30*60000){
+      this._lastTithiListTick = now;
+      this.renderSignificantTithiList();
+    }
 
     // holidays today
     const hs = holidaysFor(todayStr);
@@ -1906,8 +2440,45 @@ const App = {
     // step; this is a redundant once-a-second refresh so the numbers never
     // look stale even if no step has landed in the last moment.
     if(document.getElementById('stepsTodayCount')) this.renderStepsSection();
+
+    // rain nowcast countdown — cheap to recompute, refresh roughly once a minute
+    if(!this._lastRainNowcastTick || now - this._lastRainNowcastTick > 60000){
+      this._lastRainNowcastTick = now;
+      const activeEntry = this.getActiveWxEntry ? this.getActiveWxEntry() : null;
+      if(activeEntry && activeEntry.data) this.renderRainNowcast(activeEntry.data);
+    }
   },
 
+  // Real-illumination moon disc: a dark shadow circle slides across a lit
+  // disc by exactly the illuminated fraction, so the visible sliver always
+  // matches true illumination — at 0% it fully overlaps (new moon), at 100%
+  // it's shifted completely clear (full moon), passing through an exact
+  // half-cover at 50% (quarter moons). Verified analytically against all
+  // eight named phases before shipping.
+  updateMoonVisual(elongDeg){
+    const el = document.getElementById('moonShadowOverlay');
+    if(!el) return;
+    const k = (1 - Math.cos(elongDeg*Math.PI/180)) / 2;
+    const waxing = elongDeg < 180;
+    const pct = (waxing ? -1 : 1) * k * 100;
+    el.style.transform = `translateX(${pct.toFixed(1)}%)`;
+  },
+  renderSignificantTithiList(){
+    const el = document.getElementById('significantTithiList');
+    if(!el) return;
+    const now = new Date();
+    const occurrences = getSignificantTithiOccurrences(now, 20, 40, [11,13,15,26,28,30]);
+    if(!occurrences.length){ el.innerHTML = '<div class="stat-sub">None found in range.</div>'; return; }
+    el.innerHTML = occurrences.map(o=>{
+      const isPast = o.endTime < now;
+      const isActive = o.startTime <= now && now <= o.endTime;
+      const dateFmt = (d)=>d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return `<div class="hitem" style="${isPast?'opacity:0.55;':''}${isActive?'box-shadow:inset 0 0 0 1.4px var(--gold);':''}">
+        <span>${isActive?'🟢 ':''}${o.name} <span style="opacity:0.7;">(${o.paksha})</span></span>
+        <span>${dateFmt(o.startTime)} → ${dateFmt(o.endTime)}</span>
+      </div>`;
+    }).join('');
+  },
   updateSky(now, sun){
     const stops = [
       {t: startOfDay(now).getTime(), c1:[11,16,38], c2:[26,27,75]},
@@ -2003,6 +2574,9 @@ const App = {
       document.getElementById('wxIconNow').textContent = icon;
       document.getElementById('wxTempNow').textContent = Math.round(cw.temperature)+'°C';
       document.getElementById('wxDescNow').textContent = desc + ' · ' + this.settings.city;
+      const [mood1, mood2] = wmoMoodGradient(cw.weathercode);
+      const cardEl = document.getElementById('weatherNowCard');
+      if(cardEl){ cardEl.style.setProperty('--wx-mood-1', mood1); cardEl.style.setProperty('--wx-mood-2', mood2); }
     }
     const idx = this.wxData.daily.time.indexOf(todayStr);
     if(idx>=0){
@@ -2138,6 +2712,31 @@ const App = {
       </div>`;
     }
     list.innerHTML = html;
+    this.renderRainNowcast(entry.data);
+  },
+  renderRainNowcast(data){
+    const card = document.getElementById('rainNowcastCard');
+    if(!card) return;
+    const m15 = data && data.minutely_15;
+    if(!m15 || !m15.time || !m15.precipitation){ card.style.display = 'none'; return; }
+    const summary = summarizeRainNowcast(m15.time, m15.precipitation, new Date());
+    card.style.display = 'flex';
+    const headlineEl = document.getElementById('rainNowcastHeadline');
+    const subEl = document.getElementById('rainNowcastSub');
+    const iconEl = document.getElementById('rainNowcastIcon');
+    if(!summary.willRain){
+      iconEl.textContent = '☀️';
+      headlineEl.textContent = 'No rain expected in the next 2 hours';
+      subEl.textContent = 'Live nowcast, updates automatically — real high-resolution model data for North America and Central Europe, interpolated from hourly data elsewhere.';
+    } else if(summary.isRainingNow){
+      iconEl.textContent = '🌧️';
+      headlineEl.textContent = `Raining now — expected to last about ${summary.durationMinutes} min`;
+      subEl.textContent = 'Grab an umbrella if you\'re heading out. Live nowcast, updates automatically.';
+    } else {
+      iconEl.textContent = '🌦️';
+      headlineEl.textContent = `Rain expected to start in about ${summary.minutesUntilStart} min`;
+      subEl.textContent = `Likely to last around ${summary.durationMinutes} min — plan with an umbrella. Live nowcast, updates automatically.`;
+    }
   },
 
   /* ---------- Settings ---------- */
@@ -2158,6 +2757,7 @@ const App = {
       this.settings.lat = pos.coords.latitude;
       this.settings.lon = pos.coords.longitude;
       this.settings.city = "My location";
+      this.settings.locationSource = "manual";
       document.getElementById('cityInput').value = this.settings.city;
       document.getElementById('locStatus').textContent = `Located: ${this.settings.lat.toFixed(2)}, ${this.settings.lon.toFixed(2)}`;
     }, err=>{
@@ -2176,6 +2776,7 @@ const App = {
         const r = data.results[0];
         this.settings.lat = r.latitude; this.settings.lon = r.longitude;
         this.settings.city = `${r.name}, ${r.country_code||''}`.trim();
+        this.settings.locationSource = "manual";
         document.getElementById('cityInput').value = this.settings.city;
         document.getElementById('locStatus').textContent = `Found: ${this.settings.city}`;
       } else {
@@ -2185,6 +2786,15 @@ const App = {
       const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
       document.getElementById('locStatus').textContent = `Search failed — ${reason}.`;
     }
+  },
+  renderQuote(){
+    const q = getDailyQuote(new Date(), this.quoteOffset);
+    document.getElementById('quoteText').textContent = `“${q.text}”`;
+    document.getElementById('quoteAuthor').textContent = `— ${q.author}`;
+  },
+  nextQuote(){
+    this.quoteOffset++;
+    this.renderQuote();
   },
   saveSettings(){
     this.settings.wake = document.getElementById('wakeInput').value || this.settings.wake;
@@ -2198,11 +2808,72 @@ const App = {
   },
   closeModal(id){ document.getElementById(id).classList.remove('open'); },
 
+  /* ---------- Backup / restore (everything saved is already in
+     localStorage automatically; this is a portable copy of it) ---------- */
+  exportAllData(){
+    const status = document.getElementById('backupStatus');
+    try{
+      const backup = {
+        exportedAt: new Date().toISOString(),
+        appVersion: 1,
+        settings: this.settings,
+        tasks: this.tasks,
+        sleepLog: this.sleepLog,
+        health: this.health
+      };
+      const json = JSON.stringify(backup, null, 2);
+      const blob = new Blob([json], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `productivity-app-backup-${dstr(new Date())}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      status.textContent = 'Backup file downloaded.';
+    }catch(e){
+      status.textContent = `Export failed — ${(e&&e.message)||'unknown error'}.`;
+    }
+  },
+  importAllData(event){
+    const file = event.target.files && event.target.files[0];
+    const status = document.getElementById('backupStatus');
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const data = JSON.parse(reader.result);
+        if(!data || typeof data !== 'object') throw new Error('not a valid backup file');
+        if(data.settings) Object.assign(this.settings, data.settings);
+        if(data.tasks) this.tasks = data.tasks;
+        if(data.sleepLog) this.sleepLog = data.sleepLog;
+        if(data.health) Object.assign(this.health, data.health);
+        this.ensurePrimaryLocation();
+        this.saveSettingsState();
+        this.saveTasks();
+        this.saveSleepLogState();
+        this.saveHealthState();
+        // refresh everything visible
+        this.renderSettingsForm();
+        this.renderCalendar();
+        this.renderWxLocationsRow();
+        this.tick();
+        status.textContent = `Restored backup from ${data.exportedAt ? new Date(data.exportedAt).toLocaleString() : 'file'}.`;
+      }catch(e){
+        status.textContent = `Import failed — ${(e&&e.message)||'the file doesn\'t look like a valid backup'}.`;
+      }
+    };
+    reader.onerror = ()=>{ status.textContent = 'Could not read that file.'; };
+    reader.readAsText(file);
+    event.target.value = '';
+  },
+
   /* ---------- Tasks (shared helpers) ---------- */
-  addTask(dateStr, text, time){
+  addTask(dateStr, text, time, category){
     if(!text || !text.trim()) return;
     if(!this.tasks[dateStr]) this.tasks[dateStr] = [];
-    this.tasks[dateStr].push({id: Date.now()+Math.random().toString(36).slice(2), text: text.trim(), done:false, time: time||null});
+    this.tasks[dateStr].push({id: Date.now()+Math.random().toString(36).slice(2), text: text.trim(), done:false, time: time||null, category: category||'none'});
     this.saveTasks();
   },
   toggleTask(dateStr, id){
@@ -2224,6 +2895,14 @@ const App = {
     this.tasks[newDate].push(t);
     this.saveTasks();
   },
+  taskCategoryMeta(category){
+    const map = {
+      professional: {icon:'💼', label:'Professional', cls:'cat-professional'},
+      home: {icon:'🏠', label:'Home', cls:'cat-home'},
+      private: {icon:'🔒', label:'Private', cls:'cat-private'}
+    };
+    return map[category] || null;
+  },
   // Sort: incomplete before done; within each, timed items first (by time), then untimed.
   sortTasksForDisplay(arr){
     return arr.slice().sort((a,b)=>{
@@ -2238,13 +2917,17 @@ const App = {
     const el = document.getElementById(elId);
     const arr = this.sortTasksForDisplay(this.tasks[dateStr]||[]);
     if(!arr.length){ el.innerHTML = `<div class="task-empty">Nothing planned yet.</div>`; return; }
-    el.innerHTML = arr.map(t=>`
+    el.innerHTML = arr.map(t=>{
+      const cat = this.taskCategoryMeta(t.category);
+      return `
       <div class="task-item ${t.done?'done':''}">
         <button class="task-check" onclick="App.toggleTaskUI('${dateStr}','${t.id}')">${t.done?'✓':''}</button>
         ${t.time?`<span class="task-time-badge">${escapeHtml(t.time)}</span>`:''}
+        ${cat?`<span class="task-cat-badge ${cat.cls}" title="${cat.label}">${cat.icon}</span>`:''}
         <div class="task-text">${escapeHtml(t.text)}</div>
         <button class="task-del" onclick="App.deleteTaskUI('${dateStr}','${t.id}')">✕</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   },
   toggleTaskUI(dateStr,id){ this.toggleTask(dateStr,id); this.refreshAllTaskViews(); },
   deleteTaskUI(dateStr,id){ this.deleteTask(dateStr,id); this.refreshAllTaskViews(); },
@@ -2258,7 +2941,8 @@ const App = {
   addTaskForToday(){
     const inp = document.getElementById('todayTaskInput');
     const timeInp = document.getElementById('todayTaskTimeInput');
-    this.addTask(dstr(new Date()), inp.value, timeInp.value);
+    const catInp = document.getElementById('todayTaskCatInput');
+    this.addTask(dstr(new Date()), inp.value, timeInp.value, catInp ? catInp.value : 'none');
     inp.value=''; timeInp.value='';
     this.refreshAllTaskViews();
   },
@@ -2295,10 +2979,23 @@ const App = {
   addTaskFromPlanner(){
     const inp = document.getElementById('plannerTaskInput');
     const timeInp = document.getElementById('plannerTaskTimeInput');
+    const catInp = document.getElementById('plannerTaskCatInput');
     const dateStr = this.resolveQuickDate();
-    this.addTask(dateStr, inp.value, timeInp.value);
+    this.addTask(dateStr, inp.value, timeInp.value, catInp ? catInp.value : 'none');
     inp.value=''; timeInp.value='';
     this.refreshAllTaskViews();
+  },
+  bindTaskCategoryFilters(){
+    const row = document.getElementById('taskCategoryFilterRow');
+    if(!row) return;
+    row.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        row.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        this.taskCategoryFilter = b.dataset.cat;
+        this.renderPlanner();
+      });
+    });
   },
   bindTaskFilters(){
     document.getElementById('taskFilterRow').querySelectorAll('button').forEach(b=>{
@@ -2312,10 +3009,12 @@ const App = {
   },
   renderPlanner(){
     const today = dstr(new Date());
-    const entries = [];
+    let entries = [];
     Object.keys(this.tasks).forEach(dateStr=>{
       (this.tasks[dateStr]||[]).forEach(t=>entries.push({dateStr, t}));
     });
+    const catFilter = this.taskCategoryFilter || 'all';
+    if(catFilter !== 'all') entries = entries.filter(e => (e.t.category||'none') === catFilter);
     entries.sort((a,b)=> a.dateStr.localeCompare(b.dateStr) || (a.t.time||'').localeCompare(b.t.time||''));
     const groups = {overdue:[], today:[], upcoming:[], done:[]};
     entries.forEach(e=>{
@@ -2333,9 +3032,11 @@ const App = {
       if(!list || !list.length) return;
       html += `<div class="group-label">${labels[key]} (${list.length})</div>`;
       list.forEach(e=>{
+        const cat = this.taskCategoryMeta(e.t.category);
         html += `<div class="task-item ${e.t.done?'done':''}">
           <button class="task-check" onclick="App.toggleTaskUI('${e.dateStr}','${e.t.id}')">${e.t.done?'✓':''}</button>
           ${e.t.time?`<span class="task-time-badge">${escapeHtml(e.t.time)}</span>`:''}
+          ${cat?`<span class="task-cat-badge ${cat.cls}" title="${cat.label}">${cat.icon}</span>`:''}
           <div style="flex:1;">
             <div class="task-text">${escapeHtml(e.t.text)}</div>
             <div class="task-date">${e.dateStr}</div>
@@ -2345,7 +3046,7 @@ const App = {
         </div>`;
       });
     });
-    document.getElementById('plannerList').innerHTML = html || `<div class="task-empty">Nothing here yet.</div>`;
+    document.getElementById('plannerList').innerHTML = html || `<div class="task-empty">Nothing here yet${catFilter!=='all'?' in this category':''}.</div>`;
   },
   bumpTask(dateStr, id){
     const newDate = dstr(addDays(new Date(),1));
@@ -2440,7 +3141,8 @@ const App = {
   addTaskForModalDay(){
     const inp = document.getElementById('dayModalTaskInput');
     const timeInp = document.getElementById('dayModalTaskTimeInput');
-    this.addTask(this.modalDate, inp.value, timeInp.value);
+    const catInp = document.getElementById('dayModalTaskCatInput');
+    this.addTask(this.modalDate, inp.value, timeInp.value, catInp ? catInp.value : 'none');
     inp.value=''; timeInp.value='';
     this.renderModalTasks();
     this.renderCalendar();
@@ -2518,11 +3220,9 @@ const App = {
           document.getElementById('healthCalories').style.display = sub==='calories' ? 'block' : 'none';
           document.getElementById('healthWater').style.display = sub==='water' ? 'block' : 'none';
           document.getElementById('healthScreen').style.display = sub==='screen' ? 'block' : 'none';
-          document.getElementById('healthRadiation').style.display = sub==='radiation' ? 'block' : 'none';
           if(sub==='calories') this.renderFoodDb();
           if(sub==='water') this.renderWaterSection();
           if(sub==='screen') this.renderScreenSection();
-          if(sub==='radiation') this.renderRadiationSection();
         });
       });
       document.getElementById('foodDbNav').querySelectorAll('button').forEach(b=>{
@@ -2563,6 +3263,8 @@ const App = {
         : `Distance uses a generic 0.7m/step assumption until you complete one GPS-tracked walk to calibrate it to you.`;
     }
     this.renderStepTrackerStatus();
+    this.renderWalkStats();
+    this.ensureWalkMapVisible();
   },
   renderStepTrackerStatus(){
     const el = document.getElementById('stepTrackerStatus');
@@ -2670,29 +3372,71 @@ const App = {
     const sensitivity = this.health.stepSensitivity || 0.8;
     this.stepTracker.detector = createStepDetector({threshold: sensitivity});
     this.stepTracker.motionHandler = (ev)=>{
+      // Devices/browsers are inconsistent about which of these two fields
+      // is populated — some only fill accelerationIncludingGravity, some
+      // only fill acceleration (already gravity-free), some fill both.
+      // Treating either one as "gravity-included" was the bug: subtracting
+      // 9.81 from an already gravity-free reading produces a permanently
+      // large magnitude and massively over-counts steps.
+      const withG = ev.accelerationIncludingGravity;
+      const noG = ev.acceleration;
+      let magnitude = null;
+      if(withG && (withG.x!=null || withG.y!=null || withG.z!=null)){
+        const gx=withG.x||0, gy=withG.y||0, gz=withG.z||0;
+        magnitude = Math.sqrt(gx*gx+gy*gy+gz*gz) - 9.81; // remove gravity baseline
+      } else if(noG && (noG.x!=null || noG.y!=null || noG.z!=null)){
+        const gx=noG.x||0, gy=noG.y||0, gz=noG.z||0;
+        magnitude = Math.sqrt(gx*gx+gy*gy+gz*gz); // already gravity-free, nothing to remove
+      } else {
+        return; // no usable acceleration data in this event
+      }
       this.stepTracker.sawAnyEvent = true;
-      const acc = ev.accelerationIncludingGravity || ev.acceleration;
-      if(!acc) return;
-      const gx = acc.x||0, gy = acc.y||0, gz = acc.z||0;
-      const magnitude = Math.sqrt(gx*gx + gy*gy + gz*gz) - 9.81; // remove gravity baseline
       if(this.stepTracker.detector.feed(Math.abs(magnitude), Date.now())){
         this.registerStep();
       }
     };
     window.addEventListener('devicemotion', this.stepTracker.motionHandler);
     this.stepTracker.active = true;
+    if(!replace) this.notifyAutoTrackingStarted();
+  },
+  // Vibration + a short chime the moment step tracking auto-starts, so it's
+  // noticeable without having to watch the screen. Honest limit: the
+  // Vibration API has never been implemented in iOS Safari (an Apple
+  // platform decision, not something any website can work around) — it
+  // silently does nothing there, while the chime still plays on every
+  // platform since Web Audio API is universally supported.
+  notifyAutoTrackingStarted(){
+    try{
+      if(navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    }catch(e){}
+    try{
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if(!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const playTone = (freq, startTime, duration)=>{
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.15, startTime+0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime+duration);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(startTime); osc.stop(startTime+duration+0.05);
+      };
+      const now = ctx.currentTime;
+      playTone(880, now, 0.12);
+      playTone(1175, now+0.13, 0.16);
+    }catch(e){ /* audio autoplay can be blocked before any user gesture — non-fatal */ }
   },
   registerStep(){
     const today = dstr(new Date());
     this.health.steps[today] = (this.health.steps[today]||0) + 1;
     this.saveHealthState();
     this.renderStepsSection();
-    // If a GPS walk is also running, reflect the live count there too.
-    if(this.gpsWalk && this.gpsWalk.active){
-      const delta = this.health.steps[today] - this.gpsWalk.startStepCount;
-      const liveEl = document.getElementById('walkStepsLive');
-      if(liveEl) liveEl.textContent = Math.max(0,delta).toLocaleString();
-    }
+    const liveEl = document.getElementById('walkStepsLive');
+    if(liveEl) liveEl.textContent = this.health.steps[today].toLocaleString();
+    this.tryCalibrateStride();
   },
   saveWeightLog(){
     const val = parseFloat(document.getElementById('weightLogInput').value);
@@ -2757,105 +3501,112 @@ const App = {
     });
     svg.innerHTML = svgContent;
   },
-  async startGpsWalk(){
-    const status = document.getElementById('walkStatus');
-    if(this.gpsWalk && this.gpsWalk.active){ return; }
+  /* ---------- Always-on GPS route tracking for today ----------
+     Same philosophy as steps: starts automatically, no button needed.
+     Calling watchPosition triggers the browser's own native location
+     permission prompt — that's a one-time browser dialog, not a custom
+     gesture gate like iOS's motion permission, so this can genuinely
+     start itself without a "Start" tap. */
+  startAutoGpsTracking(){
     if(!('geolocation' in navigator)){
-      status.textContent = 'Geolocation is not available in this browser.';
+      document.getElementById('walkStatus').textContent = 'Geolocation is not available in this browser — the route map isn\'t possible here, but steps still track.';
       return;
     }
-    // Steps are already being counted automatically in the background (see
-    // the status above) — this button only adds a GPS route map on top.
     const today = dstr(new Date());
-    const walk = {
-      active: true, startTime: Date.now(), startStepCount: this.health.steps[today]||0,
-      distanceKm: 0, lastFix: null, map: null, polyline: null,
-      pathLatLngs: [], geoWatchId: null, timerInterval: null, rejectedFixCount: 0
-    };
-    this.gpsWalk = walk;
+    if(!this.gpsTrack || this.gpsTrack.date !== today){
+      this.gpsTrack = { date: today, distanceKm: 0, lastFix: null, pathLatLngs: [], rejectedFixCount: 0, map: null, polyline: null };
+    }
+    if(this.gpsTrack.geoWatchId != null) return; // already watching
+    document.getElementById('walkStatus').textContent = 'Locating… GPS typically takes 5-15 seconds to lock on the first time.';
+    this.gpsTrack.geoWatchId = navigator.geolocation.watchPosition((pos)=>{
+      const track = this.gpsTrack;
+      const nextFix = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy, timestamp: pos.timestamp || Date.now() };
+      if(!isPlausibleGpsFix(track.lastFix, nextFix)){
+        track.rejectedFixCount++;
+        return; // drop this fix — poor accuracy or an implausible jump; don't corrupt the route/distance
+      }
+      if(track.lastFix){
+        track.distanceKm += haversineDistanceKm(track.lastFix.lat, track.lastFix.lon, nextFix.lat, nextFix.lon);
+      }
+      track.lastFix = nextFix;
+      track.pathLatLngs.push([nextFix.lat, nextFix.lon]);
+      this.renderWalkStats();
+      if(track.map && track.polyline){
+        track.polyline.addLatLng([nextFix.lat, nextFix.lon]);
+        track.map.panTo([nextFix.lat, nextFix.lon]);
+      }
+      // Stride calibration from real-world walking, continuously refined:
+      // any time we've moved a meaningful distance with a plausible pace,
+      // quietly improve the steps-to-distance conversion used elsewhere.
+      this.tryCalibrateStride();
+    }, (err)=>{
+      document.getElementById('walkStatus').textContent = `Location access ${err.code===1?'denied':'unavailable'} — steps still track, but the route map needs it. ${err.code===1?'You can allow it from your browser\'s site settings.':''}`;
+    }, { enableHighAccuracy:true, maximumAge:2000, timeout:15000 });
 
-    document.getElementById('startWalkBtn').style.display = 'none';
-    document.getElementById('stopWalkBtn').style.display = 'inline-block';
-    document.getElementById('walkLiveStats').style.display = 'grid';
-    document.getElementById('walkStepsLive').textContent = '0';
+    if(!this._walkTimerInterval){
+      this._walkTimerInterval = setInterval(()=>this.renderWalkStats(), 1000);
+    }
+  },
+  tryCalibrateStride(){
+    const today = dstr(new Date());
+    const steps = this.health.steps[today] || 0;
+    const track = this.gpsTrack;
+    if(!track || steps < 200 || track.distanceKm < 0.1) return;
+    const strideM = (track.distanceKm*1000) / steps;
+    if(strideM >= 0.3 && strideM <= 1.3){
+      this.health.strideM = strideM;
+      this.saveHealthState();
+    }
+  },
+  renderWalkStats(){
+    const track = this.gpsTrack;
+    const statusEl = document.getElementById('walkStatus');
+    const liveEl = document.getElementById('walkLiveStats');
+    if(!track){ return; }
+    if(liveEl) liveEl.style.display = 'grid';
+    const today = dstr(new Date());
+    const steps = this.health.steps[today] || 0;
+    const stepsEl = document.getElementById('walkStepsLive');
+    if(stepsEl) stepsEl.textContent = steps.toLocaleString();
+    const distEl = document.getElementById('walkDistLive');
+    if(distEl) distEl.textContent = track.distanceKm.toFixed(2)+' km';
+    if(statusEl && track.lastFix){
+      const accNote = track.rejectedFixCount > 0 ? ` · ${track.rejectedFixCount} low-quality reading${track.rejectedFixCount===1?'':'s'} filtered out` : '';
+      statusEl.textContent = `🟢 Live-tracking today's route automatically.${accNote}`;
+    }
+  },
+  ensureWalkMapVisible(){
+    const track = this.gpsTrack;
     const mapEl = document.getElementById('walkMap');
+    if(!track || !mapEl) return;
     mapEl.style.display = 'block';
-    status.textContent = 'Mapping your route… keep this tab open and your phone with you. GPS typically takes 5-15 seconds to lock on. Steps keep counting automatically as before.';
-
+    if(track.map) return; // already initialized
     this.ensureLeafletLoaded().then(()=>{
-      if(!this.gpsWalk || !this.gpsWalk.active) return; // stopped before this resolved
-      const map = window.L.map(mapEl).setView([this.settings.lat, this.settings.lon], 16);
+      if(track.map) return;
+      const map = window.L.map(mapEl).setView(
+        track.lastFix ? [track.lastFix.lat, track.lastFix.lon] : [this.settings.lat, this.settings.lon], 16
+      );
       window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
       }).addTo(map);
-      const polyline = window.L.polyline([], {color: '#FF8A26', weight: 4}).addTo(map);
-      walk.map = map;
-      walk.polyline = polyline;
-    }).catch(()=>{ status.textContent += ' (Map failed to load — route distance still tracks without it.)'; });
-
-    walk.geoWatchId = navigator.geolocation.watchPosition((pos)=>{
-      const nextFix = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy, timestamp: pos.timestamp || Date.now() };
-      if(!isPlausibleGpsFix(walk.lastFix, nextFix)){
-        walk.rejectedFixCount++;
-        return; // drop this fix — poor accuracy or an implausible jump; don't corrupt the route/distance
-      }
-      if(walk.lastFix){
-        walk.distanceKm += haversineDistanceKm(walk.lastFix.lat, walk.lastFix.lon, nextFix.lat, nextFix.lon);
-        document.getElementById('walkDistLive').textContent = walk.distanceKm.toFixed(2)+' km';
-      }
-      walk.lastFix = nextFix;
-      walk.pathLatLngs.push([nextFix.lat, nextFix.lon]);
-      if(walk.map && walk.polyline){
-        walk.polyline.addLatLng([nextFix.lat, nextFix.lon]);
-        walk.map.panTo([nextFix.lat, nextFix.lon]);
-      }
-    }, (err)=>{
-      status.textContent = `GPS error: ${err.message || 'permission denied or unavailable'}. Steps keep counting; only the route map is affected.`;
-    }, { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
-
-    walk.timerInterval = setInterval(()=>{
-      const elapsedSec = Math.floor((Date.now()-walk.startTime)/1000);
-      const mm = Math.floor(elapsedSec/60), ss = elapsedSec%60;
-      document.getElementById('walkTimeLive').textContent = `${mm}:${String(ss).padStart(2,'0')}`;
-    }, 1000);
+      const polyline = window.L.polyline(track.pathLatLngs, {color: '#FF8A26', weight: 4}).addTo(map);
+      track.map = map;
+      track.polyline = polyline;
+      if(track.pathLatLngs.length) map.panTo(track.pathLatLngs[track.pathLatLngs.length-1]);
+    }).catch(()=>{
+      const statusEl = document.getElementById('walkStatus');
+      if(statusEl) statusEl.textContent += ' (Map failed to load — distance still tracks without it.)';
+    });
   },
-  stopGpsWalk(){
-    const walk = this.gpsWalk;
-    if(!walk) return;
-    walk.active = false;
-    if(walk.geoWatchId != null && navigator.geolocation) navigator.geolocation.clearWatch(walk.geoWatchId);
-    if(walk.timerInterval) clearInterval(walk.timerInterval);
-
+  clearTodayRoute(){
     const today = dstr(new Date());
-    const stepsThisWalk = Math.max(0, (this.health.steps[today]||0) - walk.startStepCount);
-
-    // Stride calibration: if this walk had a decent number of steps and a
-    // GPS-tracked distance, use the ratio to replace the generic ~0.7m/step
-    // assumption for future distance estimates on days without GPS. Small/
-    // noisy walks are skipped so a fluke short walk can't badly miscalibrate
-    // future estimates.
-    let calibrationNote = '';
-    if(stepsThisWalk >= 200 && walk.distanceKm >= 0.1){
-      const strideM = (walk.distanceKm*1000) / stepsThisWalk;
-      if(strideM >= 0.3 && strideM <= 1.3){ // sanity range for a human stride
-        this.health.strideM = strideM;
-        calibrationNote = ` Stride length calibrated to ${strideM.toFixed(2)}m/step from this walk's GPS distance.`;
-      }
+    this.gpsTrack = { date: today, distanceKm: 0, lastFix: null, pathLatLngs: [], rejectedFixCount: 0, map: this.gpsTrack?this.gpsTrack.map:null, polyline: null };
+    if(this.gpsTrack.map){
+      if(this.gpsTrack.polyline) this.gpsTrack.map.removeLayer(this.gpsTrack.polyline);
+      this.gpsTrack.polyline = window.L.polyline([], {color: '#FF8A26', weight: 4}).addTo(this.gpsTrack.map);
     }
-    const durationHours = (Date.now()-walk.startTime)/3600000;
-    const weightKg = this.getLatestWeightKg();
-    const calories = estimateCaloriesBurned(stepsThisWalk, walk.distanceKm, weightKg, durationHours);
-    if(!this.health.calorieBurnLog) this.health.calorieBurnLog = {};
-    this.health.calorieBurnLog[today] = (this.health.calorieBurnLog[today]||0) + calories;
-    this.saveHealthState();
-    this.renderStepsSection();
-
-    document.getElementById('startWalkBtn').style.display = 'inline-block';
-    document.getElementById('stopWalkBtn').style.display = 'none';
-    const accuracyNote = walk.rejectedFixCount > 0 ? ` (${walk.rejectedFixCount} low-quality GPS reading${walk.rejectedFixCount===1?'':'s'} filtered out.)` : '';
-    document.getElementById('walkStatus').textContent =
-      `Route saved: ${stepsThisWalk} steps, ${walk.distanceKm.toFixed(2)} km, ~${calories} kcal for this walk.${accuracyNote}${calibrationNote}`;
-    this.gpsWalk = null;
+    this.renderWalkStats();
+    document.getElementById('walkStatus').textContent = 'Route cleared for today. Distance tracking continues.';
   },
   getLatestWeightKg(){
     const dates = Object.keys(this.health.weightLog||{}).sort();
@@ -3124,12 +3875,109 @@ const App = {
     if(!conn){
       typeEl.textContent = '—'; downEl.textContent = '—'; rttEl.textContent = '—';
       noteEl.textContent = 'Your browser doesn\'t expose even this much network info (Safari and some browsers don\'t implement the Network Information API) — this is a browser limitation, not something this app can work around.';
-      return;
+    } else {
+      typeEl.textContent = conn.effectiveType || '—';
+      downEl.textContent = conn.downlink != null ? conn.downlink : '—';
+      rttEl.textContent = conn.rtt != null ? conn.rtt : '—';
+      noteEl.textContent = 'This reflects your connection speed/quality only. It is not a radiation measurement and says nothing about RF exposure or safety.';
     }
-    typeEl.textContent = conn.effectiveType || '—';
-    downEl.textContent = conn.downlink != null ? conn.downlink : '—';
-    rttEl.textContent = conn.rtt != null ? conn.rtt : '—';
-    noteEl.textContent = 'This reflects your connection speed/quality only. It is not a radiation measurement and says nothing about RF exposure or safety.';
+    this.renderSpeedTestHistory();
+  },
+  setSpeedGauge(mbps, label, maxScale){
+    const fill = document.getElementById('speedGaugeFill');
+    const valueEl = document.getElementById('speedGaugeValue');
+    const labelEl = document.getElementById('speedGaugeLabel');
+    if(!fill) return;
+    maxScale = maxScale || 200; // gauge saturates at 200 Mbps for readable needle movement
+    const frac = Math.max(0, Math.min(1, mbps / maxScale));
+    const arcLength = 251;
+    fill.style.strokeDashoffset = (arcLength * (1 - frac)).toFixed(1);
+    valueEl.textContent = mbps >= 0 ? mbps.toFixed(1) : '—';
+    if(label) labelEl.textContent = label;
+  },
+  async runSpeedTest(){
+    const btn = document.getElementById('runSpeedTestBtn');
+    const status = document.getElementById('speedTestStatus');
+    btn.disabled = true;
+    btn.textContent = '⏳ Testing…';
+
+    document.getElementById('speedDownVal').textContent = '—';
+    document.getElementById('speedUpVal').textContent = '—';
+    document.getElementById('speedPingVal').textContent = '—';
+    document.getElementById('speedJitterVal').textContent = '—';
+    this.setSpeedGauge(0, 'Mbps down');
+
+    let downResult = null, upResult = null, pingResult = null;
+    try{
+      status.textContent = 'Measuring ping…';
+      pingResult = await runLatencyTest(6);
+      document.getElementById('speedPingVal').textContent = pingResult.medianMs.toFixed(0);
+      document.getElementById('speedJitterVal').textContent = pingResult.jitterMs.toFixed(0);
+    }catch(e){
+      status.textContent = `Ping test failed — ${(e&&e.message)||'unknown error'}.`;
+    }
+
+    try{
+      status.textContent = 'Measuring download speed…';
+      downResult = await runDownloadTest(4000);
+      document.getElementById('speedDownVal').textContent = downResult.mbps.toFixed(1);
+      this.setSpeedGauge(downResult.mbps, 'Mbps down');
+    }catch(e){
+      status.textContent = `Download test failed — every source unreachable (${(e&&e.message)||'unknown error'}).`;
+    }
+
+    try{
+      status.textContent = 'Measuring upload speed…';
+      upResult = await runUploadTest(4*1024*1024);
+      document.getElementById('speedUpVal').textContent = upResult.mbps.toFixed(1);
+      this.setSpeedGauge(upResult.mbps, 'Mbps up');
+      // leave the gauge showing download as the headline after a brief pause
+      setTimeout(()=>{ if(downResult) this.setSpeedGauge(downResult.mbps, 'Mbps down'); }, 1800);
+    }catch(e){
+      status.textContent += ` Upload test unavailable — ${(e&&e.message)||'unknown error'}.`;
+    }
+
+    if(downResult || upResult || pingResult){
+      const parts = [];
+      if(downResult) parts.push(`↓ ${downResult.mbps.toFixed(1)} Mbps (${downResult.sourceLabel})`);
+      if(upResult) parts.push(`↑ ${upResult.mbps.toFixed(1)} Mbps (${upResult.sourceLabel})`);
+      if(pingResult) parts.push(`${pingResult.medianMs.toFixed(0)}ms ping`);
+      status.textContent = parts.join(' · ');
+      if(!this.health.speedTestHistory) this.health.speedTestHistory = [];
+      this.health.speedTestHistory.unshift({
+        time: new Date().toISOString(),
+        down: downResult ? downResult.mbps : null,
+        up: upResult ? upResult.mbps : null,
+        ping: pingResult ? pingResult.medianMs : null
+      });
+      this.health.speedTestHistory = this.health.speedTestHistory.slice(0, 10);
+      this.saveHealthState();
+      this.renderSpeedTestHistory();
+    }
+
+    btn.disabled = false;
+    btn.textContent = '▶️ Run speed test';
+  },
+  renderSpeedTestHistory(){
+    const el = document.getElementById('speedTestHistory');
+    if(!el) return;
+    const history = this.health.speedTestHistory || [];
+    if(!history.length){ el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="group-label" style="margin:6px 0 6px;">Recent tests</div>' + history.map(h=>{
+      const when = new Date(h.time).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return `<div class="hitem"><span>${when}</span><span>${h.down!=null?'↓'+h.down.toFixed(1):'—'} · ${h.up!=null?'↑'+h.up.toFixed(1):'—'} · ${h.ping!=null?h.ping.toFixed(0)+'ms':'—'}</span></div>`;
+    }).join('');
+  },
+  async checkPublicIp(){
+    const status = document.getElementById('ipInfoStatus');
+    status.textContent = 'Looking up your public IP…';
+    try{
+      const info = await getPublicIpInfo(7000);
+      const locationPart = [info.city, info.country].filter(Boolean).join(', ');
+      status.textContent = `Public IP: ${info.ip}${locationPart ? ' · Apparent location: '+locationPart : ''} (via ${info.sourceLabel})`;
+    }catch(e){
+      status.textContent = `Couldn't look this up — ${(e&&e.message)||'every source unreachable'}.`;
+    }
   },
 
   /* ---------- Date & time calculator ---------- */
@@ -3290,7 +4138,26 @@ App.init();
 // no-ops there instead of showing an error.
 if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(()=>{ /* optional enhancement — safe to ignore */ });
+    // updateViaCache:'none' stops the browser from serving a stale, HTTP-cached
+    // copy of sw.js itself — combined with the version bump in sw.js, this is
+    // what makes "last version running" go away after you push an update.
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if(!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if(newWorker.state === 'activated'){
+            // A new version just took over this tab — reload once so the
+            // person actually sees it, instead of the old page silently
+            // continuing to run against a newer cache.
+            if(!sessionStorage.getItem('sw_reloaded_once')){
+              sessionStorage.setItem('sw_reloaded_once', '1');
+              location.reload();
+            }
+          }
+        });
+      });
+    }).catch(()=>{ /* optional enhancement — safe to ignore */ });
   });
 }
 </script>

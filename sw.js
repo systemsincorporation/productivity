@@ -1,13 +1,12 @@
 // Productivity App service worker
-// Only caches the app shell (this file, index.html, manifest, icons) for
-// offline loading. Every request to a different origin — Open-Meteo,
-// Hacker News, BBC, the CORS proxies, etc. — is left completely untouched
-// and goes straight to the network, exactly as if there were no service
-// worker at all. Intercepting cross-origin requests here would risk
-// breaking those fetches (opaque responses can't be read as JSON/text),
-// so this worker deliberately stays out of their way.
+//
+// VERSION — bump this string every time you deploy a change, so browsers
+// that already have this app installed pick up the new version instead of
+// silently continuing to run the old cached one. This is the #1 fix for
+// "my GitHub Pages update isn't showing up."
+const SW_VERSION = 'v5';
+const CACHE_NAME = `productivityapp-shell-${SW_VERSION}`;
 
-const CACHE_NAME = 'productivityapp-shell-v1';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -24,7 +23,7 @@ self.addEventListener('install', (event) => {
       .then((cache) => cache.addAll(SHELL_FILES))
       .catch(() => { /* ok if some files are missing when hosted differently */ })
   );
-  self.skipWaiting();
+  self.skipWaiting(); // don't wait for old tabs to close — activate immediately
 });
 
 self.addEventListener('activate', (event) => {
@@ -33,7 +32,7 @@ self.addEventListener('activate', (event) => {
       Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
     )
   );
-  self.clients.claim();
+  self.clients.claim(); // take control of already-open tabs right away
 });
 
 self.addEventListener('fetch', (event) => {
@@ -41,11 +40,34 @@ self.addEventListener('fetch', (event) => {
 
   // Only handle same-origin GET requests for the app shell.
   // Everything else (all the live weather/news APIs and proxies, which are
-  // all cross-origin) is left alone entirely.
+  // all cross-origin) is left alone entirely — never intercepted.
   if (url.origin !== self.location.origin || event.request.method !== 'GET') {
     return;
   }
 
+  const isHTML = event.request.mode === 'navigate' ||
+                 (event.request.headers.get('accept') || '').includes('text/html');
+
+  if (isHTML) {
+    // Network-first for the app page itself: always try to get the latest
+    // version when online (this is what actually prevents "stale version
+    // still running" after you push an update) — only fall back to the
+    // cached copy if there's genuinely no network.
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(()=>{});
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-first for static assets (icons, manifest) — these rarely change,
+  // so instant-from-cache is the right tradeoff, and a version bump above
+  // still forces a fresh copy of everything on the next deploy.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
