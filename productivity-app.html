@@ -520,6 +520,30 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
     </div>
 
     <div class="card" style="margin-bottom:14px;">
+      <h3>📍 Where you are now</h3>
+      <div class="weather-mini">
+        <div>
+          <div class="stat-big" id="locNowTemp">—</div>
+          <div class="stat-sub" id="locNowName">—</div>
+          <div class="stat-sub" id="locNowCond" style="margin-top:2px;"></div>
+        </div>
+      </div>
+      <div class="stat-sub" id="locNowDetail" style="margin-top:8px; font-family:var(--font-mono); font-size:11px;"></div>
+      <div style="margin-top:10px;"><button class="btn ghost" onclick="App.refreshMyLocation()">🎯 Update my location</button></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h3>🔭 Upcoming Vedic &amp; astronomical events</h3>
+      <div class="stat-sub">Eclipses, Sankranti and the observance tithis ahead — surfaced in advance, so there's time to prepare rather than finding out on the day. Eclipse dates and types are computed from the Sun and Moon's positions, not read from a fixed list, so this stays correct in future years.</div>
+      <div class="filter-row" id="vedicRangeRow" style="margin-top:8px;">
+        <button class="active" data-days="30" onclick="App.setVedicRange(30)">30 days</button>
+        <button data-days="90" onclick="App.setVedicRange(90)">3 months</button>
+        <button data-days="365" onclick="App.setVedicRange(365)">1 year</button>
+      </div>
+      <div id="vedicEventsList" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
       <h3>🪔 Ekadashi, Trayodashi &amp; more — always visible</h3>
       <div class="stat-sub">Exact start/end times for nearby Ekadashi, Trayodashi, Purnima and Amavasya — shown here regardless of which one is active today, so you don't need to catch it on the exact day.</div>
       <div id="significantTithiList" style="margin-top:10px;"></div>
@@ -754,6 +778,7 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
     <div class="section-title">Health</div>
     <div class="filter-row" id="healthSubNav">
       <button class="active" data-sub="steps">🚶 Steps &amp; Route</button>
+      <button data-sub="speed">🚗 Speed</button>
       <button data-sub="calories">🍽️ Calories</button>
       <button data-sub="water">💧 Water</button>
       <button data-sub="screen">📱 Screen Time</button>
@@ -859,6 +884,50 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
           <div class="dc-stat"><div class="num" id="walkDistLive">0.00 km</div><div class="lbl">Distance (GPS)</div></div>
         </div>
         <div id="walkMap" class="walk-map"></div>
+      </div>
+    </div>
+
+    <!-- ---- Speed ---- -->
+    <div id="healthSpeed" style="display:none;">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="stat-sub">Live speed from GPS — works whether you're walking, running, cycling or in a car. Speed comes from the device's own Doppler measurement where available, which is considerably more accurate than dividing distance by time between fixes, and falls back to that only when the device doesn't report it.</div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="eyebrow">Current speed</div>
+          <div class="stat-big" id="spdNow">—</div>
+          <div class="stat-sub" id="spdMode">Waiting for GPS…</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">This trip</div>
+          <div class="stat-big" id="spdAvg">—</div>
+          <div class="stat-sub" id="spdMax">Max: —</div>
+          <div class="stat-sub" id="spdDist" style="margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="dc-stat-grid">
+          <div class="dc-stat"><div class="num" id="spdDur">0:00</div><div class="lbl">Moving time</div></div>
+          <div class="dc-stat"><div class="num" id="spdAcc">—</div><div class="lbl">GPS accuracy</div></div>
+          <div class="dc-stat"><div class="num" id="spdAlt">—</div><div class="lbl">Altitude</div></div>
+          <div class="dc-stat"><div class="num" id="spdHead">—</div><div class="lbl">Heading</div></div>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" id="spdToggleBtn" onclick="App.toggleSpeedTracking()">▶️ Start</button>
+          <button class="btn ghost" onclick="App.resetSpeedTrip()">🔄 Reset trip</button>
+          <select id="spdUnit" onchange="App.setSpeedUnit()" style="max-width:130px;">
+            <option value="kmh">km/h</option>
+            <option value="mph">mph</option>
+            <option value="ms">m/s</option>
+            <option value="kn">knots</option>
+          </select>
+        </div>
+        <div class="stat-sub" id="spdStatus" style="margin-top:8px;"></div>
+      </div>
+      <div class="card">
+        <div class="group-label" style="margin-bottom:6px;">Speed over the last few minutes</div>
+        <svg id="spdGraphSvg" class="sleep-graph" viewBox="0 0 320 100" preserveAspectRatio="none"></svg>
+        <div class="stat-sub" style="margin-top:8px;">Honest limits: consumer GPS speed is typically accurate to about 1 km/h when moving steadily with a clear sky view, but is noticeably worse when stationary, indoors, in tunnels or among tall buildings. Readings below roughly 1 km/h are shown as zero rather than reporting drift as movement.</div>
       </div>
     </div>
 
@@ -1062,15 +1131,6 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
         </div>
       </div>
 
-      <div class="card" style="margin-bottom:14px;">
-        <h3>📡 About EMF / ambient radiation "detection"</h3>
-        <div class="stat-sub">Same honesty here: a phone's web browser has <b>no access</b> to any sensor that measures RF, cellular, or WiFi radiation. Even native phone apps claiming to be "EMF meters" can only read the phone's magnetometer (compass sensor) — which detects magnetic fields, not the radio/cellular/WiFi radiation people usually mean by "EMF." No standard phone hardware, and no web technology, can genuinely measure ambient electromagnetic radiation in a room. I won't show a fabricated "safety score" here.</div>
-      </div>
-
-      <div class="card">
-        <h3>🔎 If you genuinely want to measure EMF</h3>
-        <div class="stat-sub">Regulatory bodies (FCC, ICNIRP, WHO) already set and enforce exposure limits that phones and cell towers must comply with by law — that's the real safety baseline, already in place before any app gets involved. To measure ambient EMF yourself, that requires dedicated hardware — a real RF/EMF meter (not a phone) — since no phone sensor, and no app, native or web, can substitute for one.</div>
-      </div>
   </div>
 
 
@@ -1421,6 +1481,270 @@ function getSignificantTithiOccurrences(centerDate, daysBefore, daysAfter, targe
   results.sort((a,b)=>a.startTime - b.startTime);
   return results;
 }
+/* ============================================================
+   VEDIC / ASTRONOMICAL EVENT ENGINE
+
+   Surfaces upcoming events far enough ahead to actually prepare for
+   them, rather than announcing them on the morning they happen.
+
+   Eclipses are computed, not looked up from a hardcoded table, so this
+   keeps working in future years. The physics is standard:
+
+     - An eclipse can only happen at syzygy: New Moon (solar) or Full
+       Moon (lunar), i.e. elongation 0 deg or 180 deg.
+     - It only actually happens if the Moon is also near one of its
+       nodes — the two points where its tilted orbit crosses the Sun's
+       path. Away from a node the Moon passes above or below and there
+       is no eclipse. That is why we don't get one every month.
+     - Nearness to a node is measured by the Moon's ecliptic LATITUDE,
+       which is approximated by the standard leading term
+       beta ~= 5.128 deg * sin(F), F being the argument of latitude.
+
+   The latitude thresholds below are the conventional ecliptic limits.
+   They are deliberately slightly generous, so a borderline event is
+   listed as "possible" rather than missed — being warned about an
+   eclipse that turns out to be marginal in your region is a far
+   smaller failure than not being warned at all.
+
+   HONEST LIMIT: this predicts the DATE and TYPE of an eclipse and its
+   approximate greatest phase in UTC. It does NOT compute local
+   circumstances — whether it's visible from where you are, at what
+   local time, or what fraction is covered. Those need the full
+   Besselian elements, which is a substantially larger calculation. For
+   visibility always check timeanddate.com or NASA's eclipse pages.
+   ============================================================ */
+
+// Moon's argument of latitude (degrees) — distance from the ascending
+// node. Same polynomial already used inside moonLongitudeDeg.
+function moonArgumentOfLatitude(date){
+  const T = toDays(date) / 36525;
+  return normalizeAngle(93.2720950 + 483202.0175233*T - 0.0036539*T*T
+                        - T*T*T/3526000 + T*T*T*T/863310000);
+}
+// Moon's ecliptic latitude, from the standard periodic series (the ten
+// largest terms of the low-precision lunar theory). The leading term
+// alone is NOT sufficient here: with only 5.128*sin(F) the total solar
+// eclipse of 12 August 2026 computes as a marginal partial, because the
+// omitted terms shift the latitude by up to about a degree — which is
+// the entire width of the eclipse limit being tested against. Sign
+// matters too; every coefficient below is positive with the argument
+// as written.
+function moonEclipticLatitudeDeg(date){
+  const T = toDays(date) / 36525;
+  const dr = Math.PI/180;
+  const D  = normalizeAngle(297.8501921 + 445267.1114034*T - 0.0018819*T*T + T*T*T/545868) * dr;
+  const M  = normalizeAngle(357.5291092 + 35999.0502909*T - 0.0001536*T*T) * dr;
+  const Mp = normalizeAngle(134.9633964 + 477198.8675055*T + 0.0087414*T*T + T*T*T/69699) * dr;
+  const F  = normalizeAngle(93.2720950 + 483202.0175233*T - 0.0036539*T*T - T*T*T/3526000) * dr;
+  const E  = 1 - 0.002516*T - 0.0000074*T*T;
+  // [D, M, M', F multipliers, coefficient in 1e-6 deg, power of E]
+  const terms = [
+    [0,0,0,1, 5128122,0],[0,0,1,1, 280602,0],[0,0,1,-1, 277693,0],
+    [2,0,0,-1, 173237,0],[2,0,-1,1, 55413,0],[2,0,-1,-1, 46271,0],
+    [2,0,0,1, 32573,0],[0,0,2,1, 17198,0],[2,0,1,-1, 9266,0],
+    [0,0,2,-1, 8822,0],[2,-1,0,-1, 8216,1],[2,0,-2,-1, 4324,0],
+    [2,0,1,1, 4200,0],[2,1,0,-1, -3359,1],[2,-1,-1,1, 2463,1],
+    [2,-1,0,1, 2211,1],[2,-1,-1,-1, 2065,1],[0,-1,-1,-1, -1870,1],
+    [4,0,-1,-1, 1828,0],[0,1,0,1, -1794,1],[0,0,0,3, -1749,0]
+  ];
+  let sum = 0;
+  for(const [di,mi,mpi,fi,coeff,ePow] of terms){
+    const arg = D*di + M*mi + Mp*mpi + F*fi;
+    sum += coeff * (ePow ? Math.pow(E, ePow) : 1) * Math.sin(arg);
+  }
+  return sum/1000000;
+}
+
+// Refines a syzygy (elongation crossing 0 or 180) to the minute by
+// bisection, the same technique the tithi code already uses.
+function refineSyzygy(tA, tB, targetDeg){
+  let a = tA, b = tB;
+  let fa = angularDiff(elongationDeg(new Date(a)), targetDeg);
+  for(let i=0;i<50;i++){
+    const mid = (a+b)/2;
+    const fm = angularDiff(elongationDeg(new Date(mid)), targetDeg);
+    if((fa<=0 && fm>0) || (fa>=0 && fm<0)){ b = mid; } else { a = mid; fa = fm; }
+    if(b-a < 30000) break; // ~30 second precision
+  }
+  return new Date((a+b)/2);
+}
+
+/**
+ * Every eclipse between `from` and `from + days`.
+ * @returns [{type, subtype, peak, latitude, certainty, name}]
+ */
+function findEclipses(from, days){
+  const out = [];
+  const stepMs = 6*3600000;
+  const end = from.getTime() + days*DAY_MS;
+  let prevT = from.getTime();
+  let prevNew = angularDiff(elongationDeg(new Date(prevT)), 0);
+  let prevFull = angularDiff(elongationDeg(new Date(prevT)), 180);
+
+  for(let t = prevT + stepMs; t <= end; t += stepMs){
+    const d = new Date(t);
+    const curNew = angularDiff(elongationDeg(d), 0);
+    const curFull = angularDiff(elongationDeg(d), 180);
+
+    // New Moon -> candidate solar eclipse
+    if(prevNew <= 0 && curNew > 0){
+      const peak = refineSyzygy(prevT, t, 0);
+      const beta = Math.abs(moonEclipticLatitudeDeg(peak));
+      // Solar ecliptic limits: certain below ~0.9 deg, impossible above
+      // ~1.58 deg, uncertain between (depends on exact distances).
+      // Solar limits are wider than lunar because parallax lets an
+      // observer somewhere on Earth's surface see a central eclipse the
+      // geocentre would miss.
+      if(beta < 1.57){
+        out.push({
+          type: 'solar',
+          name: beta < 1.00 ? 'Total or annular solar eclipse' : 'Partial solar eclipse',
+          subtype: beta < 1.00 ? 'central' : 'partial',
+          peak, latitude: beta,
+          certainty: beta < 1.30 ? 'certain' : 'possible',
+          tithi: 'Amavasya (New Moon)'
+        });
+      }
+    }
+    // Full Moon -> candidate lunar eclipse
+    if(prevFull <= 0 && curFull > 0){
+      const peak = refineSyzygy(prevT, t, 180);
+      const beta = Math.abs(moonEclipticLatitudeDeg(peak));
+      // Lunar limits are tighter than solar: umbral below ~0.62 deg,
+      // penumbral out to ~1.07 deg.
+      if(beta < 1.07){
+        out.push({
+          type: 'lunar',
+          name: beta < 0.35 ? 'Total lunar eclipse'
+              : (beta < 0.65 ? 'Partial lunar eclipse' : 'Penumbral lunar eclipse'),
+          subtype: beta < 0.65 ? 'umbral' : 'penumbral',
+          peak, latitude: beta,
+          certainty: beta < 0.95 ? 'certain' : 'possible',
+          tithi: 'Purnima (Full Moon)'
+        });
+      }
+    }
+    prevT = t; prevNew = curNew; prevFull = curFull;
+  }
+  return out;
+}
+
+/**
+ * Recurring observances derived from the tithi cycle, plus solar
+ * ingress. All computed — nothing hardcoded to a particular year.
+ *
+ * Each carries a `prepareDays` figure: how far ahead it's worth
+ * flagging, since a fast you observe needs more notice than a moon you
+ * simply want to look at.
+ */
+const VEDIC_OBSERVANCES = [
+  {tithi: 11, label: 'Ekadashi',   icon: '🌿', prepareDays: 3,
+   note: 'Traditional fasting day. Many observe a partial or full fast from sunrise to the next morning.'},
+  {tithi: 13, label: 'Pradosh',    icon: '🔱', prepareDays: 2,
+   note: 'Evening observance in the twilight window around sunset.'},
+  {tithi: 15, label: 'Purnima',    icon: '🌕', prepareDays: 3,
+   note: 'Full Moon. Commonly observed with fasting, charity or a river bath.'},
+  {tithi: 30, label: 'Amavasya',   icon: '🌑', prepareDays: 3,
+   note: 'New Moon. Traditionally set aside for ancestral rites (pitru tarpan).'},
+  {tithi: 4,  label: 'Chaturthi',  icon: '🐘', prepareDays: 2,
+   note: 'Associated with Ganesha; Sankashti Chaturthi is observed in the waning fortnight.'},
+  {tithi: 8,  label: 'Ashtami',    icon: '🔥', prepareDays: 2,
+   note: 'Observed for Durga; Krishna Janmashtami falls on the waning Ashtami of Bhadrapada.'}
+];
+
+// Sankranti: the Sun entering a new sidereal sign. Makar Sankranti (Sun
+// into Capricorn, mid-January) is the best known, but each of the twelve
+// is traditionally observed.
+function findSankrantis(from, days){
+  const out = [];
+  const stepMs = 12*3600000;
+  const end = from.getTime() + days*DAY_MS;
+  let prevT = from.getTime();
+  let prevSign = Math.floor(normalizeAngle(sunLongitudeDeg(new Date(prevT)) - getLahiriAyanamsha(new Date(prevT)))/30);
+  for(let t = prevT + stepMs; t <= end; t += stepMs){
+    const d = new Date(t);
+    const sign = Math.floor(normalizeAngle(sunLongitudeDeg(d) - getLahiriAyanamsha(d))/30);
+    if(sign !== prevSign){
+      // Bisect to the hour for a usable transition time.
+      let a = prevT, b = t;
+      for(let i=0;i<30;i++){
+        const mid=(a+b)/2, dm=new Date(mid);
+        const sm = Math.floor(normalizeAngle(sunLongitudeDeg(dm) - getLahiriAyanamsha(dm))/30);
+        if(sm === prevSign) a = mid; else b = mid;
+        if(b-a < 60000) break;
+      }
+      out.push({ when: new Date((a+b)/2), sign, name: RASHI_NAMES[sign].split(' ')[0] + ' Sankranti' });
+      prevSign = sign;
+    }
+    prevT = t;
+  }
+  return out;
+}
+
+/**
+ * The single feed the UI renders: everything upcoming in one list,
+ * sorted by date, each with how many days away it is and whether it's
+ * inside its own preparation window.
+ */
+function getUpcomingVedicEvents(from, days){
+  const events = [];
+  const now = from.getTime();
+
+  findEclipses(from, days).forEach(e=>{
+    events.push({
+      when: e.peak,
+      icon: e.type === 'solar' ? '🌑' : '🌘',
+      title: e.name,
+      kind: 'eclipse',
+      priority: 1,
+      detail: `${e.tithi}. Greatest phase around ${e.peak.toUTCString().replace(' GMT',' UTC')}.` +
+              (e.certainty === 'possible' ? ' Marginal — near the edge of the eclipse limit, so confirm locally.' : '') +
+              ' Visibility depends on where you are; this gives the date and type, not local timings.',
+      prepareDays: 14
+    });
+  });
+
+  const tithiTargets = VEDIC_OBSERVANCES.map(o=>o.tithi === 30 ? 30 : o.tithi)
+    .concat(VEDIC_OBSERVANCES.filter(o=>o.tithi<=15).map(o=>o.tithi+15));
+  const occurrences = getSignificantTithiOccurrences(from, 0, days, Array.from(new Set(tithiTargets)));
+  occurrences.forEach(o=>{
+    const idx = o.paksha === 'Shukla' ? o.num : (o.num === 15 ? 30 : o.num);
+    const def = VEDIC_OBSERVANCES.find(v=>v.tithi === idx)
+             || VEDIC_OBSERVANCES.find(v=>v.tithi === o.num);
+    if(!def) return;
+    if(o.startTime.getTime() < now - DAY_MS) return;
+    events.push({
+      when: o.startTime,
+      icon: def.icon,
+      title: `${def.label} (${o.paksha} ${o.name})`,
+      kind: 'tithi',
+      priority: 3,
+      detail: `${def.note} Begins ${o.startTime.toLocaleString(undefined,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}, ends ${o.endTime ? o.endTime.toLocaleString(undefined,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'later'}.`,
+      prepareDays: def.prepareDays
+    });
+  });
+
+  findSankrantis(from, days).forEach(s=>{
+    events.push({
+      when: s.when,
+      icon: '☀️',
+      title: s.name,
+      kind: 'sankranti',
+      priority: 2,
+      detail: `The Sun enters ${RASHI_NAMES[s.sign]} (sidereal, Lahiri). Sankranti days are traditionally marked with charity and ritual bathing.`,
+      prepareDays: 5
+    });
+  });
+
+  events.forEach(e=>{
+    e.daysAway = Math.floor((e.when.getTime() - now)/DAY_MS);
+    e.hoursAway = (e.when.getTime() - now)/3600000;
+    e.inPrepWindow = e.daysAway <= e.prepareDays;
+  });
+  events.sort((a,b)=> a.when - b.when);
+  return events;
+}
+
 function brahmaMuhurta(sunrise){
   // Traditional definition: the 48-minute window ending 48 minutes
   // before sunrise (i.e. starting 1h36m before sunrise).
@@ -1803,6 +2127,13 @@ const NEWS_TABS = {
     scope: 'geo',
     label: 'India',
     allowDomains: INDIA_DOMAINS,
+    // The domain allowlist guarantees the PUBLISHER is Indian; it can't
+    // guarantee the STORY is. Indian outlets carry plenty of foreign
+    // coverage, and their "national" feeds still slip in world items.
+    // requireIndiaTopic adds the second half of the test: an article must
+    // either mention India (or an Indian place, institution or figure) or
+    // it must not be visibly about somewhere else.
+    requireIndiaTopic: true,
     feeds: [
       {name:'Times of India',    url:'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms', trusted:true},
       {name:'The Hindu',         url:'https://www.thehindu.com/news/national/feeder/default.rss', trusted:true},
@@ -1835,7 +2166,14 @@ const NEWS_TABS = {
     // Business is where per-outlet flooding is worst (MarketWatch and
     // Business Insider both publish dozens of items an hour), so the
     // diversity cap is tightened for this tab specifically.
-    perDomainCap: 3
+    perDomainCap: 3,
+    // Even a business desk runs general-interest items. These keywords
+    // are applied to every article, with trusted business feeds getting a
+    // baseline credit so genuine business stories that happen not to use
+    // an obvious keyword still survive.
+    mustMatch: ['market','stock','shares','earnings','revenue','profit','loss','economy','economic','inflation','gdp','trade','tariff','merger','acquisition','ipo','investor','investment','bank','central bank','fed','ecb','interest rate','bond','currency','dollar','euro','oil price','commodity','ceo','company','corporate','quarterly','forecast','layoff','supply chain','retail','manufacturing','startup','funding','valuation','bankruptcy','regulator','antitrust'],
+    mustNotMatch: ['horoscope','recipe','celebrity','dating','football','cricket score','movie review'],
+    trustedBaseline: 0.9
   },
 
   entrepreneur: {
@@ -1850,8 +2188,9 @@ const NEWS_TABS = {
       {name:'Sifted',              url:'https://sifted.eu/feed', trusted:true},
       {name:'HN: funding',         url:'https://hn.algolia.com/api/v1/search?query=startup%20funding%20raised&tags=story&hitsPerPage=25&numericFilters=points%3E30', type:'hn-json'}
     ],
-    mustMatch: ['startup','founder','entrepreneur','funding','venture','seed round','series a','series b','series c','bootstrap','acquisition','raises','raised','vc','accelerator','ipo'],
-    mustNotMatch: []
+    mustMatch: ['startup','founder','entrepreneur','venture capital','seed round','series a','series b','series c','bootstrap','bootstrapped','bootstrapping','raises','raised','raising','funding round','pre-seed','accelerator','incubator','angel investor','small business','self-employed','side hustle','scale-up','unicorn','pitch deck','cap table','term sheet','exit','acquisition','ipo','valuation'],
+    mustNotMatch: ['horoscope','celebrity','football','cricket score'],
+    trustedBaseline: 0.9
   },
 
   // AI: research-first. arXiv is listed first deliberately — a genuine
@@ -1875,7 +2214,7 @@ const NEWS_TABS = {
     // Applied only to non-trusted (query-driven) sources. Note there is
     // no bare "ai" token here — that single keyword was why this tab
     // matched everything.
-    mustMatch: ['artificial intelligence','machine learning','deep learning','neural network','llm','large language model','transformer','gpt','openai','anthropic','claude','gemini','llama','mistral','diffusion','reinforcement learning','fine-tun','inference','benchmark','model weights','agentic'],
+    mustMatch: ['artificial intelligence','machine learning','deep learning','neural network','llm','large language model','transformer','gpt','openai','anthropic','claude','gemini','llama','mistral','diffusion','reinforcement learning','fine-tuning','fine-tuned','inference','benchmark','model weights','agentic'],
     // Marketing/finance noise that used to fill this tab.
     mustNotMatch: ['stock','shares','share price','nasdaq','etf','crypto','bitcoin','deal of the day','discount','coupon','best ai tools','ai girlfriend','horoscope','casino']
   },
@@ -1883,6 +2222,9 @@ const NEWS_TABS = {
   tech: {
     scope: 'global',
     label: 'Tech',
+    mustMatch: ['tech','software','hardware','app','device','chip','semiconductor','smartphone','laptop','computer','internet','cloud','data','privacy','security','browser','operating system','open source','robot','satellite','battery','electric vehicle','streaming','social media','platform','startup','ai'],
+    mustNotMatch: ['horoscope','recipe','celebrity gossip'],
+    trustedBaseline: 0.9,
     feeds: [
       {name:'Ars Technica',   url:'https://feeds.arstechnica.com/arstechnica/index', trusted:true},
       {name:'The Verge',      url:'https://www.theverge.com/rss/index.xml', trusted:true},
@@ -1913,7 +2255,9 @@ const NEWS_TABS = {
       {name:'ZDNet',              url:'https://www.zdnet.com/news/rss.xml', trusted:true},
       {name:'HN: dev',            url:'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=25&numericFilters=points%3E80', type:'hn-json'}
     ],
-    mustMatch: ['software','developer','programming','code','api','cloud','kubernetes','container','database','devops','security','vulnerability','open source','framework','javascript','python','rust','golang','java','linux','server','infrastructure','architecture','compiler','git','release','sre','observability','enterprise']
+    mustMatch: ['software','developer','programming','code','api','cloud','kubernetes','container','database','devops','security','vulnerability','open source','framework','javascript','typescript','python','rust','golang','java','linux','server','infrastructure','architecture','compiler','git','release','sre','observability','enterprise','ci/cd','microservices','microservice','runtime','library','sdk','deployment','latency','scaling'],
+    mustNotMatch: ['horoscope','celebrity'],
+    trustedBaseline: 0.9
   }
 };
 
@@ -1935,21 +2279,63 @@ const NEWS_TABS = {
 
 function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 const _keywordRegexCache = {};
+// Whole-word matching at BOTH ends. Anchoring only the start meant a
+// keyword was really a prefix: "euro" matched "Europe", so a piece about
+// European beaches scored as business news. Inflected forms are listed
+// explicitly in the keyword sets instead of being caught by prefix.
 function keywordRegex(keyword){
-  if(!_keywordRegexCache[keyword]) _keywordRegexCache[keyword] = new RegExp('\\b'+escapeRegExp(keyword), 'i');
+  if(!_keywordRegexCache[keyword]) _keywordRegexCache[keyword] = new RegExp('\\b'+escapeRegExp(keyword)+'\\b', 'i');
   return _keywordRegexCache[keyword];
+}
+
+// India-relevance vocabulary. An Indian publisher's national feed still
+// carries world stories, so "the publisher is Indian" and "the story is
+// about India" are two different tests and the tab needs both.
+const INDIA_TERMS = ['india','indian','delhi','new delhi','mumbai','bengaluru','bangalore','kolkata','chennai','hyderabad','pune','ahmedabad','jaipur','lucknow','kerala','tamil nadu','karnataka','maharashtra','gujarat','rajasthan','punjab','haryana','bihar','odisha','assam','telangana','andhra','uttar pradesh','madhya pradesh','west bengal','goa','kashmir','ladakh','modi','rahul gandhi','bjp','congress party','lok sabha','rajya sabha','supreme court of india','rbi','reserve bank of india','sensex','nifty','rupee','isro','upsc','cbse','iit','aiims','ncr','bharat','hindustan','crore','lakh'];
+// Countries and capitals that, when a headline is about them and never
+// mentions India, mark it as foreign coverage rather than Indian news.
+const FOREIGN_TERMS = ['colombia','bogota','venezuela','brazil','argentina','chile','peru','mexico','ukraine','russia','moscow','kyiv','gaza','israel','palestine','syria','lebanon','iran','iraq','yemen','egypt','turkey','china','beijing','japan','tokyo','korea','pyongyang','vietnam','thailand','indonesia','philippines','australia','sydney','britain','uk','london','france','paris','germany','berlin','italy','rome','spain','madrid','netherlands','sweden','norway','poland','ireland','canada','ottawa','united states','washington','new york','trump','biden','putin','zelensky','nigeria','kenya','ethiopia','south africa'];
+
+function matchesAny(text, terms){
+  for(const t of terms){ if(keywordRegex(t).test(text)) return true; }
+  return false;
+}
+
+/**
+ * Is this article actually about India?
+ *
+ * Deliberately asymmetric. A headline mentioning India is Indian news,
+ * full stop — including "India and Brazil sign trade deal". A headline
+ * that mentions a foreign country and never mentions India is foreign
+ * coverage and is dropped. Anything mentioning neither is kept, because
+ * an Indian outlet's domestic story often names only a city, a minister
+ * or a company without ever using the word "India" — dropping those
+ * would gut the tab.
+ */
+function isIndiaRelevant(item){
+  const hay = ((item.title||'') + ' ' + (item.description||'')).toLowerCase();
+  if(matchesAny(hay, INDIA_TERMS)) return true;
+  const title = (item.title||'').toLowerCase();
+  if(matchesAny(title, FOREIGN_TERMS)) return false;
+  return true;
 }
 
 // Relevance is scored, not just pass/fail, and the TITLE is weighted far
 // more heavily than the body. "AI" appearing once in the last paragraph
-// of a phone review is not an AI research story; the old any-field match
-// treated it as one.
-function scoreRelevance(item, spec){
+// of a phone review is not an AI research story; an any-field match
+// treats it as one.
+function scoreRelevance(item, spec, fromTrustedFeed){
+  if(spec.requireIndiaTopic && !isIndiaRelevant(item)) return 0;
   if(!spec.mustMatch || !spec.mustMatch.length) return 1;
   const title = (item.title||'').toLowerCase();
   const body  = (item.description||'').toLowerCase();
-  if(spec.mustNotMatch && spec.mustNotMatch.some(k=>keywordRegex(k).test(title))) return 0;
-  let score = 0;
+  if(spec.mustNotMatch && matchesAny(title, spec.mustNotMatch)) return 0;
+  // A curated topic desk has already made the topic decision, so its
+  // articles start with credit rather than having to prove themselves
+  // against a keyword list. Without this, requiring a literal keyword
+  // match on an editorially-curated feed strips out real headlines --
+  // the failure that previously emptied whole tabs.
+  let score = fromTrustedFeed ? (spec.trustedBaseline || 0) : 0;
   for(const k of spec.mustMatch){
     const re = keywordRegex(k);
     if(re.test(title)) score += 2;
@@ -2075,10 +2461,14 @@ async function loadNewsItems(cat, timeoutMs, opts){
     merged = merged.filter(it=>hostMatchesAllowlist(it.host, spec.allowDomains));
     dropped = before - merged.length;
   }
+  const beforeTopic = merged.length;
 
   // 2. Relevance (only affects tabs that define mustMatch).
-  merged = merged.map(it=>({...it, _score: scoreRelevance(it, spec)}))
-                 .filter(it=>it._score > 0);
+  const trustedFeeds = new Set(spec.feeds.filter(f=>f.trusted).map(f=>f.name));
+  merged = merged.map(it=>({...it, _score: scoreRelevance(it, spec, trustedFeeds.has(it.feedName))}))
+                 .filter(it=>it._score >= (spec.minRelevance != null ? spec.minRelevance : 0.5));
+
+  const offTopic = beforeTopic - merged.length;
 
   // 3. Dedupe by canonical URL, then by near-identical title.
   const seenUrl = new Set(), seenTitle = new Set();
@@ -2113,7 +2503,7 @@ async function loadNewsItems(cat, timeoutMs, opts){
   }
   merged = head.concat(tail).slice(0, 80);
 
-  const result = { items: merged, sources: okSources, failed: errors.length, droppedOffScope: dropped };
+  const result = { items: merged, sources: okSources, failed: errors.length, droppedOffScope: dropped, droppedOffTopic: offTopic };
   _newsCache[cat] = { ...result, time: Date.now() };
   return result;
 }
@@ -2160,6 +2550,45 @@ function formatNewsDate(ts){
   if(diffMin < 60*24) return `${Math.round(diffMin/60)}h ago`;
   return d.toLocaleDateString(undefined, {day:'numeric', month:'short'}) + ' · ' +
          d.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
+}
+
+/* ============================================================
+   Reverse geocoding — turn coordinates into a real place name.
+
+   Auto-location previously set the label to the literal string "My
+   location", which is useless for telling at a glance whether the
+   weather and sunrise times on screen are actually for where you are.
+   BigDataCloud's client endpoint is used because it is keyless and
+   CORS-enabled, with Open-Meteo's own geocoder as a fallback; both are
+   already trusted elsewhere in this app.
+   ============================================================ */
+async function reverseGeocode(lat, lon, timeoutMs){
+  timeoutMs = timeoutMs || 8000;
+  const attempts = [
+    {label:'BigDataCloud', url:`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`, kind:'bdc'},
+    {label:'BigDataCloud (proxy)', url:proxyAllOrigins(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`), kind:'bdc'}
+  ];
+  for(const a of attempts){
+    try{
+      const res = await fetchWithTimeout(a.url, timeoutMs);
+      if(!res.ok) continue;
+      const d = await res.json();
+      if(a.kind === 'bdc'){
+        // Prefer the most specific name available, falling back outward:
+        // neighbourhood -> town -> city -> principality -> country.
+        const parts = [
+          d.locality || d.city || d.localityInfo?.administrative?.slice(-1)[0]?.name,
+          d.principalSubdivision,
+          d.countryName
+        ].filter(Boolean);
+        if(!parts.length) continue;
+        const seen = new Set();
+        const label = parts.filter(p=>{ const k=p.toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; }).join(', ');
+        return { label, short: parts[0], region: d.principalSubdivision || '', country: d.countryName || '', countryCode: d.countryCode || '' };
+      }
+    }catch(e){ /* try the next route */ }
+  }
+  return null;
 }
 
 function buildWeatherAttempts(lat, lon){
@@ -2455,86 +2884,103 @@ function suggestTaskTextFromOCR(text){
 }
 
 /* ============================================================
-   GAIT ENGINE v2 — motion-validated step detection.
+   GAIT ENGINE v3 — cadence-integrating step counter.
 
-   Why the previous version over-counted, and what replaced it:
+   Why v2 under-counted, and what changed:
 
-   The old detector counted a step every time smoothed acceleration
-   crossed a fixed threshold, debounced to 300ms, then required 5
-   consecutive pulses at a plausible spacing. That gate helps, but it
-   only ever looked at the GAPS between pulses. Scrolling, typing,
-   fidgeting and riding in a car all produce bursts of pulses that
-   happen to land 300-800ms apart, so they cleared the gate and became
-   "steps". The missing test is whether the signal is actually
-   PERIODIC.
+   v2 confirmed that motion was real walking (autocorrelation over the
+   gait band), then counted one step per acceleration peak that crossed
+   an adaptive threshold. The detection half was right; the COUNTING
+   half was the problem, for three compounding reasons:
 
-   Walking is quasi-periodic: the same waveform repeats at a stable
-   frequency for seconds at a time. Hand movement is not — it is
-   energetic but aperiodic. Autocorrelation separates the two cleanly,
-   and no threshold tuning can. So this engine gates on three things
-   that must ALL hold before a single step is banked:
+     a) The threshold was mean + k*stddev over the same buffer. During
+        steady walking the stddev IS the walking signal, so the
+        threshold rose with it and only the strongest peak of each
+        stride cleared it — systematically counting roughly one step
+        per stride instead of two.
+     b) A phone in a pocket or bag produces peaks that vary hugely in
+        amplitude between steps. Any fixed or slowly-adapting threshold
+        drops the weak ones. Missed peaks are lost forever.
+     c) Worse, a single non-periodic analysis window instantly wiped
+        the pending buffer, and analysis only ran every 400ms. Real
+        walking dips below any periodicity threshold constantly —
+        turning a corner, shifting the phone, a slight stumble — so
+        bouts were being torn down and rebuilt continuously, each time
+        discarding steps that hadn't reached the confirm count.
 
-     1. PERIODICITY  — normalized autocorrelation of the last ~3s of
-        motion must show a strong, stable peak inside the human gait
-        band (0.7-4.0 Hz). Sitting fails on energy; phone-handling
-        fails here.
-     2. CADENCE + ENERGY — the dominant frequency must be a plausible
-        step rate and signal variance must sit between a floor (rules
-        out a stationary phone) and a ceiling (rules out shaking).
-     3. BOUT CONFIRMATION — steps are held in a pending buffer and only
-        committed once 8 consistent steps have accumulated. If the
-        pattern breaks first, the buffer is discarded and nothing is
-        ever added. Once a bout is confirmed the buffer is committed
-        retroactively, so the first steps of a real walk aren't lost.
+   v3 stops counting peaks. Autocorrelation already measures the step
+   FREQUENCY directly and robustly; the step count over any interval is
+   simply that frequency integrated over time. So:
 
-   Plus a fourth rule that lives outside the accelerometer: sustained
-   GPS speed above ~6.5 m/s with no gait periodicity means a vehicle,
-   and step commits are suppressed entirely.
+     steps += cadenceHz * elapsedSeconds
 
-   Honest limit, unchanged: this only runs while the page is open and
-   the screen is on. Browsers suspend motion and location sensors for
-   backgrounded tabs — that is a platform decision no website can work
-   around. For all-day passive counting, your phone's own health app
-   (which runs in the OS, on a dedicated low-power motion coprocessor)
-   is still the more accurate number, which is what manual entry is for.
+   This cannot miss a step because one peak was weak, and it degrades
+   gracefully: if the signal briefly gets noisy, cadence holds its last
+   good value through a grace window rather than resetting to nothing.
+   It is also what makes the count independent of phone placement, which
+   was the largest single source of error.
+
+   The three-state machine with hysteresis:
+
+     IDLE      -> nothing accruing.
+     CONFIRMING-> gait detected; must hold for CONFIRM_MS before any
+                  step is banked. This is what still keeps scrolling,
+                  fidgeting and car rides at zero.
+     ACTIVE    -> steps accrue by cadence integration. Brief dips in
+                  periodicity are tolerated for GRACE_MS (holding the
+                  last known cadence) instead of ending the bout.
+
+   On confirmation the CONFIRMING period is credited retroactively, so
+   the first seconds of a walk aren't lost.
    ============================================================ */
 
 const GAIT = {
-  BUFFER_SECONDS: 3.0,        // autocorrelation window — long enough for ~3-9 strides
-  RESAMPLE_HZ: 25,            // uniform grid the autocorrelation runs on
-  MIN_CADENCE_HZ: 0.7,        // ~42 steps/min — a very slow amble
-  MAX_CADENCE_HZ: 4.0,        // ~240 steps/min — a sprint
-  WALK_RUN_SPLIT_HZ: 2.6,     // above this cadence, classify as running
-  MIN_AUTOCORR: 0.55,         // periodicity score required to accept a window
-  CADENCE_STABILITY: 0.25,    // dominant frequency may drift this much between windows
-  MIN_VARIANCE: 0.03,         // below = phone is essentially still
-  MAX_VARIANCE: 45,           // above = being shaken/dropped, not carried
-  MIN_STEP_INTERVAL_MS: 250,  // refractory period; caps at 4 steps/sec
-  MAX_STEP_INTERVAL_MS: 2000, // a longer gap ends the bout
-  INTERVAL_TOLERANCE: 0.35,   // a step interval may deviate this much from the running median
-  CONFIRM_STEPS: 8,           // pending steps required before anything is banked
-  CONFIRM_WINDOW_MS: 7000,    // ...and they must arrive within this long
-  BOUT_END_MS: 2500,          // silence this long closes the bout
+  BUFFER_SECONDS: 2.6,        // autocorrelation window — ~4-8 strides
+  RESAMPLE_HZ: 50,            // uniform grid the autocorrelation runs on
+  ANALYZE_EVERY_MS: 250,      // how often the periodicity test re-runs
+  MIN_CADENCE_HZ: 0.6,        // ~36 steps/min — a very slow amble
+  MAX_CADENCE_HZ: 4.2,        // ~252 steps/min — a sprint
+  WALK_RUN_SPLIT_HZ: 2.5,     // above this cadence, classify as running
+  ENTER_AUTOCORR: 0.60,       // periodicity needed to START a bout
+  STAY_AUTOCORR: 0.34,        // lower bar to CONTINUE one (hysteresis)
+  ENTER_STABILITY: 0.30,      // cadence drift allowed while starting a bout
+  STAY_STABILITY: 0.60,       // ...and the looser bar once one is running
+  MIN_VARIANCE: 0.04,         // below = phone is essentially still
+  MIN_ENERGY_CONTINUITY: 0.10,// quietest quarter vs loudest — rejects bursts
+  MIN_CYCLES: 2.5,            // full periods that must fit in the window
+  OCTAVE_RATIO: 0.80,         // how well half-lag must score to be preferred
+  CADENCE_MEDIAN_N: 5,        // window for the running median of cadence
+  MAX_VARIANCE: 90,           // above = being shaken/dropped, not carried
+  CONFIRM_MS: 2200,           // gait must hold this long before banking
+  // Walking demonstrably began BEFORE the analyzer could see it: the
+  // buffer has to fill with real gait data before autocorrelation can
+  // detect any. Those seconds are real steps, so they're credited too.
+  WARMUP_CREDIT_MS: 1300,
+  COLD_START_MS: 12000,       // idle this long before warm-up credit applies
+  GRACE_MS: 3000,             // how long a bout stays open through a dropout
+  GRACE_INTEGRATE_MS: 700,    // ...but steps only accrue this far into one
+  DUTY_WINDOW_MS: 12000,       // window the duty-cycle test looks back over
+  MIN_DUTY_CYCLE: 0.42,       // share of that window that must read as gait
   VEHICLE_SPEED_MPS: 6.5,     // ~23 km/h sustained = vehicle, suppress steps
-  PEAK_K: 0.6                 // adaptive threshold = mean + K * stddev
+  MIN_BOUT_STEPS: 6           // shorter than this is discarded as noise
 };
 
 /**
- * Rolling buffer of gravity-removed acceleration magnitude, with the
- * two features every decision downstream depends on: periodicity score
- * and dominant cadence.
+ * Rolling buffer of acceleration magnitude with the two features every
+ * decision depends on: a periodicity score and a dominant cadence.
  */
 function createGaitAnalyzer(cfg){
   cfg = Object.assign({}, GAIT, cfg||{});
   const samples = []; // {t, v} — v is dynamic (gravity-removed) magnitude
   let gravityBaseline = null;
   let lastCadenceHz = null;
+  let cadenceHistory = [];
 
   function push(rawMagnitude, t){
     // Adaptive gravity baseline rather than a hardcoded 9.81. Devices
-    // disagree about units and about whether gravity is included at all;
-    // a slow EMA of the raw magnitude tracks whatever the baseline
-    // actually is on this device and leaves only the dynamic component.
+    // disagree about units and about whether gravity is already removed;
+    // a slow EMA tracks whatever the baseline actually is on this device
+    // and leaves only the dynamic component behind.
     if(gravityBaseline == null) gravityBaseline = rawMagnitude;
     else gravityBaseline = 0.02*rawMagnitude + 0.98*gravityBaseline;
     const dyn = rawMagnitude - gravityBaseline;
@@ -2544,15 +2990,21 @@ function createGaitAnalyzer(cfg){
     return dyn;
   }
 
-  // Resample the irregular devicemotion stream onto a uniform grid.
-  // devicemotion fires at an inconsistent rate (and differs between
-  // iOS and Android), and autocorrelation on unevenly-spaced samples
-  // produces a meaningless frequency.
+  // devicemotion fires at an inconsistent rate, and differs between iOS
+  // and Android. Autocorrelation on unevenly-spaced samples produces a
+  // meaningless frequency, so everything is resampled onto a fixed grid.
   function resample(){
     if(samples.length < 8) return null;
     const t0 = samples[0].t, t1 = samples[samples.length-1].t;
     const span = t1 - t0;
-    if(span < cfg.BUFFER_SECONDS*1000*0.6) return null; // not enough history yet
+    // The buffer must be essentially FULL, not merely started. A short
+    // window physically cannot represent a long period: at half length
+    // the longest measurable lag corresponds to ~1.8 Hz, so a genuine
+    // 1.5 Hz walk gets reported as 1.8+ Hz simply because nothing slower
+    // fits. Those partial windows were dragging every slow walk's cadence
+    // upward and every fast one down — a large systematic count error
+    // that had nothing to do with the person's actual walking.
+    if(span < cfg.BUFFER_SECONDS*1000*0.92) return null; // not enough history yet
     const n = Math.floor(span/1000 * cfg.RESAMPLE_HZ);
     if(n < 16) return null;
     const out = new Float64Array(n);
@@ -2569,16 +3021,16 @@ function createGaitAnalyzer(cfg){
   }
 
   /**
-   * Normalized autocorrelation across the gait band. Returns the best
-   * score (0-1) and the frequency that produced it.
+   * Normalized autocorrelation across the gait band.
    *
-   * This is the single most important function in the pipeline: a
-   * periodic signal correlates strongly with a time-shifted copy of
-   * itself, an aperiodic one does not, regardless of how large its
-   * peaks are. That is precisely the difference between walking and
-   * shaking a phone around.
+   * A periodic signal correlates strongly with a time-shifted copy of
+   * itself; an aperiodic one does not, however large its peaks are.
+   * That is precisely the difference between walking and waving a phone
+   * around, and no amplitude threshold can make that distinction.
+   *
+   * @param inBout - when true, the lower STAY_AUTOCORR bar applies.
    */
-  function analyze(){
+  function analyze(inBout){
     const x = resample();
     if(!x) return {periodic:false, score:0, cadenceHz:null, variance:0, reason:'warming up'};
     const n = x.length;
@@ -2591,167 +3043,305 @@ function createGaitAnalyzer(cfg){
     if(variance < cfg.MIN_VARIANCE) return {periodic:false, score:0, cadenceHz:null, variance, reason:'too still'};
     if(variance > cfg.MAX_VARIANCE) return {periodic:false, score:0, cadenceHz:null, variance, reason:'too erratic'};
 
+    // SUSTAINED-ENERGY TEST. Walking produces continuous oscillation:
+    // every part of the window carries similar energy. Tapping a screen,
+    // setting the phone down, or a single bump produces energy in one
+    // burst and near-silence either side. Sparse bursts like that also
+    // correlate strongly at some lag purely by chance, which is how a
+    // phone lying on a desk being typed on scored as "rhythmic". Compare
+    // the quietest quarter of the window against the loudest: real gait
+    // stays well balanced, bursts do not.
+    const q = Math.floor(n/4);
+    if(q >= 4){
+      const qv = [];
+      for(let k=0;k<4;k++){
+        let m=0, v=0;
+        for(let i=k*q;i<(k+1)*q;i++) m += x[i];
+        m /= q;
+        for(let i=k*q;i<(k+1)*q;i++) v += (x[i]-m)*(x[i]-m);
+        qv.push(v/q);
+      }
+      const lo = Math.min(...qv), hi = Math.max(...qv);
+      if(hi > 0 && lo/hi < cfg.MIN_ENERGY_CONTINUITY){
+        return {periodic:false, score:0, cadenceHz:null, variance, reason:'bursty, not sustained'};
+      }
+    }
+
     const minLag = Math.max(2, Math.round(cfg.RESAMPLE_HZ / cfg.MAX_CADENCE_HZ));
-    const maxLag = Math.min(n-4, Math.round(cfg.RESAMPLE_HZ / cfg.MIN_CADENCE_HZ));
+    // Cap the lag so at least MIN_CYCLES full periods fit inside the
+    // window. A lag close to the window length is computed from only a
+    // handful of overlapping samples, where random noise routinely
+    // correlates above 0.9 — that was letting near-silent signals look
+    // strongly periodic.
+    const maxLag = Math.min(n-4, Math.floor(n/cfg.MIN_CYCLES), Math.round(cfg.RESAMPLE_HZ / cfg.MIN_CADENCE_HZ));
+    if(maxLag <= minLag) return {periodic:false, score:0, cadenceHz:null, variance, reason:'warming up'};
     const scores = new Float64Array(maxLag+1);
     let bestScore = 0, bestLag = 0;
     for(let lag=minLag; lag<=maxLag; lag++){
       let num = 0;
       const m = n - lag;
       for(let i=0;i<m;i++) num += (x[i]-mean)*(x[i+lag]-mean);
-      const score = num / (m * variance); // normalized to [-1, 1]
+      // BIASED estimator: divide by the FULL window length, not by the
+      // shrinking overlap m. Dividing by m inflates the score at long
+      // lags — where only a handful of samples overlap — so a spurious
+      // late peak could outscore the true one and the reported cadence
+      // collapsed to roughly a third of reality at the fast end. The
+      // biased form tapers naturally with lag, which is exactly why
+      // pitch detectors use it: it favours the fundamental.
+      const score = num / (n * variance);
       scores[lag] = score;
       if(score > bestScore){ bestScore = score; bestLag = lag; }
     }
-    // OCTAVE CORRECTION. A periodic signal correlates just as strongly at
-    // twice its period, and real gait genuinely has both: a step period
-    // and a stride period (two steps, slightly asymmetric left/right). The
-    // raw argmax therefore lands on the stride about half the time, which
-    // reports HALF the true cadence and makes the frequency look unstable
-    // as it flips between the two. Counting steps needs the fundamental,
-    // so take the SHORTEST lag that is a local maximum and scores nearly
-    // as well as the best one.
+    // OCTAVE CORRECTION. Gait has two real periods: the step, and the
+    // stride (two steps, slightly asymmetric left/right). Autocorrelation
+    // peaks at both, and the global maximum lands on the stride about
+    // half the time — which reports HALF the true cadence and, because it
+    // flips between the two, makes a steady walk look unstable. Counting
+    // steps needs the fundamental.
+    //
+    // The check is deliberately narrow: look ONLY at half the winning
+    // lag, and switch to it only if that neighbourhood scores nearly as
+    // well. Scanning outward for the first local maximum (the obvious
+    // approach) latches onto noise bumps instead — with a real, noisy
+    // signal there are dozens of tiny local maxima, and picking one at
+    // random was pulling every cadence estimate toward the same wrong
+    // value regardless of how fast the person was actually walking.
     let fundamentalLag = bestLag;
-    for(let lag=minLag; lag<=maxLag; lag++){
-      const s = scores[lag];
-      if(s < bestScore*0.80) continue;
-      const isLocalMax = (lag<=minLag || s >= scores[lag-1]) && (lag>=maxLag || s >= scores[lag+1]);
-      if(isLocalMax){ fundamentalLag = lag; break; }
+    for(let pass=0; pass<2; pass++){
+      const half = Math.round(fundamentalLag/2);
+      if(half < minLag) break;
+      let localBest = 0, localLag = half;
+      for(let l=Math.max(minLag,half-1); l<=Math.min(maxLag,half+1); l++){
+        if(scores[l] > localBest){ localBest = scores[l]; localLag = l; }
+      }
+      if(localBest >= bestScore*cfg.OCTAVE_RATIO){ fundamentalLag = localLag; }
+      else break;
     }
     bestScore = Math.min(1, Math.max(bestScore, scores[fundamentalLag]));
-    const cadenceHz = fundamentalLag ? cfg.RESAMPLE_HZ / fundamentalLag : null;
 
-    let periodic = bestScore >= cfg.MIN_AUTOCORR &&
+    // SUB-SAMPLE REFINEMENT. Lags are whole samples, so the cadence can
+    // only ever be RESAMPLE_HZ/integer — a coarse ladder. Snapping to the
+    // wrong rung biases the frequency, and since steps are that frequency
+    // integrated over time, the bias becomes a systematic mis-count on
+    // every walk. Fitting a parabola through the correlation peak and its
+    // two neighbours recovers the true peak position between samples.
+    let refinedLag = fundamentalLag;
+    if(fundamentalLag > minLag && fundamentalLag < maxLag){
+      const y0 = scores[fundamentalLag-1], y1 = scores[fundamentalLag], y2 = scores[fundamentalLag+1];
+      const denom = (y0 - 2*y1 + y2);
+      if(denom !== 0){
+        const delta = 0.5*(y0 - y2)/denom;
+        if(Math.abs(delta) <= 1) refinedLag = fundamentalLag + delta;
+      }
+    }
+    const cadenceHz = refinedLag ? cfg.RESAMPLE_HZ / refinedLag : null;
+
+    const bar = inBout ? cfg.STAY_AUTOCORR : cfg.ENTER_AUTOCORR;
+    let periodic = bestScore >= bar &&
                    cadenceHz != null &&
                    cadenceHz >= cfg.MIN_CADENCE_HZ &&
                    cadenceHz <= cfg.MAX_CADENCE_HZ;
-    let reason = periodic ? 'gait' : (bestScore < cfg.MIN_AUTOCORR ? 'not rhythmic' : 'cadence out of range');
+    let reason = periodic ? 'gait' : (bestScore < bar ? 'not rhythmic' : 'cadence out of range');
 
-    // Frequency must also be STABLE between consecutive windows. A
-    // one-off correlation spike from a repetitive hand gesture won't
-    // hold its frequency for two windows running; a real walk will.
+    // Frequency must also be reasonably stable between windows — but the
+    // comparison is octave-aware, because a momentary flip to the stride
+    // period is a harmonic of the same gait, not a different activity.
     if(periodic && lastCadenceHz != null){
-      const drift = Math.abs(cadenceHz - lastCadenceHz) / lastCadenceHz;
-      if(drift > cfg.CADENCE_STABILITY){ periodic = false; reason = 'cadence unstable'; }
+      const cands = [cadenceHz, cadenceHz*2, cadenceHz/2];
+      const drift = Math.min(...cands.map(c=>Math.abs(c - lastCadenceHz)/lastCadenceHz));
+      const stabilityBar = inBout ? cfg.STAY_STABILITY : cfg.ENTER_STABILITY;
+      if(drift > stabilityBar){ periodic = false; reason = 'cadence unstable'; }
     }
-    if(cadenceHz != null) lastCadenceHz = cadenceHz;
+    if(periodic) lastCadenceHz = cadenceHz;
 
-    return {periodic, score: Math.max(0, bestScore), cadenceHz, variance, reason};
+    // MEDIAN SMOOTHING. Steps are the cadence integrated over time, so a
+    // single bad window doesn't just look wrong — it is permanently
+    // banked as a wrong number of steps. A running median over the last
+    // few estimates discards outliers (a stumble, a pocket shift, a
+    // half-second of noise) without lagging behind genuine changes of
+    // pace the way an average would.
+    let smoothed = cadenceHz;
+    if(periodic && cadenceHz){
+      cadenceHistory.push(cadenceHz);
+      if(cadenceHistory.length > cfg.CADENCE_MEDIAN_N) cadenceHistory.shift();
+      const sorted = cadenceHistory.slice().sort((a,b)=>a-b);
+      smoothed = sorted[Math.floor(sorted.length/2)];
+    }
+
+    return {periodic, score: Math.max(0, bestScore), cadenceHz: smoothed, rawCadenceHz: cadenceHz, variance, reason};
   }
 
-  // Adaptive peak threshold, derived from the buffer itself rather than
-  // a user-tuned constant. Different phones report wildly different
-  // accelerometer scales; deriving the threshold from the signal makes
-  // the "step sensitivity" setting a fine adjustment rather than a
-  // load-bearing one.
-  function adaptiveThreshold(sensitivityScale){
-    if(samples.length < 8) return Infinity;
-    let mean = 0;
-    for(const s of samples) mean += s.v;
-    mean /= samples.length;
-    let sd = 0;
-    for(const s of samples) sd += (s.v-mean)*(s.v-mean);
-    sd = Math.sqrt(sd/samples.length);
-    return mean + (cfg.PEAK_K * (sensitivityScale||1)) * sd;
-  }
-
-  return {analyze, push, adaptiveThreshold, get bufferSize(){ return samples.length; }, reset(){ samples.length=0; gravityBaseline=null; lastCadenceHz=null; }};
+  return {
+    analyze, push,
+    get bufferSize(){ return samples.length; },
+    reset(){ samples.length=0; gravityBaseline=null; lastCadenceHz=null; cadenceHistory=[]; }
+  };
 }
 
 /**
- * Turns validated peaks into confirmed steps and bouts.
+ * Turns a stream of periodicity verdicts into confirmed steps and bouts.
  *
- * Nothing is committed until CONFIRM_STEPS consistent steps have
- * accumulated — this is the "commit buffer". It is why picking up your
- * phone, or three seconds of fidgeting, can never add to your total: a
- * false burst dies in the buffer and is discarded, never banked. When a
- * bout does confirm, the buffered steps are released all at once so a
- * genuine walk isn't short-changed at the start.
+ * Counting is by CADENCE INTEGRATION, not peak counting: while a bout is
+ * active, steps accrue at the measured step frequency. A fractional
+ * accumulator carries the remainder between updates so nothing is lost
+ * to rounding over a long walk.
  */
 function createBoutTracker(cfg, callbacks){
   cfg = Object.assign({}, GAIT, cfg||{});
   callbacks = callbacks || {};
-  let pending = [];          // timestamps not yet committed
-  let intervals = [];        // recent step intervals, for consistency checks
-  let lastStepT = null;
-  let confirmed = false;
-  let bout = null;           // {startT, endT, steps, activity, cadenceSum, cadenceN}
+  let state = 'idle';        // 'idle' | 'confirming' | 'active'
+  let stateSince = 0;        // when the current state began
+  let lastUpdate = 0;        // last time steps were integrated
+  let lastGoodAt = 0;        // last time the signal looked like gait
+  let heldCadence = null;    // cadence carried through a grace window
+  let frac = 0;              // fractional step accumulator
+  let bout = null;
+  let lastBoutEndT = 0;      // guards against re-crediting warm-up
+  let verdicts = [];         // rolling {t, ok} history, for the duty-cycle test
+  let lastSeenVerdict = null;
 
-  function medianInterval(){
-    if(!intervals.length) return null;
-    const s = intervals.slice(-6).sort((a,b)=>a-b);
-    return s[Math.floor(s.length/2)];
+  function reset(){
+    state = 'idle'; bout = null; frac = 0; heldCadence = null;
+    stateSince = 0; lastUpdate = 0; lastGoodAt = 0; verdicts = [];
   }
 
-  function resetPending(){ pending = []; intervals = []; confirmed = false; lastStepT = null; }
+  /**
+   * Fraction of recent analyses that looked like gait.
+   *
+   * The grace window alone isn't enough: it only asks "was the signal
+   * rhythmic at some point in the last few seconds", which sustained but
+   * irregular motion — a hand gesturing through a long conversation —
+   * satisfies indefinitely. Once such a bout started it never ended, and
+   * cadence integration kept banking steps the whole time. Real walking
+   * reads as gait the large majority of the time; irregular motion only
+   * intermittently. So the bout also has to keep clearing a duty cycle.
+   */
+  function dutyCycle(now){
+    const cutoff = now - cfg.DUTY_WINDOW_MS;
+    while(verdicts.length && verdicts[0].t < cutoff) verdicts.shift();
+    if(verdicts.length < 8) return 1; // not enough history to judge yet
+    let ok = 0;
+    for(const v of verdicts) if(v.ok) ok++;
+    return ok/verdicts.length;
+  }
 
-  function closeBout(){
-    if(bout && confirmed && bout.steps > 0 && callbacks.onBoutEnd) callbacks.onBoutEnd(bout);
-    bout = null;
-    resetPending();
+  function endBout(){
+    const finished = bout;
+    const endedAt = finished ? finished.endT : Date.now();
+    reset();
+    lastBoutEndT = endedAt;
+    // A very short burst that somehow cleared confirmation is discarded
+    // rather than banked — the last line of defence against false starts.
+    if(finished && finished.steps >= cfg.MIN_BOUT_STEPS && callbacks.onBoutEnd){
+      callbacks.onBoutEnd(finished);
+      return finished;
+    }
+    return null;
   }
 
   return {
-    /** @returns number of steps newly committed by this peak (0 or more) */
-    feedPeak(t, cadenceHz, suppressed){
-      // Vehicle suppression / non-gait window: kill the pending buffer
-      // outright so a car journey can never accumulate toward a bout.
-      if(suppressed){ if(bout) closeBout(); else resetPending(); return 0; }
-
-      if(lastStepT != null){
-        const gap = t - lastStepT;
-        if(gap < cfg.MIN_STEP_INTERVAL_MS) return 0;           // refractory
-        if(gap > cfg.MAX_STEP_INTERVAL_MS){                     // bout broken
-          if(bout) closeBout(); else resetPending();
-        } else {
-          const med = medianInterval();
-          if(med != null && Math.abs(gap-med)/med > cfg.INTERVAL_TOLERANCE){
-            // Rhythm broke — restart the streak rather than banking a
-            // step that doesn't fit the gait pattern.
-            if(!confirmed){ resetPending(); }
-          } else {
-            intervals.push(gap);
-          }
-        }
+    /**
+     * @param now       epoch ms
+     * @param gait      the analyzer verdict for this moment
+     * @param suppressed true when GPS says vehicle
+     * @returns whole steps newly committed by this update (0 or more)
+     */
+    update(now, gait, suppressed){
+      if(suppressed){
+        // A vehicle journey must never accumulate, even partially.
+        if(state === 'active'){ endBout(); } else { reset(); }
+        return 0;
       }
-      lastStepT = t;
+      const looksLikeGait = !!(gait && gait.periodic && gait.cadenceHz);
+      if(looksLikeGait){ lastGoodAt = now; heldCadence = gait.cadenceHz; }
+      // One verdict per analysis pass, not per motion sample, so the duty
+      // cycle isn't skewed by however fast this device fires events.
+      if(gait && gait !== lastSeenVerdict){ lastSeenVerdict = gait; verdicts.push({t:now, ok:looksLikeGait}); }
 
-      if(confirmed && bout){
-        bout.steps += 1;
-        bout.endT = t;
-        if(cadenceHz){ bout.cadenceSum += cadenceHz; bout.cadenceN += 1; }
-        bout.activity = (bout.cadenceN && (bout.cadenceSum/bout.cadenceN) >= cfg.WALK_RUN_SPLIT_HZ) ? 'run' : 'walk';
-        return 1;
+      if(state === 'idle'){
+        if(!looksLikeGait) return 0;
+        state = 'confirming';
+        stateSince = now;
+        lastUpdate = now;
+        return 0;
       }
 
-      pending.push(t);
-      // Drop anything too old to be part of the same bout.
-      while(pending.length && (t - pending[0]) > cfg.CONFIRM_WINDOW_MS) pending.shift();
+      const sinceGood = now - lastGoodAt;
 
-      if(pending.length >= cfg.CONFIRM_STEPS){
-        confirmed = true;
-        const released = pending.length;
+      if(state === 'confirming'){
+        // Any real break during confirmation aborts it outright. This is
+        // the strict phase — it is what keeps fidgeting at zero.
+        if(sinceGood > 600){ reset(); return 0; }
+        if(now - stateSince < cfg.CONFIRM_MS) return 0;
+        // Confirmed. Credit the confirmation window retroactively so the
+        // opening seconds of a genuine walk aren't thrown away.
+        const cadence = heldCadence || 1.8;
+        // Only credit warm-up on a genuinely cold start. A bout confirming
+        // moments after the previous one ended is the same walk resuming,
+        // and its gap was already covered by the grace window.
+        const coldStart = (stateSince - lastBoutEndT) > cfg.COLD_START_MS;
+        const warmup = coldStart ? cfg.WARMUP_CREDIT_MS : 0;
+        const creditedSec = (now - stateSince + warmup)/1000;
+        const credited = cadence * creditedSec;
         bout = {
-          startT: pending[0], endT: t, steps: released,
-          activity: (cadenceHz && cadenceHz >= cfg.WALK_RUN_SPLIT_HZ) ? 'run' : 'walk',
-          cadenceSum: cadenceHz ? cadenceHz*released : 0, cadenceN: cadenceHz ? released : 0,
-          distanceM: 0, gpsDistanceM: 0
+          startT: stateSince - warmup, endT: now,
+          steps: 0, activity: cadence >= cfg.WALK_RUN_SPLIT_HZ ? 'run' : 'walk',
+          cadenceSum: cadence*creditedSec, cadenceN: creditedSec,
+          gpsDistanceM: 0
         };
-        pending = [];
+        state = 'active';
+        lastUpdate = now;
+        frac = credited;
+        const whole = Math.floor(frac);
+        frac -= whole;
+        bout.steps += whole;
         if(callbacks.onBoutStart) callbacks.onBoutStart(bout);
-        return released; // retroactive commit of the whole confirmed run
+        return whole;
       }
-      return 0;
+
+      // state === 'active'
+      if(sinceGood > cfg.GRACE_MS){ endBout(); return 0; }
+      if(dutyCycle(now) < cfg.MIN_DUTY_CYCLE){ endBout(); return 0; }
+      // Only accrue steps while the signal ACTUALLY looks like gait, plus
+      // a short bridge for momentary dropouts. The grace window keeps the
+      // bout open for much longer than that — but open is not the same as
+      // accruing. Integrating held cadence across the full grace window
+      // invented several phantom steps every time a walk paused, and on a
+      // long walk with many brief interruptions that compounded into a
+      // large over-count.
+      const bridging = !looksLikeGait && sinceGood <= cfg.GRACE_INTEGRATE_MS;
+      const cadence = looksLikeGait ? gait.cadenceHz : (bridging ? heldCadence : null);
+      const dtSec = Math.max(0, (now - lastUpdate)/1000);
+      lastUpdate = now;
+      if(!cadence) return 0; // bout stays open, but nothing is banked
+      // Guard against a suspended tab resuming and crediting a huge gap:
+      // browsers freeze timers in the background, and integrating across
+      // that gap would invent thousands of steps that never happened.
+      if(dtSec > 3){ return 0; }
+      frac += cadence * dtSec;
+      bout.endT = now;
+      bout.cadenceSum += cadence*dtSec;
+      bout.cadenceN += dtSec;
+      const avg = bout.cadenceN ? bout.cadenceSum/bout.cadenceN : cadence;
+      bout.activity = avg >= cfg.WALK_RUN_SPLIT_HZ ? 'run' : 'walk';
+      const whole = Math.floor(frac);
+      if(whole > 0){ frac -= whole; bout.steps += whole; }
+      return whole;
     },
     /** Called on a timer; closes a bout that has gone quiet. */
     tick(now){
-      if(lastStepT != null && (now - lastStepT) > cfg.BOUT_END_MS){
-        if(bout) closeBout(); else resetPending();
+      if(state === 'idle') return;
+      if(now - lastGoodAt > cfg.GRACE_MS){
+        if(state === 'active') endBout(); else reset();
       }
     },
-    get activeBout(){ return confirmed ? bout : null; },
-    get pendingCount(){ return pending.length; },
-    reset(){ bout = null; resetPending(); }
+    get activeBout(){ return state === 'active' ? bout : null; },
+    get state(){ return state; },
+    get confirmProgress(){
+      if(state === 'confirming') return Math.min(1, (Date.now()-stateSince)/cfg.CONFIRM_MS);
+      return state === 'active' ? 1 : 0;
+    },
+    reset
   };
 }
 
@@ -2907,7 +3497,10 @@ const App = {
   settings: {
     lat: 52.3676, lon: 4.9041, city: "Amsterdam, NL",
     wake: "07:00", bed: "23:00", tzGuessed:true,
-    locationSource: "default" // 'default' | 'auto' | 'manual' — only 'default' triggers a one-time auto-locate
+    locationSource: "default", // 'default' | 'auto' | 'manual' — only 'default' triggers a one-time auto-locate
+    placeFull: "",             // full resolved place name, e.g. "Rosmalen, North Brabant, Netherlands"
+    placeCountry: "",          // ISO country code from reverse geocoding
+    gpsAccuracyM: null
   },
   tasks: {}, // { 'YYYY-MM-DD': [{id,text,done}] }
   sleepLog: {}, // { 'YYYY-MM-DD' (wake date): {bedTime:'HH:MM', wakeTime:'HH:MM', durationHours:N} }
@@ -2983,6 +3576,8 @@ const App = {
       ['startAutoGpsTracking', ()=>this.startAutoGpsTracking()],
       ['autoLocateOnFirstLoad', ()=>this.autoLocateOnFirstLoad()],
       ['renderQuote', ()=>this.renderQuote()],
+      ['renderVedicEvents', ()=>this.renderVedicEvents()],
+      ['renderLocationNow', ()=>this.renderLocationNow()],
       ['tick', ()=>this.tick()],
       ['renderCalendar', ()=>this.renderCalendar()],
       ['fetchWeather', ()=>this.fetchWeather()]
@@ -3047,15 +3642,298 @@ const App = {
       if(this.settings.locationSource !== 'default') return; // user changed it while this was pending
       this.settings.lat = pos.coords.latitude;
       this.settings.lon = pos.coords.longitude;
-      this.settings.city = "My location";
+      this.settings.city = "Locating…";
       this.settings.locationSource = "auto";
       this.ensurePrimaryLocation();
       this.saveSettingsState();
       this.fetchWeather();
       this.renderWxLocationsRow();
       this.tick();
+      // Resolve the coordinates to an actual place name rather than
+      // leaving a generic label on screen.
+      this.resolveLocationName(pos.coords.latitude, pos.coords.longitude);
     }, ()=>{ /* denied or unavailable — silently keep the default, no error shown for a background attempt */ },
     { maximumAge: 300000, timeout: 8000 });
+  },
+  async resolveLocationName(lat, lon){
+    const place = await reverseGeocode(lat, lon);
+    if(!place) {
+      // Never leave the placeholder showing if the lookup fails — fall
+      // back to the coordinates, which are at least truthful.
+      if(this.settings.city === 'Locating…'){
+        this.settings.city = `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+        this.ensurePrimaryLocation(); this.saveSettingsState(); this.tick();
+      }
+      return;
+    }
+    if(this.settings.locationSource === 'manual') return; // user overrode us meanwhile
+    this.settings.city = place.short;
+    this.settings.placeFull = place.label;
+    this.settings.placeCountry = place.countryCode;
+    this.ensurePrimaryLocation();
+    this.saveSettingsState();
+    this.renderWxLocationsRow();
+    this.renderSettingsForm();
+    this.tick();
+    if(this.wxData) this.renderWeatherNow(dstr(new Date()));
+  },
+  // Manual refresh, for when someone has travelled and wants the app to
+  // catch up without digging through settings.
+  refreshMyLocation(){
+    const status = document.getElementById('locNowDetail');
+    if(!('geolocation' in navigator)){ if(status) status.textContent = 'This browser has no location access.'; return; }
+    if(status) status.textContent = 'Getting a fresh fix…';
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      this.settings.lat = pos.coords.latitude;
+      this.settings.lon = pos.coords.longitude;
+      this.settings.locationSource = 'auto';
+      this.settings.gpsAccuracyM = pos.coords.accuracy;
+      this.ensurePrimaryLocation(); this.saveSettingsState();
+      await this.resolveLocationName(pos.coords.latitude, pos.coords.longitude);
+      this.fetchWeather();
+      this.renderLocationNow();
+    }, err=>{
+      if(status) status.textContent = err.code===1
+        ? 'Location permission denied — allow it in your browser settings to use this.'
+        : 'Location unavailable right now.';
+    }, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+  },
+  renderLocationNow(){
+    const nameEl = document.getElementById('locNowName');
+    const tempEl = document.getElementById('locNowTemp');
+    const detEl  = document.getElementById('locNowDetail');
+    const condEl = document.getElementById('locNowCond');
+    if(!nameEl) return;
+    nameEl.textContent = this.settings.placeFull || this.settings.city || '—';
+    const cw = this.wxData && this.wxData.current_weather;
+    if(cw){
+      tempEl.textContent = Math.round(cw.temperature)+'°C';
+      const [icon, desc] = wmoInfo(cw.weathercode);
+      if(condEl) condEl.textContent = `${icon} ${desc} · wind ${Math.round(cw.windspeed)} km/h`;
+    } else {
+      tempEl.textContent = '—';
+      if(condEl) condEl.textContent = this.wxError ? 'Weather unavailable' : 'Fetching weather…';
+    }
+    const acc = this.settings.gpsAccuracyM;
+    detEl.textContent = `${this.settings.lat.toFixed(4)}, ${this.settings.lon.toFixed(4)}`
+      + (acc ? ` · accurate to about ${Math.round(acc)}m` : '')
+      + ` · ${this.settings.locationSource === 'manual' ? 'set manually' : 'from your device'}`;
+  },
+  /* ---------- Vedic & astronomical events ---------- */
+  vedicRange: 30,
+  setVedicRange(days){
+    this.vedicRange = days;
+    document.querySelectorAll('#vedicRangeRow button').forEach(b=>
+      b.classList.toggle('active', Number(b.dataset.days) === days));
+    this.renderVedicEvents(true);
+  },
+  renderVedicEvents(force){
+    const el = document.getElementById('vedicEventsList');
+    if(!el) return;
+    // Scanning a year of syzygies is a heavy calculation, so it's cached
+    // and only recomputed when the range changes or the day rolls over.
+    const key = `${this.vedicRange}|${dstr(new Date())}`;
+    if(force || this._vedicCacheKey !== key){
+      this._vedicCacheKey = key;
+      try{ this._vedicCache = getUpcomingVedicEvents(new Date(), this.vedicRange); }
+      catch(e){ this._vedicCache = []; console.error('Vedic event computation failed', e); }
+    }
+    const events = this._vedicCache || [];
+    if(!events.length){ el.innerHTML = '<div class="stat-sub">No events found in this window.</div>'; return; }
+    // Eclipses first when they're imminent — they're the ones people
+    // actually plan around.
+    const shown = events.slice(0, this.vedicRange <= 30 ? 14 : 30);
+    el.innerHTML = shown.map(e=>{
+      const when = e.when.toLocaleDateString(undefined,{weekday:'short', day:'numeric', month:'short'});
+      const away = e.daysAway <= 0
+        ? (e.hoursAway > 0 ? `in ${Math.round(e.hoursAway)}h` : 'today')
+        : (e.daysAway === 1 ? 'tomorrow' : `in ${e.daysAway} days`);
+      const urgent = e.kind === 'eclipse' || e.inPrepWindow;
+      return `<div class="news-item" style="${urgent?'background:rgba(var(--tint-rgb),0.05); border-radius:10px; padding:10px 8px;':''}">
+        <div style="font-size:22px; flex:none; width:30px; text-align:center;">${e.icon}</div>
+        <div class="news-body">
+          <div class="news-top-row">
+            <span class="news-cat-pill">${escapeHtml(when)}</span>
+            <span class="news-meta-date">${escapeHtml(away)}</span>
+          </div>
+          <div style="font-weight:600; font-size:13.5px; color:var(--text-hi);">${escapeHtml(e.title)}</div>
+          <div class="news-meta">${escapeHtml(e.detail)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  /* ---------- Speed tracking (walking, running, cycling, driving) ----------
+     Separate from the step tracker on purpose: this is about how fast
+     you're moving, works in a vehicle where step counting is deliberately
+     suppressed, and is opt-in because continuous high-accuracy GPS is the
+     single most battery-expensive thing this app can do. */
+  speed: {
+    watchId: null, unit: 'kmh',
+    current: null, max: 0, samples: [],
+    movingMs: 0, distanceM: 0,
+    lastFix: null, lastTickAt: null, accuracy: null, altitude: null, heading: null
+  },
+  SPEED_UNITS: {
+    kmh: {label:'km/h', factor:3.6, dp:1},
+    mph: {label:'mph',  factor:2.23694, dp:1},
+    ms:  {label:'m/s',  factor:1, dp:1},
+    kn:  {label:'kn',   factor:1.94384, dp:1}
+  },
+  // Below this, a reading is GPS drift rather than movement. Reporting
+  // 0.4 km/h while standing still is the classic speedometer-app bug.
+  SPEED_NOISE_FLOOR_MPS: 0.3,
+  setSpeedUnit(){
+    const sel = document.getElementById('spdUnit');
+    if(sel) this.speed.unit = sel.value;
+    this.renderSpeedSection();
+  },
+  fmtSpeed(mps){
+    if(mps == null) return '—';
+    const u = this.SPEED_UNITS[this.speed.unit] || this.SPEED_UNITS.kmh;
+    const v = Math.max(0, mps) * u.factor;
+    return `${v.toFixed(u.dp)} ${u.label}`;
+  },
+  // Classification from speed alone, cross-checked against the gait
+  // engine: if cadence says you're running, that beats a speed guess,
+  // because 12 km/h is a fast run and also a slow cycle.
+  classifyMotion(mps){
+    const bout = this.stepTracker.tracker && this.stepTracker.tracker.activeBout;
+    if(mps == null) return {icon:'❓', label:'No fix yet'};
+    if(mps < this.SPEED_NOISE_FLOOR_MPS) return {icon:'🧍', label:'Stationary'};
+    if(bout && bout.activity === 'run' && mps < 7) return {icon:'🏃', label:'Running (confirmed by cadence)'};
+    if(bout && bout.activity === 'walk' && mps < 3) return {icon:'🚶', label:'Walking (confirmed by cadence)'};
+    if(mps < 2.2) return {icon:'🚶', label:'Walking pace'};
+    if(mps < 4.2) return {icon:'🏃', label:'Running pace'};
+    if(mps < 8.5) return {icon:'🚴', label:'Cycling pace'};
+    if(mps < 33)  return {icon:'🚗', label:'Vehicle'};
+    return {icon:'🚄', label:'Fast vehicle / rail'};
+  },
+  toggleSpeedTracking(){
+    if(this.speed.watchId != null){ this.stopSpeedTracking(); return; }
+    if(!('geolocation' in navigator)){
+      document.getElementById('spdStatus').textContent = 'This browser has no location access, so speed can\'t be measured.';
+      return;
+    }
+    const status = document.getElementById('spdStatus');
+    if(status) status.textContent = 'Acquiring GPS… the first fix usually takes 5-15 seconds outdoors.';
+    this.speed.lastTickAt = Date.now();
+    this.speed.watchId = navigator.geolocation.watchPosition(pos=>{
+      const c = pos.coords;
+      const now = pos.timestamp || Date.now();
+      this.speed.accuracy = c.accuracy;
+      this.speed.altitude = (typeof c.altitude === 'number' && !isNaN(c.altitude)) ? c.altitude : null;
+      this.speed.heading  = (typeof c.heading === 'number' && !isNaN(c.heading)) ? c.heading : null;
+
+      // Prefer the device's Doppler-derived speed. Differentiating
+      // successive positions amplifies GPS jitter badly at low speeds;
+      // the receiver's own velocity solution doesn't.
+      let mps = (typeof c.speed === 'number' && !isNaN(c.speed) && c.speed >= 0) ? c.speed : null;
+      const fix = {lat:c.latitude, lon:c.longitude, t:now};
+      if(mps == null && this.speed.lastFix){
+        const dt = (now - this.speed.lastFix.t)/1000;
+        if(dt > 0.2){
+          const d = haversineDistanceKm(this.speed.lastFix.lat, this.speed.lastFix.lon, fix.lat, fix.lon)*1000;
+          mps = d/dt;
+        }
+      }
+      // Reject physically impossible jumps from a bad fix.
+      if(mps != null && mps > 200) mps = null;
+      if(mps != null && mps < this.SPEED_NOISE_FLOOR_MPS) mps = 0;
+
+      if(mps != null){
+        const dt = this.speed.lastTickAt ? (now - this.speed.lastTickAt)/1000 : 0;
+        this.speed.lastTickAt = now;
+        if(mps > this.SPEED_NOISE_FLOOR_MPS && dt > 0 && dt < 30){
+          this.speed.movingMs += dt*1000;
+          this.speed.distanceM += mps*dt;
+        }
+        this.speed.current = mps;
+        if(mps > this.speed.max) this.speed.max = mps;
+        this.speed.samples.push({t:now, v:mps});
+        // Keep roughly the last five minutes for the graph.
+        const cutoff = now - 5*60*1000;
+        while(this.speed.samples.length && this.speed.samples[0].t < cutoff) this.speed.samples.shift();
+      }
+      this.speed.lastFix = fix;
+      // Share the reading with the step engine so vehicle rejection works
+      // even when the user is sitting on this tab rather than the steps one.
+      this.stepTracker.lastGpsSpeed = mps;
+      this.stepTracker.lastGpsSpeedAt = Date.now();
+      this.renderSpeedSection();
+    }, err=>{
+      if(status) status.textContent = err.code===1
+        ? 'Location permission denied — speed needs it. You can allow it in your browser\'s site settings.'
+        : 'No GPS fix available. Speed needs a clear view of the sky; it won\'t work reliably indoors.';
+    }, {enableHighAccuracy:true, maximumAge:0, timeout:20000});
+
+    const btn = document.getElementById('spdToggleBtn');
+    if(btn) btn.textContent = '⏸️ Stop';
+    if(!this._speedInterval) this._speedInterval = setInterval(()=>{
+      // If no fix has arrived for a while, we've stopped moving or lost
+      // signal — show zero rather than leaving a stale number on screen.
+      if(this.speed.watchId != null && this.speed.lastFix && Date.now() - this.speed.lastFix.t > 8000){
+        this.speed.current = 0;
+      }
+      if(document.getElementById('healthSpeed') && document.getElementById('healthSpeed').style.display !== 'none') this.renderSpeedSection();
+    }, 1000);
+    this.requestWakeLock();
+  },
+  stopSpeedTracking(){
+    if(this.speed.watchId != null){ navigator.geolocation.clearWatch(this.speed.watchId); this.speed.watchId = null; }
+    if(this._speedInterval){ clearInterval(this._speedInterval); this._speedInterval = null; }
+    const btn = document.getElementById('spdToggleBtn');
+    if(btn) btn.textContent = '▶️ Start';
+    const status = document.getElementById('spdStatus');
+    if(status) status.textContent = 'Stopped. Trip totals are kept until you reset them.';
+    this.speed.current = null;
+    this.renderSpeedSection();
+  },
+  resetSpeedTrip(){
+    this.speed.max = 0; this.speed.samples = []; this.speed.movingMs = 0;
+    this.speed.distanceM = 0; this.speed.lastFix = null; this.speed.lastTickAt = Date.now();
+    this.renderSpeedSection();
+  },
+  renderSpeedSection(){
+    const el = id => document.getElementById(id);
+    if(!el('spdNow')) return;
+    const s = this.speed;
+    el('spdNow').textContent = s.watchId == null && s.current == null ? '—' : this.fmtSpeed(s.current || 0);
+    const cls = this.classifyMotion(s.current);
+    el('spdMode').textContent = s.watchId == null ? 'Not tracking — press Start' : `${cls.icon} ${cls.label}`;
+    const avgMps = s.movingMs > 0 ? s.distanceM/(s.movingMs/1000) : null;
+    el('spdAvg').textContent = avgMps != null ? this.fmtSpeed(avgMps) : '—';
+    el('spdMax').textContent = `Max: ${s.max ? this.fmtSpeed(s.max) : '—'}`;
+    el('spdDist').textContent = s.distanceM ? `Distance: ${(s.distanceM/1000).toFixed(2)} km` : '';
+    const mins = Math.floor(s.movingMs/60000), secs = Math.floor((s.movingMs%60000)/1000);
+    el('spdDur').textContent = `${mins}:${String(secs).padStart(2,'0')}`;
+    el('spdAcc').textContent = s.accuracy != null ? `${Math.round(s.accuracy)}m` : '—';
+    el('spdAlt').textContent = s.altitude != null ? `${Math.round(s.altitude)}m` : '—';
+    el('spdHead').textContent = s.heading != null ? `${Math.round(s.heading)}°` : '—';
+    if(s.accuracy != null && s.accuracy > 50 && el('spdStatus')){
+      el('spdStatus').textContent = `GPS accuracy is only ${Math.round(s.accuracy)}m right now, so the speed reading is rough. It improves outdoors with a clear view of the sky.`;
+    }
+    this.renderSpeedGraph();
+  },
+  renderSpeedGraph(){
+    const svg = document.getElementById('spdGraphSvg');
+    if(!svg) return;
+    const pts = this.speed.samples;
+    if(pts.length < 2){ svg.innerHTML = ''; return; }
+    const u = this.SPEED_UNITS[this.speed.unit] || this.SPEED_UNITS.kmh;
+    const W=320,H=100,padTop=8,padBottom=14, chartH=H-padTop-padBottom;
+    const t0=pts[0].t, t1=pts[pts.length-1].t, span=Math.max(1,t1-t0);
+    const max=Math.max(...pts.map(p=>p.v), 0.1);
+    const d = pts.map((p,i)=>{
+      const x=((p.t-t0)/span)*W;
+      const y=padTop+chartH-(p.v/max)*chartH;
+      return (i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+    }).join(' ');
+    svg.innerHTML =
+      `<path d="${d}" fill="none" stroke="var(--saffron)" stroke-width="2"></path>` +
+      `<text class="sleep-axis-label" x="2" y="${padTop+8}">${(max*u.factor).toFixed(0)} ${u.label}</text>` +
+      `<text class="sleep-axis-label" x="2" y="${H-3}">${Math.round(span/60000)} min ago</text>` +
+      `<text class="sleep-axis-label" x="${W-4}" y="${H-3}" text-anchor="end">now</text>`;
   },
   saveTasks(){ localStorage.setItem('productivityapp_tasks', JSON.stringify(this.tasks)); },
   saveSleepLogState(){ localStorage.setItem('productivityapp_sleep_log', JSON.stringify(this.sleepLog)); },
@@ -3259,6 +4137,7 @@ const App = {
 
     // weather now (from cached data if available)
     this.renderWeatherNow(todayStr);
+    this.renderLocationNow();
 
     // steps/distance — event-driven updates already happen per detected
     // step; this is a redundant refresh so the numbers never look stale
@@ -3273,6 +4152,14 @@ const App = {
         this._lastStepsFullRender = now;
         this.renderStepsSection();
       }
+    }
+
+    // Vedic events involve scanning for syzygies, which is far too heavy
+    // for a per-second tick — recompute hourly, and immediately if the
+    // calendar day has rolled over.
+    if(!this._lastVedicTick || now - this._lastVedicTick > 3600000){
+      this._lastVedicTick = now;
+      this.renderVedicEvents();
     }
 
     // rain nowcast countdown — cheap to recompute, refresh roughly once a minute
@@ -3407,7 +4294,7 @@ const App = {
       const [icon, desc] = wmoInfo(cw.weathercode);
       document.getElementById('wxIconNow').textContent = icon;
       document.getElementById('wxTempNow').textContent = Math.round(cw.temperature)+'°C';
-      document.getElementById('wxDescNow').textContent = desc + ' · ' + this.settings.city;
+      document.getElementById('wxDescNow').textContent = desc + ' · ' + (this.settings.placeFull || this.settings.city);
       const [mood1, mood2] = wmoMoodGradient(cw.weathercode);
       const cardEl = document.getElementById('weatherNowCard');
       if(cardEl){ cardEl.style.setProperty('--wx-mood-1', mood1); cardEl.style.setProperty('--wx-mood-2', mood2); }
@@ -4061,9 +4948,11 @@ const App = {
           b.classList.add('active');
           const sub = b.dataset.sub;
           document.getElementById('healthSteps').style.display = sub==='steps' ? 'block' : 'none';
+          document.getElementById('healthSpeed').style.display = sub==='speed' ? 'block' : 'none';
           document.getElementById('healthCalories').style.display = sub==='calories' ? 'block' : 'none';
           document.getElementById('healthWater').style.display = sub==='water' ? 'block' : 'none';
           document.getElementById('healthScreen').style.display = sub==='screen' ? 'block' : 'none';
+          if(sub==='speed') this.renderSpeedSection();
           if(sub==='calories') this.renderFoodDb();
           if(sub==='water') this.renderWaterSection();
           if(sub==='screen') this.renderScreenSection();
@@ -4338,7 +5227,6 @@ const App = {
     if(this.stepTracker.active && !replace) return;
     if(this.stepTracker.motionHandler) window.removeEventListener('devicemotion', this.stepTracker.motionHandler);
 
-    const sensitivity = this.health.stepSensitivity || 0.8;
     const analyzer = createGaitAnalyzer();
     const tracker = createBoutTracker({}, {
       onBoutStart: (bout)=>{ this.onBoutStart(bout); },
@@ -4348,7 +5236,6 @@ const App = {
     this.stepTracker.tracker = tracker;
     this.stepTracker.lastGait = null;
     this.stepTracker.lastAnalyzeAt = 0;
-    this.stepTracker.aboveThreshold = false;
 
     this.stepTracker.motionHandler = (ev)=>{
       // Devices disagree about which field is populated and whether
@@ -4367,14 +5254,16 @@ const App = {
 
       this.stepTracker.sawAnyEvent = true;
       const now = Date.now();
-      const dyn = analyzer.push(raw, now);
+      analyzer.push(raw, now);
 
-      // Re-run the periodicity analysis a few times a second rather than
-      // per sample — it's an O(n·lags) scan and doesn't need to run at
-      // sensor rate to be responsive.
-      if(now - this.stepTracker.lastAnalyzeAt > 400){
+      // The periodicity test re-runs a few times a second rather than per
+      // sample — it's an O(n x lags) scan and doesn't need sensor-rate
+      // updates to be responsive. Everything between analyses integrates
+      // against the last verdict.
+      const inBout = tracker.state !== 'idle';
+      if(now - this.stepTracker.lastAnalyzeAt > GAIT.ANALYZE_EVERY_MS){
         this.stepTracker.lastAnalyzeAt = now;
-        this.stepTracker.lastGait = analyzer.analyze();
+        this.stepTracker.lastGait = analyzer.analyze(inBout);
       }
       const gait = this.stepTracker.lastGait;
 
@@ -4384,36 +5273,52 @@ const App = {
       this.stepTracker.suppressedReason = null;
       const spd = this.stepTracker.lastGpsSpeed;
       const spdFresh = this.stepTracker.lastGpsSpeedAt && (now - this.stepTracker.lastGpsSpeedAt) < 20000;
-      if(spdFresh && spd != null && spd > GAIT.VEHICLE_SPEED_MPS && !(gait && gait.periodic)){
+      // Unconditional: no one walks or runs at 23 km/h, so sustained GPS
+      // speed above that settles it on its own. Requiring the motion to
+      // ALSO look non-rhythmic was the flaw — road vibration in a moving
+      // car is periodic, so the rhythm test let the journey through.
+      if(spdFresh && spd != null && spd > GAIT.VEHICLE_SPEED_MPS){
         suppressed = true;
         this.stepTracker.suppressedReason = 'moving too fast for walking (vehicle)';
+      } else if(!gait || !gait.periodic){
+        this.stepTracker.suppressedReason = gait ? gait.reason : 'warming up';
       }
-      if(!gait || !gait.periodic){
-        // Not rhythmic enough to be gait — the pending buffer decays and
-        // nothing is banked. This is the check that kills scrolling,
-        // typing and fidgeting.
-        if(!suppressed) this.stepTracker.suppressedReason = gait ? gait.reason : 'warming up';
-        tracker.feedPeak(now, null, true);
-        return;
-      }
-      if(suppressed){ tracker.feedPeak(now, null, true); return; }
 
-      // Adaptive peak detection inside a confirmed-gait window.
-      const threshold = analyzer.adaptiveThreshold(sensitivity);
-      if(dyn > threshold){
-        if(!this.stepTracker.aboveThreshold){
-          const committed = tracker.feedPeak(now, gait.cadenceHz, false);
-          if(committed > 0) this.commitSteps(committed, gait.cadenceHz);
-        }
-        this.stepTracker.aboveThreshold = true;
-      } else {
-        this.stepTracker.aboveThreshold = false;
-      }
+      // Steps accrue from the measured cadence, so a weak or missed peak
+      // can't lose one. This is the fix for under-counting.
+      const committed = tracker.update(now, gait, suppressed);
+      if(committed > 0) this.commitSteps(committed, gait && gait.cadenceHz);
     };
 
     window.addEventListener('devicemotion', this.stepTracker.motionHandler);
     this.stepTracker.active = true;
+
+    // devicemotion stops firing when the tab is hidden or the screen
+    // locks — a platform behaviour, not a bug. Closing the open bout on
+    // the way out means the time spent away is never integrated into it.
+    if(!this._visibilityBound){
+      this._visibilityBound = true;
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.hidden && this.stepTracker.tracker) this.stepTracker.tracker.tick(Date.now() + GAIT.GRACE_MS + 1);
+        if(!document.hidden){
+          if(this.stepTracker.analyzer) this.stepTracker.analyzer.reset();
+          this.requestWakeLock();
+        }
+      });
+    }
+    this.requestWakeLock();
     if(!replace) this.notifyAutoTrackingStarted();
+  },
+  // Keeps the screen awake during an active walk so the sensors keep
+  // delivering. Only held while a bout is running, and released as soon
+  // as it ends, so it can't quietly drain the battery all day.
+  async requestWakeLock(){
+    try{
+      if(!('wakeLock' in navigator) || document.hidden) return;
+      if(this._wakeLock) return;
+      this._wakeLock = await navigator.wakeLock.request('screen');
+      this._wakeLock.addEventListener('release', ()=>{ this._wakeLock = null; });
+    }catch(e){ /* denied or unsupported — tracking still works while the screen is on */ }
   },
   notifyAutoTrackingStarted(){
     try{
@@ -5121,7 +6026,7 @@ const App = {
     this.saveHealthState();
   },
 
-  /* ---------- Radiation: honest explanation + genuine (non-EMF) network info ---------- */
+  /* ---------- Network diagnostics + device RF reference info ---------- */
   renderRadiationSection(){
     const typeEl = document.getElementById('netConnType');
     const downEl = document.getElementById('netDownlink');
