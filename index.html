@@ -330,6 +330,20 @@ button:focus-visible, a:focus-visible{
 .news-top-row{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:3px;}
 .news-cat-pill{font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; background:rgba(var(--tint-rgb),0.08); color:var(--text-hi); white-space:nowrap;}
 .news-meta-date{font-size:10.5px; color:var(--text-lo); font-family:var(--font-mono); white-space:nowrap;}
+.news-skeleton{pointer-events:none;}
+.skeleton-pill, .skeleton-date, .skeleton-line{
+  background:linear-gradient(90deg, rgba(var(--tint-rgb),0.07) 25%, rgba(var(--tint-rgb),0.14) 37%, rgba(var(--tint-rgb),0.07) 63%);
+  background-size:400% 100%; animation:skeleton-shimmer 1.4s ease infinite; border-radius:6px;
+}
+.skeleton-pill{width:70px; height:14px; border-radius:20px;}
+.skeleton-date{width:60px; height:12px;}
+.skeleton-line{height:12px; margin-top:6px;}
+.skeleton-title{width:85%; height:15px;}
+.skeleton-meta{width:96%;}
+@keyframes skeleton-shimmer{ 0%{background-position:100% 0;} 100%{background-position:0 0;} }
+.news-refresh-inline{background:none; border:none; color:var(--text-lo); font-size:13px; cursor:pointer; padding:0 0 0 6px; opacity:0.7; transition:opacity 0.15s ease, transform 0.3s ease;}
+.news-refresh-inline:hover{opacity:1; transform:rotate(90deg);}
+.news-footer-note{display:flex; align-items:center; gap:2px;}
 .news-error{font-size:13px; color:var(--text-lo); padding:10px 2px;}
 .news-retry{margin-top:10px;}
 
@@ -701,7 +715,7 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
   <!-- ===================== NEWS ===================== -->
   <div class="view" id="view-news">
     <div class="section-title">Headlines</div>
-    <div class="section-sub">Curated per category from reliable direct sources, with automatic fallbacks if one is unreachable.</div>
+    <div class="section-sub">Every tab merges several independent publishers at once. Only the India and Netherlands tabs are country-locked — every other tab is deliberately worldwide.</div>
     <div class="filter-row" id="newsCatRow">
       <button class="active" data-cat="global">🌍 International</button>
       <button data-cat="local_nl">🇳🇱 Local (Netherlands)</button>
@@ -710,7 +724,25 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
       <button data-cat="entrepreneur">🚀 Entrepreneur</button>
       <button data-cat="ai">🤖 AI</button>
       <button data-cat="tech">💻 Tech</button>
-      <button data-cat="it">🖥️ IT</button>
+      <button data-cat="it">🖥️ IT &amp; Software</button>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="eyebrow">Filter by date</div>
+      <div class="filter-row" id="newsDateRow" style="margin-top:6px;">
+        <button data-range="all" class="active">All</button>
+        <button data-range="today">Today</button>
+        <button data-range="3d">Last 3 days</button>
+        <button data-range="7d">Last 7 days</button>
+      </div>
+      <div class="add-row" style="margin-top:8px; flex-wrap:wrap; gap:8px;">
+        <input type="date" id="newsExactDate" style="max-width:180px;">
+        <button class="btn ghost" onclick="App.applyNewsExactDate()">Show that day</button>
+        <select id="newsSortOrder" onchange="App.renderNewsList()" style="max-width:170px;">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </div>
+      <div class="stat-sub" id="newsFilterNote" style="margin-top:6px;"></div>
     </div>
     <div class="card">
       <div id="newsList"><div class="stat-sub">Loading headlines…</div></div>
@@ -730,12 +762,14 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
     <!-- ---- Steps & Route ---- -->
     <div id="healthSteps">
       <div class="card" style="margin-bottom:14px;">
-        <div class="stat-sub">Honest limits, upfront: this tracks steps using your <b>phone's</b> motion sensor and GPS, only while this page is open in a mobile browser. It cannot read an Apple Watch or Wear OS watch directly — smartwatches don't run web pages, that needs a native watch app. If your watch already counts your steps well, the manual entry below is the most reliable option. Tracking uses noise-filtering and GPS-quality checks to stay as accurate as a phone-based sensor genuinely can be, but no browser-based pedometer or consumer GPS can be perfectly glitch-free — phone placement, walking style, and satellite conditions all cause real variance.</div>
+        <div class="stat-sub">Steps are only counted when you're <b>actually walking</b>. Every few hundred milliseconds the app checks whether your phone's motion is genuinely rhythmic (an autocorrelation test across the human gait band), and holds detected steps in a buffer until eight consistent ones confirm a real walking bout. Scrolling, typing, fidgeting, gesturing while talking, and car or train journeys all fail that test and are discarded rather than counted.<br><br><b>Honest limits, upfront:</b> this uses your <i>phone's</i> sensors and only while this page is open and the screen is on — browsers suspend motion and location for background tabs, which no website can work around. It also can't read an Apple Watch or Wear OS watch. Your phone's own health app runs on a dedicated low-power motion chip all day, so if you have that number, manual entry below still beats any browser pedometer.</div>
       </div>
 
       <div class="card" style="margin-bottom:14px;">
         <div class="stat-sub" id="stepTrackerStatus">Checking for a motion sensor…</div>
         <div style="margin-top:8px;"><button class="btn" id="enableAutoTrackingBtn" onclick="App.enableAutoStepTrackingTap()" style="display:none;">👆 Tap to enable automatic tracking</button></div>
+        <div style="margin-top:8px;"><button class="btn ghost" onclick="App.toggleGaitDebug()">🔬 Show live signal</button></div>
+        <div class="stat-sub" id="gaitDebug" style="display:none; margin-top:8px; font-family:var(--font-mono); font-size:11px; line-height:1.6;"></div>
       </div>
 
       <div class="grid2">
@@ -743,13 +777,40 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
           <div class="eyebrow">Steps today</div>
           <div class="stat-big" id="stepsTodayCount">0</div>
           <div class="stat-sub" id="stepsGoalLabel">Goal: 10,000</div>
+          <div class="stat-sub" id="stepsActivityLabel" style="margin-top:6px;"></div>
         </div>
         <div class="card">
           <div class="eyebrow">Distance &amp; calories (est.)</div>
-          <div class="stat-big" id="stepsDistanceLabel">0.0 km</div>
+          <div class="stat-big" id="stepsDistanceLabel">0.00 km</div>
           <div class="stat-sub" id="stepsCaloriesLabel">~0 kcal burned</div>
+          <div class="stat-sub" id="stepsSourceNote" style="margin-top:6px;"></div>
+          <div class="stat-sub" style="margin-top:6px;">Walking pace: <b id="stepsPaceLabel">—</b></div>
           <div class="stat-sub" id="strideCalibrationNote" style="margin-top:6px; font-style:italic;"></div>
         </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📅 Any past day</h3>
+        <div class="stat-sub">Pick a date, or step back day by day, to see exactly what you walked then — total steps, distance, pace and each individual walking session.</div>
+        <div class="add-row" style="margin-top:10px; flex-wrap:wrap; gap:8px;">
+          <button class="btn ghost" onclick="App.shiftStepHistory(-1)">← Earlier</button>
+          <input type="date" id="stepHistDate" onchange="App.setStepHistoryDate()" style="max-width:180px;">
+          <button class="btn ghost" onclick="App.shiftStepHistory(1)">Later →</button>
+        </div>
+        <div id="stepHistOut" style="margin-top:12px;"></div>
+        <div class="group-label" style="margin:14px 0 4px;">Last 14 days</div>
+        <svg id="stepBarsSvg" class="sleep-graph" viewBox="0 0 320 100" preserveAspectRatio="none"></svg>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <h3>📊 Averages</h3>
+        <div class="filter-row" id="stepAvgRow" style="margin-top:6px;">
+          <button class="active" data-win="7" onclick="App.setAverageWindow(7)">7 days</button>
+          <button data-win="30" onclick="App.setAverageWindow(30)">30 days</button>
+          <button data-win="90" onclick="App.setAverageWindow(90)">90 days</button>
+          <button data-win="365" onclick="App.setAverageWindow(365)">1 year</button>
+        </div>
+        <div id="stepAvgOut" style="margin-top:12px;"></div>
       </div>
 
       <div class="card" style="margin-bottom:14px;">
@@ -758,6 +819,7 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
         <div class="add-row" style="margin-top:8px;">
           <input type="number" id="manualStepsInput" placeholder="e.g. 8500" min="0">
           <button onclick="App.saveManualSteps()">Save</button>
+          <button class="btn ghost" onclick="App.clearManualSteps()">Undo override</button>
         </div>
         <div class="dc-field" style="margin-top:10px; max-width:200px;"><label>Daily step goal</label><input type="number" id="stepGoalInput" min="1000" step="500"></div>
         <div style="margin-top:8px;"><button class="btn ghost" onclick="App.saveStepGoal()">Update goal</button></div>
@@ -1509,6 +1571,33 @@ function extractTag(block, tag){
   if(cdata) val = cdata[1];
   return decodeXMLEntities(val.trim());
 }
+// Atom feeds (arXiv, The Register, The Verge, GitHub Blog) use <entry>
+// instead of <item>, <published>/<updated> instead of <pubDate>, and put
+// the URL in a <link href="..."> attribute rather than element text.
+// Parsing only RSS 2.0 silently returned zero items for those sources,
+// which is why several tabs fell through to a weaker fallback.
+function parseAtomEntries(xmlText, limit){
+  const items = [];
+  const entryRe = /<entry[^>]*>([\s\S]*?)<\/entry>/gi;
+  let m;
+  while((m = entryRe.exec(xmlText)) && items.length < (limit||50)){
+    const block = m[1];
+    // Prefer rel="alternate" (the human-readable article); fall back to the
+    // first href. arXiv puts the abstract page in rel="alternate".
+    let link = '';
+    const altRe = /<link[^>]*rel=["']alternate["'][^>]*href=["']([^"']+)["']/i.exec(block)
+              || /<link[^>]*href=["']([^"']+)["'][^>]*rel=["']alternate["']/i.exec(block)
+              || /<link[^>]*href=["']([^"']+)["']/i.exec(block);
+    if(altRe) link = decodeXMLEntities(altRe[1]);
+    items.push({
+      title: extractTag(block, 'title').replace(/\s+/g,' ').trim(),
+      link: link,
+      pubDate: extractTag(block, 'published') || extractTag(block, 'updated'),
+      description: extractTag(block, 'summary') || extractTag(block, 'content')
+    });
+  }
+  return items;
+}
 function parseRSSItems(xmlText, limit){
   const items = [];
   const itemRe = /<item[^>]*>([\s\S]*?)<\/item>/gi;
@@ -1518,148 +1607,559 @@ function parseRSSItems(xmlText, limit){
     items.push({
       title: extractTag(block, 'title'),
       link: extractTag(block, 'link'),
-      pubDate: extractTag(block, 'pubDate'),
+      pubDate: extractTag(block, 'pubDate') || extractTag(block, 'dc:date') || extractTag(block, 'date'),
       description: extractTag(block, 'description')
     });
   }
+  // Not an RSS 2.0 document — try Atom before giving up.
+  if(!items.length) return parseAtomEntries(xmlText, limit);
   return items;
 }
-// News dates arrive in different shapes depending on the source: RFC 822
-// ("Thu, 23 Jul 2026 09:00:00 GMT") from raw RSS, or space-separated
-// ("2026-07-23 09:00:00") from rss2json. Try both before giving up.
+// News dates arrive in several shapes depending on the source: RFC 822
+// ("Thu, 23 Jul 2026 09:00:00 GMT") from raw RSS, space-separated
+// ("2026-07-23 09:00:00") from rss2json, or a raw Unix timestamp (seconds
+// or milliseconds) from some JSON APIs. Try all before giving up, so a
+// single source's date quirk never falls back to an unsorted/random order.
 function parsePubDate(str){
-  if(!str) return null;
+  if(str == null || str === '') return null;
+  if(typeof str === 'number' || /^\d+$/.test(String(str).trim())){
+    const n = Number(str);
+    // Heuristic: 10-digit numbers are Unix seconds, 13-digit are milliseconds.
+    const ms = String(Math.trunc(n)).length >= 13 ? n : n*1000;
+    const d = new Date(ms);
+    if(!isNaN(d.getTime())) return d;
+  }
   let d = new Date(str);
   if(!isNaN(d.getTime())) return d;
-  d = new Date(str.replace(' ','T'));
+  d = new Date(String(str).replace(' ','T'));
   if(!isNaN(d.getTime())) return d;
   return null;
 }
 
-// Real, editorially-curated feeds per category. Where a first-party
-// CORS-enabled JSON API exists (Hacker News), that's used directly with
-// no proxy at all — it's the most reliable option available.
-const NEWS_SOURCES = {
-  global:       {kind:'rss', name:'BBC World',      url:'http://feeds.bbci.co.uk/news/world/rss.xml'},
-  business:     {kind:'rss', name:'BBC Business',   url:'http://feeds.bbci.co.uk/news/business/rss.xml'},
-  local_nl:     {kind:'rss', name:'DutchNews.nl',   url:'https://www.dutchnews.nl/feed/'},
-  local_in:     {kind:'rss', name:'Times of India', url:'https://timesofindia.indiatimes.com/rssfeedstopstories.cms'},
-  entrepreneur: {kind:'hn',  query:'startup funding'},
-  ai:           {kind:'hn',  query:'artificial intelligence'},
-  tech:         {kind:'hn',  frontpage:true},
-  it:           {kind:'hn',  query:'enterprise software IT'}
-};
+/* ============================================================
+   NEWS ENGINE v2 — multi-source, scope-enforced, date-filterable.
 
-function buildNewsAttempts(cat){
-  const cfg = NEWS_SOURCES[cat] || NEWS_SOURCES.global;
-  const attempts = [];
-  if(cfg.kind === 'hn'){
-    const hnUrl = cfg.frontpage
-      ? 'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=20'
-      : `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(cfg.query)}&tags=story&hitsPerPage=20`;
-    attempts.push({label:'Hacker News', url:hnUrl, type:'hn-json'});
-    const gnQuery = cfg.query || 'technology';
-    const gnUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(gnQuery)}&hl=en-US&gl=US&ceid=US:en`;
-    attempts.push({label:'Google News', url:gnUrl, type:'xml'});
-    attempts.push({label:'Google News (proxy 1)', url:proxyAllOrigins(gnUrl), type:'xml'});
-    attempts.push({label:'Google News (proxy 2)', url:proxyCodeTabs(gnUrl), type:'xml'});
-    attempts.push({label:'Google News (proxy 3)', url:proxyRss2Json(gnUrl), type:'rss2json'});
-  } else {
-    const rssUrl = cfg.url;
-    attempts.push({label:cfg.name, url:rssUrl, type:'xml'});
-    attempts.push({label:cfg.name+' (proxy 1)', url:proxyAllOrigins(rssUrl), type:'xml'});
-    attempts.push({label:cfg.name+' (proxy 2)', url:proxyCodeTabs(rssUrl), type:'xml'});
-    attempts.push({label:cfg.name+' (proxy 3)', url:proxyRss2Json(rssUrl), type:'rss2json'});
-  }
-  return attempts;
+   What was wrong before, and what each part below fixes:
+
+   1. "India tab shows Colombian news."
+      The India tab pulled ONE feed: Times of India *top stories*, which
+      is a general front page — it carries plenty of world coverage, so
+      foreign stories were never off-topic as far as that feed was
+      concerned. Fixed two ways: India now pulls from nine India-desk
+      feeds (not front pages), and every geo tab runs a hard DOMAIN
+      ALLOWLIST after fetching. An article whose link doesn't resolve to
+      an Indian publisher is dropped. A Colombian story can no longer
+      physically appear, whatever any upstream feed decides to syndicate.
+
+   2. "Business only shows UK news."
+      The tab was literally hardcoded to BBC Business — a UK
+      broadcaster's business desk. It is now a merge of ten feeds
+      spanning the US, EU, Middle East and Asia, with a per-domain
+      diversity cap so no single outlet can dominate the page.
+
+   3. "IT tab doesn't show tech / software development / AI research."
+      IT was a Hacker News keyword search for "enterprise software IT",
+      which matches almost nothing well. It's now a curated set of real
+      software-engineering and enterprise-IT publications plus the HN
+      front page filtered on points.
+
+   4. "AI tab shows vague news."
+      AI was an HN search for "artificial intelligence", then a keyword
+      filter whose keyword list included the bare token "ai" — which
+      matches any headline mentioning AI in passing, including pure
+      marketing. It is now research-first (arXiv cs.AI/cs.LG/cs.CL, plus
+      the primary labs' own blogs), keyword matching is weighted toward
+      the TITLE, and there's a negative-keyword list that removes the
+      "AI-powered <consumer gadget>" and "AI stock" noise.
+
+   5. "Can't sort news by exact date."
+      There was no date filter at all, and every source's date string was
+      re-parsed on every comparison. Dates are now normalized ONCE at
+      ingest into a numeric UTC timestamp (`ts`), which is what both the
+      sort and the date filter operate on. Sorting a date *string* is the
+      classic version of this bug; sorting a number can't have it.
+
+   Design rule enforced throughout: only `local_in` and `local_nl` are
+   geo-scoped. Every other tab is explicitly global and is asserted to
+   have no country restriction.
+   ============================================================ */
+
+// Hosts are compared after stripping "www." and any leading subdomain
+// that isn't part of the registrable name, so feeds.bbci.co.uk,
+// timesofindia.indiatimes.com and m.economictimes.com all match cleanly.
+function articleHost(url){
+  try{
+    const h = new URL(url, 'https://x.invalid').hostname.toLowerCase();
+    return h.replace(/^www\./, '');
+  }catch(e){ return ''; }
 }
-
-// Soft relevance filter: keeps a category's results on-topic by title,
-// but never filters down to too few items — if filtering would leave
-// fewer than 3 results, the unfiltered list is used instead so a strict
-// keyword miss never means an empty tab.
-// Strict, whole-category keyword sets — covers ALL categories now (not
-// just ai/entrepreneur/it), matched over title + description combined.
-// Naive substring matching was tried first and found to false-positive
-// badly (e.g. "ai" matching inside "Mumbai"/"chain", "raise" matching
-// inside "raises") — keywordRegex() below enforces real word boundaries
-// instead, which is what makes "strict" filtering actually strict.
-const NEWS_CATEGORY_KEYWORDS = {
-  global: ['world','global','international','foreign','diplomat','united nations','geopolit','summit','treaty','ceasefire','election'],
-  business: ['business','market','economy','stock','finance','trade','earnings','company','industry','bank','ipo','merger','revenue','shares','corporate'],
-  local_nl: ['netherlands','dutch','amsterdam','rotterdam','the hague','holland'],
-  local_in: ['india','indian','delhi','mumbai','bengaluru','modi','rupee'],
-  entrepreneur: ['startup','founder','entrepreneur','funding round','venture capital','raised funding','seed round','series a','series b','bootstrapp'],
-  ai: ['ai','artificial intelligence','machine learning','llm','gpt','neural','openai','anthropic','chatbot','generative','deep learning','claude','gemini'],
-  tech: ['tech','technology','software','app','device','gadget','computer','internet','digital','gizmo'],
-  it: ['cloud','enterprise','cyber','data center','saas','network','infrastructure','security','sysadmin','devops','server']
+function hostMatchesAllowlist(host, allowlist){
+  if(!host) return false;
+  return allowlist.some(d => host === d || host.endsWith('.'+d));
+}
+// Human-readable publisher name from a URL, so every merged item can
+// show where it actually came from (the old code showed one global
+// "source label" for the whole tab, which is meaningless once several
+// feeds are merged together).
+function publisherName(url){
+  const host = articleHost(url);
+  if(!host) return 'Unknown source';
+  return (PUBLISHER_NAMES[host] || host.replace(/\.(com|org|net|nl|in|co\.uk|co|io|news)$/,'')).replace(/^\w/, c=>c.toUpperCase());
+}
+const PUBLISHER_NAMES = {
+  'bbci.co.uk':'BBC', 'bbc.co.uk':'BBC', 'bbc.com':'BBC',
+  'aljazeera.com':'Al Jazeera', 'dw.com':'DW', 'france24.com':'France 24',
+  'theguardian.com':'The Guardian', 'npr.org':'NPR', 'cbc.ca':'CBC',
+  'channelnewsasia.com':'CNA', 'japantimes.co.jp':'The Japan Times',
+  'cnbc.com':'CNBC', 'finance.yahoo.com':'Yahoo Finance', 'yahoo.com':'Yahoo Finance',
+  'marketwatch.com':'MarketWatch', 'businessinsider.com':'Business Insider',
+  'asia.nikkei.com':'Nikkei Asia', 'nikkei.com':'Nikkei Asia', 'ft.com':'Financial Times',
+  'techcrunch.com':'TechCrunch', 'arstechnica.com':'Ars Technica', 'theverge.com':'The Verge',
+  'theregister.com':'The Register', 'infoq.com':'InfoQ', 'zdnet.com':'ZDNet',
+  'wired.com':'WIRED', 'engadget.com':'Engadget', 'thenewstack.io':'The New Stack',
+  'dev.to':'DEV', 'github.blog':'GitHub Blog', 'stackoverflow.blog':'Stack Overflow Blog',
+  'arxiv.org':'arXiv', 'technologyreview.com':'MIT Tech Review',
+  'venturebeat.com':'VentureBeat', 'huggingface.co':'Hugging Face',
+  'deepmind.com':'Google DeepMind', 'deepmind.google':'Google DeepMind',
+  'openai.com':'OpenAI', 'marktechpost.com':'MarkTechPost',
+  'news.crunchbase.com':'Crunchbase News', 'crunchbase.com':'Crunchbase News',
+  'entrepreneur.com':'Entrepreneur', 'inc.com':'Inc.', 'sifted.eu':'Sifted',
+  'timesofindia.indiatimes.com':'Times of India', 'indiatimes.com':'Times of India',
+  'thehindu.com':'The Hindu', 'ndtv.com':'NDTV', 'indianexpress.com':'Indian Express',
+  'hindustantimes.com':'Hindustan Times', 'indiatoday.in':'India Today',
+  'livemint.com':'Mint', 'scroll.in':'Scroll.in', 'deccanherald.com':'Deccan Herald',
+  'thewire.in':'The Wire', 'business-standard.com':'Business Standard',
+  'economictimes.indiatimes.com':'Economic Times', 'news18.com':'News18',
+  'nos.nl':'NOS', 'nu.nl':'NU.nl', 'dutchnews.nl':'DutchNews.nl', 'nltimes.nl':'NL Times',
+  'ad.nl':'AD', 'telegraaf.nl':'De Telegraaf', 'volkskrant.nl':'de Volkskrant',
+  'nrc.nl':'NRC', 'rtl.nl':'RTL Nieuws', 'parool.nl':'Het Parool',
+  'news.ycombinator.com':'Hacker News'
 };
+
+// --- Domain allowlists. These are the hard guarantee for the geo tabs. ---
+const INDIA_DOMAINS = [
+  'timesofindia.indiatimes.com','indiatimes.com','thehindu.com','ndtv.com',
+  'indianexpress.com','hindustantimes.com','indiatoday.in','livemint.com',
+  'scroll.in','deccanherald.com','thewire.in','business-standard.com',
+  'economictimes.indiatimes.com','news18.com','telegraphindia.com',
+  'firstpost.com','theprint.in','thequint.com','newindianexpress.com',
+  'feedburner.com' // NDTV's feed proxies through FeedBurner before redirecting
+];
+const NL_DOMAINS = [
+  'nos.nl','nu.nl','dutchnews.nl','nltimes.nl','ad.nl','telegraaf.nl',
+  'volkskrant.nl','nrc.nl','rtl.nl','rtlnieuws.nl','parool.nl','fd.nl',
+  'trouw.nl','bnr.nl','iamexpat.nl'
+];
+
+/**
+ * Feed registry. One entry per tab.
+ *   scope: 'geo'  -> allowDomains is enforced, results are country-locked
+ *          'global' -> NO country restriction; feeds are chosen from
+ *                      multiple continents on purpose
+ *   feeds: fetched CONCURRENTLY and merged; a tab stays usable as long as
+ *          at least one feed responds, which is why there are many.
+ *   mustMatch / mustNotMatch: applied to query-driven or broad sources.
+ *          Curated single-topic feeds pass `trusted:true` and skip
+ *          keyword filtering entirely (their editors already made the
+ *          topic decision — re-filtering them on keywords was what
+ *          previously emptied whole tabs).
+ */
+const NEWS_TABS = {
+  global: {
+    scope: 'global',
+    label: 'International',
+    feeds: [
+      {name:'BBC World',       url:'https://feeds.bbci.co.uk/news/world/rss.xml', trusted:true},
+      {name:'Al Jazeera',      url:'https://www.aljazeera.com/xml/rss/all.xml', trusted:true},
+      {name:'DW',              url:'https://rss.dw.com/rdf/rss-en-world', trusted:true},
+      {name:'France 24',       url:'https://www.france24.com/en/rss', trusted:true},
+      {name:'The Guardian',    url:'https://www.theguardian.com/world/rss', trusted:true},
+      {name:'NPR World',       url:'https://feeds.npr.org/1004/rss.xml', trusted:true},
+      {name:'CNA Asia',        url:'https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511', trusted:true},
+      {name:'CBC World',       url:'https://www.cbc.ca/webfeed/rss/rss-world', trusted:true}
+    ]
+  },
+
+  local_nl: {
+    scope: 'geo',
+    label: 'Netherlands',
+    allowDomains: NL_DOMAINS,
+    feeds: [
+      {name:'NOS',            url:'https://feeds.nos.nl/nosnieuwsalgemeen', trusted:true},
+      {name:'NU.nl',          url:'https://www.nu.nl/rss/Algemeen', trusted:true},
+      {name:'DutchNews.nl',   url:'https://www.dutchnews.nl/feed/', trusted:true},
+      {name:'NL Times',       url:'https://nltimes.nl/rss.xml', trusted:true},
+      {name:'AD',             url:'https://www.ad.nl/home/rss.xml', trusted:true},
+      {name:'De Telegraaf',   url:'https://www.telegraaf.nl/rss', trusted:true},
+      {name:'de Volkskrant',  url:'https://www.volkskrant.nl/voorpagina/rss.xml', trusted:true},
+      {name:'NRC',            url:'https://www.nrc.nl/rss/', trusted:true}
+    ]
+  },
+
+  // India: every feed below is an INDIA DESK feed, not a front page.
+  // Front pages (the old rssfeedstopstories.cms) mix in world coverage —
+  // that was the actual source of the foreign headlines.
+  local_in: {
+    scope: 'geo',
+    label: 'India',
+    allowDomains: INDIA_DOMAINS,
+    feeds: [
+      {name:'Times of India',    url:'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms', trusted:true},
+      {name:'The Hindu',         url:'https://www.thehindu.com/news/national/feeder/default.rss', trusted:true},
+      {name:'NDTV',              url:'https://feeds.feedburner.com/ndtvnews-india-news', trusted:true},
+      {name:'Indian Express',    url:'https://indianexpress.com/section/india/feed/', trusted:true},
+      {name:'Hindustan Times',   url:'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml', trusted:true},
+      {name:'India Today',       url:'https://www.indiatoday.in/rss/1206578', trusted:true},
+      {name:'Mint',              url:'https://www.livemint.com/rss/news', trusted:true},
+      {name:'Scroll.in',         url:'https://scroll.in/feed', trusted:true},
+      {name:'Deccan Herald',     url:'https://www.deccanherald.com/rss/national.rss', trusted:true},
+      {name:'The Wire',          url:'https://thewire.in/rss', trusted:true}
+    ]
+  },
+
+  business: {
+    scope: 'global',
+    label: 'Business',
+    feeds: [
+      {name:'CNBC',             url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114', trusted:true},
+      {name:'Yahoo Finance',    url:'https://finance.yahoo.com/news/rssindex', trusted:true},
+      {name:'MarketWatch',      url:'https://feeds.content.dowjones.io/public/rss/mw_topstories', trusted:true},
+      {name:'Business Insider', url:'https://markets.businessinsider.com/rss/news', trusted:true},
+      {name:'Nikkei Asia',      url:'https://asia.nikkei.com/rss/feed/nar', trusted:true},
+      {name:'CNA Business',     url:'https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6936', trusted:true},
+      {name:'Al Jazeera Econ',  url:'https://www.aljazeera.com/economy/feed/', trusted:true},
+      {name:'DW Business',      url:'https://rss.dw.com/rdf/rss-en-bus', trusted:true},
+      {name:'Guardian Business',url:'https://www.theguardian.com/uk/business/rss', trusted:true},
+      {name:'BBC Business',     url:'https://feeds.bbci.co.uk/news/business/rss.xml', trusted:true}
+    ],
+    // Business is where per-outlet flooding is worst (MarketWatch and
+    // Business Insider both publish dozens of items an hour), so the
+    // diversity cap is tightened for this tab specifically.
+    perDomainCap: 3
+  },
+
+  entrepreneur: {
+    scope: 'global',
+    label: 'Entrepreneur',
+    feeds: [
+      {name:'TechCrunch Startups', url:'https://techcrunch.com/category/startups/feed/', trusted:true},
+      {name:'Crunchbase News',     url:'https://news.crunchbase.com/feed/', trusted:true},
+      {name:'Entrepreneur',        url:'https://www.entrepreneur.com/latest.rss', trusted:true},
+      {name:'Inc.',                url:'https://www.inc.com/rss/', trusted:true},
+      {name:'VentureBeat',         url:'https://venturebeat.com/category/entrepreneur/feed/', trusted:true},
+      {name:'Sifted',              url:'https://sifted.eu/feed', trusted:true},
+      {name:'HN: funding',         url:'https://hn.algolia.com/api/v1/search?query=startup%20funding%20raised&tags=story&hitsPerPage=25&numericFilters=points%3E30', type:'hn-json'}
+    ],
+    mustMatch: ['startup','founder','entrepreneur','funding','venture','seed round','series a','series b','series c','bootstrap','acquisition','raises','raised','vc','accelerator','ipo'],
+    mustNotMatch: []
+  },
+
+  // AI: research-first. arXiv is listed first deliberately — a genuine
+  // "AI research" tab should surface papers, not press releases.
+  ai: {
+    scope: 'global',
+    label: 'AI',
+    feeds: [
+      {name:'arXiv cs.AI/LG/CL', url:'https://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.CL&sortBy=submittedDate&sortOrder=descending&max_results=30', trusted:true},
+      {name:'arXiv cs.CV',       url:'https://export.arxiv.org/api/query?search_query=cat:cs.CV&sortBy=submittedDate&sortOrder=descending&max_results=15', trusted:true},
+      {name:'Hugging Face',      url:'https://huggingface.co/blog/feed.xml', trusted:true},
+      {name:'Google DeepMind',   url:'https://deepmind.google/blog/rss.xml', trusted:true},
+      {name:'OpenAI',            url:'https://openai.com/news/rss.xml', trusted:true},
+      {name:'MIT Tech Review AI',url:'https://www.technologyreview.com/topic/artificial-intelligence/feed', trusted:true},
+      {name:'The Verge AI',      url:'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml', trusted:true},
+      {name:'VentureBeat AI',    url:'https://venturebeat.com/category/ai/feed/', trusted:true},
+      {name:'MarkTechPost',      url:'https://www.marktechpost.com/feed/', trusted:true},
+      {name:'Ars Technica AI',   url:'https://arstechnica.com/ai/feed/', trusted:true},
+      {name:'HN: AI research',   url:'https://hn.algolia.com/api/v1/search?query=LLM%20model%20research&tags=story&hitsPerPage=25&numericFilters=points%3E50', type:'hn-json'}
+    ],
+    // Applied only to non-trusted (query-driven) sources. Note there is
+    // no bare "ai" token here — that single keyword was why this tab
+    // matched everything.
+    mustMatch: ['artificial intelligence','machine learning','deep learning','neural network','llm','large language model','transformer','gpt','openai','anthropic','claude','gemini','llama','mistral','diffusion','reinforcement learning','fine-tun','inference','benchmark','model weights','agentic'],
+    // Marketing/finance noise that used to fill this tab.
+    mustNotMatch: ['stock','shares','share price','nasdaq','etf','crypto','bitcoin','deal of the day','discount','coupon','best ai tools','ai girlfriend','horoscope','casino']
+  },
+
+  tech: {
+    scope: 'global',
+    label: 'Tech',
+    feeds: [
+      {name:'Ars Technica',   url:'https://feeds.arstechnica.com/arstechnica/index', trusted:true},
+      {name:'The Verge',      url:'https://www.theverge.com/rss/index.xml', trusted:true},
+      {name:'TechCrunch',     url:'https://techcrunch.com/feed/', trusted:true},
+      {name:'Engadget',       url:'https://www.engadget.com/rss.xml', trusted:true},
+      {name:'WIRED',          url:'https://www.wired.com/feed/rss', trusted:true},
+      {name:'The Register',   url:'https://www.theregister.com/headlines.atom', trusted:true},
+      {name:'ZDNet',          url:'https://www.zdnet.com/news/rss.xml', trusted:true},
+      {name:'BBC Technology', url:'https://feeds.bbci.co.uk/news/technology/rss.xml', trusted:true},
+      {name:'HN front page',  url:'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=25', type:'hn-json'}
+    ]
+  },
+
+  // IT: software development + enterprise infrastructure, which is what
+  // was actually being asked for. HN is filtered on points so it
+  // contributes signal rather than every new submission.
+  it: {
+    scope: 'global',
+    label: 'IT & Software',
+    feeds: [
+      {name:'InfoQ',              url:'https://feed.infoq.com/', trusted:true},
+      {name:'The New Stack',      url:'https://thenewstack.io/blog/feed/', trusted:true},
+      {name:'GitHub Blog',        url:'https://github.blog/feed/', trusted:true},
+      {name:'Stack Overflow Blog',url:'https://stackoverflow.blog/feed/', trusted:true},
+      {name:'DEV Community',      url:'https://dev.to/feed', trusted:true},
+      {name:'Ars Technica IT',    url:'https://feeds.arstechnica.com/arstechnica/technology-lab', trusted:true},
+      {name:'The Register',       url:'https://www.theregister.com/headlines.atom', trusted:true},
+      {name:'ZDNet',              url:'https://www.zdnet.com/news/rss.xml', trusted:true},
+      {name:'HN: dev',            url:'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=25&numericFilters=points%3E80', type:'hn-json'}
+    ],
+    mustMatch: ['software','developer','programming','code','api','cloud','kubernetes','container','database','devops','security','vulnerability','open source','framework','javascript','python','rust','golang','java','linux','server','infrastructure','architecture','compiler','git','release','sre','observability','enterprise']
+  }
+};
+
+// A scope assertion, kept in the code rather than in a comment: any tab
+// that isn't India or NL must never carry a domain allowlist, because
+// that is exactly how a "global" tab silently becomes a single-country
+// tab. If this ever throws, someone has reintroduced the Business bug.
+(function assertScopes(){
+  Object.entries(NEWS_TABS).forEach(([id, spec])=>{
+    const isGeo = (id === 'local_in' || id === 'local_nl');
+    if(!isGeo && spec.allowDomains){
+      console.error(`News scope violation: global tab "${id}" has a domain allowlist — that would lock it to one country.`);
+    }
+    if(isGeo && (!spec.allowDomains || !spec.allowDomains.length)){
+      console.error(`News scope violation: geo tab "${id}" has no domain allowlist — foreign articles can leak in.`);
+    }
+  });
+})();
+
 function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 const _keywordRegexCache = {};
 function keywordRegex(keyword){
-  if(!_keywordRegexCache[keyword]) _keywordRegexCache[keyword] = new RegExp('\\b'+escapeRegExp(keyword)+'\\b', 'i');
+  if(!_keywordRegexCache[keyword]) _keywordRegexCache[keyword] = new RegExp('\\b'+escapeRegExp(keyword), 'i');
   return _keywordRegexCache[keyword];
 }
-// Strict: keeps ONLY items matching this category's keywords. No soft
-// fallback to "show everything if too few match" — a category tab that
-// genuinely has no on-topic items shows that honestly (loadNewsItems
-// below treats zero-after-filter as a failure and tries the next
-// fallback source) rather than silently mixing in other categories.
-function filterByRelevance(items, cat){
-  const keywords = NEWS_CATEGORY_KEYWORDS[cat];
-  if(!keywords || !keywords.length) return items;
-  return items.filter(it=>{
-    const haystack = (it.title||'') + ' ' + (it.description||'');
-    return keywords.some(k=>keywordRegex(k).test(haystack));
-  });
-}
-function sortNewsChronological(items){
-  return items.slice().sort((a,b)=>{
-    const da = parsePubDate(a.pubDate), db = parsePubDate(b.pubDate);
-    if(da && db) return db.getTime() - da.getTime();
-    if(da && !db) return -1;
-    if(!da && db) return 1;
-    return 0;
-  });
+
+// Relevance is scored, not just pass/fail, and the TITLE is weighted far
+// more heavily than the body. "AI" appearing once in the last paragraph
+// of a phone review is not an AI research story; the old any-field match
+// treated it as one.
+function scoreRelevance(item, spec){
+  if(!spec.mustMatch || !spec.mustMatch.length) return 1;
+  const title = (item.title||'').toLowerCase();
+  const body  = (item.description||'').toLowerCase();
+  if(spec.mustNotMatch && spec.mustNotMatch.some(k=>keywordRegex(k).test(title))) return 0;
+  let score = 0;
+  for(const k of spec.mustMatch){
+    const re = keywordRegex(k);
+    if(re.test(title)) score += 2;
+    else if(re.test(body)) score += 0.5;
+  }
+  return score;
 }
 
-async function loadNewsItems(cat, timeoutMs){
-  timeoutMs = timeoutMs || 9000;
-  const attempts = buildNewsAttempts(cat);
-  const errors = [];
-  for(const attempt of attempts){
+// Two articles are the same story if they share a canonical URL, or if
+// their titles are near-identical. Wire copy syndicated to six outlets
+// used to fill half a page.
+function canonicalUrl(u){
+  try{
+    const url = new URL(u);
+    ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','ito','at_medium','at_campaign','CMP','cmpid','ncid','fbclid'].forEach(p=>url.searchParams.delete(p));
+    url.hash = '';
+    return (url.hostname.replace(/^www\./,'') + url.pathname.replace(/\/$/,'')).toLowerCase();
+  }catch(e){ return String(u||'').toLowerCase(); }
+}
+function titleKey(t){
+  return String(t||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim().split(' ').slice(0,9).join(' ');
+}
+
+function normalizeItem(raw, feedName){
+  const d = parsePubDate(raw.pubDate);
+  const link = (raw.link||'').trim();
+  return {
+    title: (raw.title||'').replace(/\s+/g,' ').trim(),
+    link,
+    // Numeric UTC timestamp — the single field both sorting and date
+    // filtering use. Items with no parseable date get ts:null and are
+    // shown last rather than being silently mixed in at a random spot.
+    ts: d ? d.getTime() : null,
+    dateKnown: !!d,
+    description: String(raw.description||'').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim(),
+    feedName,
+    host: articleHost(link),
+    publisher: publisherName(link) || feedName
+  };
+}
+
+// Per-tab cache. Keyed by tab only: filtering and sorting happen on the
+// cached array client-side, so changing the date filter is instant and
+// costs no network requests.
+const _newsCache = {};
+const NEWS_CACHE_TTL_MS = 5*60*1000;
+
+async function fetchOneFeed(feed, timeoutMs){
+  const routes = feed.type === 'hn-json'
+    ? [{url: feed.url, type:'hn-json'}]
+    : [
+        {url: feed.url,                 type:'xml'},
+        {url: proxyAllOrigins(feed.url),type:'xml'},
+        {url: proxyCodeTabs(feed.url),  type:'xml'},
+        {url: proxyRss2Json(feed.url),  type:'rss2json'}
+      ];
+  let lastErr = 'no route succeeded';
+  for(const route of routes){
     try{
-      const res = await fetchWithTimeout(attempt.url, timeoutMs);
-      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetchWithTimeout(route.url, timeoutMs);
+      if(!res.ok){ lastErr = `HTTP ${res.status}`; continue; }
       let items;
-      if(attempt.type === 'xml'){
-        const text = await res.text();
-        items = parseRSSItems(text, 20);
-        if(!items.length) throw new Error('no items parsed');
-      } else if(attempt.type === 'rss2json'){
+      if(route.type === 'xml'){
+        items = parseRSSItems(await res.text(), 40);
+      } else if(route.type === 'rss2json'){
         const data = await res.json();
-        if(data.status !== 'ok' || !data.items || !data.items.length) throw new Error(data.message || 'no items');
-        items = data.items.slice(0,20).map(it=>({title:it.title, link:it.link, pubDate:it.pubDate, description:it.description}));
-      } else if(attempt.type === 'hn-json'){
+        if(data.status !== 'ok' || !data.items) { lastErr = data.message||'rss2json empty'; continue; }
+        items = data.items.slice(0,40).map(it=>({title:it.title, link:it.link, pubDate:it.pubDate, description:it.description}));
+      } else {
         const data = await res.json();
-        if(!data.hits || !data.hits.length) throw new Error('no hits');
-        items = data.hits.slice(0,20).map(hit=>({
+        if(!data.hits) { lastErr = 'no hits'; continue; }
+        items = data.hits.map(hit=>({
           title: hit.title || hit.story_title || '(untitled)',
           link: hit.url || hit.story_url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
           pubDate: hit.created_at || '',
           description: `${hit.points||0} points · ${hit.num_comments||0} comments on Hacker News`
         }));
       }
-      items = filterByRelevance(items, cat);
-      if(!items.length) throw new Error('no on-topic items after strict category filtering');
-      items = sortNewsChronological(items);
-      return { items, sourceLabel: attempt.label };
+      if(!items.length){ lastErr = 'no items parsed'; continue; }
+      return items.map(it=>normalizeItem(it, feed.name));
     }catch(e){
-      const reason = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'error');
-      errors.push(`${attempt.label}: ${reason}`);
+      lastErr = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'network error');
     }
   }
-  throw new Error(errors.join(' | '));
+  throw new Error(`${feed.name}: ${lastErr}`);
+}
+
+/**
+ * Fetches every feed for a tab CONCURRENTLY and merges whatever comes
+ * back. Unlike the old Promise.any (first-past-the-post, so a tab only
+ * ever showed one publisher), this waits for all of them and uses every
+ * successful result — that breadth is what makes a "global" tab actually
+ * global. A tab is only an error if EVERY feed failed.
+ */
+async function loadNewsItems(cat, timeoutMs, opts){
+  timeoutMs = timeoutMs || 12000;
+  opts = opts || {};
+  const spec = NEWS_TABS[cat] || NEWS_TABS.global;
+
+  const cached = _newsCache[cat];
+  if(!opts.forceRefresh && cached && (Date.now() - cached.time) < NEWS_CACHE_TTL_MS){
+    return { items: cached.items, sources: cached.sources, failed: cached.failed, fromCache: true };
+  }
+
+  const settled = await Promise.allSettled(spec.feeds.map(f=>fetchOneFeed(f, timeoutMs)));
+  const errors = [];
+  const okSources = [];
+  let merged = [];
+  settled.forEach((r, i)=>{
+    if(r.status === 'fulfilled'){
+      okSources.push(spec.feeds[i].name);
+      merged = merged.concat(r.value);
+    } else {
+      errors.push((r.reason && r.reason.message) || String(r.reason));
+    }
+  });
+  if(!merged.length) throw new Error(errors.join(' | ') || 'all sources failed');
+
+  // 1. Scope enforcement — the hard guarantee for India / NL.
+  let dropped = 0;
+  if(spec.allowDomains){
+    const before = merged.length;
+    merged = merged.filter(it=>hostMatchesAllowlist(it.host, spec.allowDomains));
+    dropped = before - merged.length;
+  }
+
+  // 2. Relevance (only affects tabs that define mustMatch).
+  merged = merged.map(it=>({...it, _score: scoreRelevance(it, spec)}))
+                 .filter(it=>it._score > 0);
+
+  // 3. Dedupe by canonical URL, then by near-identical title.
+  const seenUrl = new Set(), seenTitle = new Set();
+  merged = merged.filter(it=>{
+    const u = canonicalUrl(it.link), t = titleKey(it.title);
+    if(!it.title || !it.link) return false;
+    if(u && seenUrl.has(u)) return false;
+    if(t && seenTitle.has(t)) return false;
+    if(u) seenUrl.add(u);
+    if(t) seenTitle.add(t);
+    return true;
+  });
+
+  // 4. Sort newest-first on the NUMERIC timestamp. Undated items sink to
+  //    the bottom instead of landing in an arbitrary position.
+  merged.sort((a,b)=>{
+    if(a.ts == null && b.ts == null) return 0;
+    if(a.ts == null) return 1;
+    if(b.ts == null) return -1;
+    return b.ts - a.ts;
+  });
+
+  // 5. Diversity cap: no single publisher may take more than N of the
+  //    first 20 slots. This is what stops one high-volume outlet from
+  //    making a worldwide tab look like a single-country tab.
+  const cap = spec.perDomainCap || 4;
+  const counts = {};
+  const head = [], tail = [];
+  for(const it of merged){
+    counts[it.host] = (counts[it.host]||0) + 1;
+    if(head.length < 20 && counts[it.host] <= cap) head.push(it); else tail.push(it);
+  }
+  merged = head.concat(tail).slice(0, 80);
+
+  const result = { items: merged, sources: okSources, failed: errors.length, droppedOffScope: dropped };
+  _newsCache[cat] = { ...result, time: Date.now() };
+  return result;
+}
+
+// Applied client-side, on the cached array, so changing the filter never
+// costs a network round trip. Day boundaries are the USER'S LOCAL day
+// converted to a UTC window — comparing a local date string against a
+// UTC timestamp is the other classic version of the date bug.
+function filterNewsByDate(items, mode, exactDateStr){
+  if(mode === 'all') return items;
+  const now = new Date();
+  let startMs, endMs;
+  if(mode === 'exact'){
+    if(!exactDateStr) return items;
+    const start = new Date(exactDateStr + 'T00:00:00');
+    if(isNaN(start.getTime())) return items;
+    startMs = start.getTime();
+    endMs = startMs + 24*3600*1000;
+  } else {
+    const days = mode === 'today' ? 1 : (mode === '3d' ? 3 : 7);
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    start.setDate(start.getDate() - (days-1));
+    startMs = start.getTime();
+    endMs = now.getTime() + 60*1000;
+  }
+  return items.filter(it => it.ts != null && it.ts >= startMs && it.ts < endMs);
+}
+function sortNewsItems(items, order){
+  const arr = items.slice();
+  arr.sort((a,b)=>{
+    if(a.ts == null && b.ts == null) return 0;
+    if(a.ts == null) return 1;
+    if(b.ts == null) return -1;
+    return order === 'oldest' ? a.ts - b.ts : b.ts - a.ts;
+  });
+  return arr;
+}
+function formatNewsDate(ts){
+  if(ts == null) return 'date unknown';
+  const d = new Date(ts);
+  const diffMin = Math.round((Date.now() - ts)/60000);
+  if(diffMin < 1) return 'just now';
+  if(diffMin < 60) return `${diffMin}m ago`;
+  if(diffMin < 60*24) return `${Math.round(diffMin/60)}h ago`;
+  return d.toLocaleDateString(undefined, {day:'numeric', month:'short'}) + ' · ' +
+         d.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
 }
 
 function buildWeatherAttempts(lat, lon){
@@ -1955,111 +2455,306 @@ function suggestTaskTextFromOCR(text){
 }
 
 /* ============================================================
-   Step detection (phone accelerometer, foreground-only).
-   A simple, honest threshold/debounce peak counter — not a
-   commercial-grade pedometer, but a real, testable algorithm:
-   counts a step each time the acceleration magnitude crosses
-   above `threshold` after being below it, no more often than
-   once per `minIntervalMs` (caps unrealistic step rates from
-   sensor jitter).
+   GAIT ENGINE v2 — motion-validated step detection.
+
+   Why the previous version over-counted, and what replaced it:
+
+   The old detector counted a step every time smoothed acceleration
+   crossed a fixed threshold, debounced to 300ms, then required 5
+   consecutive pulses at a plausible spacing. That gate helps, but it
+   only ever looked at the GAPS between pulses. Scrolling, typing,
+   fidgeting and riding in a car all produce bursts of pulses that
+   happen to land 300-800ms apart, so they cleared the gate and became
+   "steps". The missing test is whether the signal is actually
+   PERIODIC.
+
+   Walking is quasi-periodic: the same waveform repeats at a stable
+   frequency for seconds at a time. Hand movement is not — it is
+   energetic but aperiodic. Autocorrelation separates the two cleanly,
+   and no threshold tuning can. So this engine gates on three things
+   that must ALL hold before a single step is banked:
+
+     1. PERIODICITY  — normalized autocorrelation of the last ~3s of
+        motion must show a strong, stable peak inside the human gait
+        band (0.7-4.0 Hz). Sitting fails on energy; phone-handling
+        fails here.
+     2. CADENCE + ENERGY — the dominant frequency must be a plausible
+        step rate and signal variance must sit between a floor (rules
+        out a stationary phone) and a ceiling (rules out shaking).
+     3. BOUT CONFIRMATION — steps are held in a pending buffer and only
+        committed once 8 consistent steps have accumulated. If the
+        pattern breaks first, the buffer is discarded and nothing is
+        ever added. Once a bout is confirmed the buffer is committed
+        retroactively, so the first steps of a real walk aren't lost.
+
+   Plus a fourth rule that lives outside the accelerometer: sustained
+   GPS speed above ~6.5 m/s with no gait periodicity means a vehicle,
+   and step commits are suppressed entirely.
+
+   Honest limit, unchanged: this only runs while the page is open and
+   the screen is on. Browsers suspend motion and location sensors for
+   backgrounded tabs — that is a platform decision no website can work
+   around. For all-day passive counting, your phone's own health app
+   (which runs in the OS, on a dedicated low-power motion coprocessor)
+   is still the more accurate number, which is what manual entry is for.
    ============================================================ */
-/* ============================================================
-   Step detection (phone accelerometer, foreground-only).
-   Two real, honest improvements over a bare threshold check:
-   1. An exponential moving average smooths high-frequency sensor
-      jitter before peak detection (a standard noise-reduction
-      technique — it doesn't eliminate sensor noise, it reduces it).
-   2. Sensitivity is adjustable, because accelerometer scale and
-      noise floor genuinely differ between phone models — no single
-      fixed threshold is correct for every device.
-   This is still a lightweight peak/debounce counter, not a
-   commercial fused-sensor pedometer. No phone-based, browser-based
-   step counter can be glitch-free — sensor noise, phone placement
-   (hand/pocket/bag), and walking style all introduce real variance.
-   ============================================================ */
-function createStepDetector(opts){
-  opts = opts || {};
-  const threshold = opts.threshold != null ? opts.threshold : 0.8;
-  const minIntervalMs = opts.minIntervalMs != null ? opts.minIntervalMs : 300;
-  const smoothingAlpha = opts.smoothingAlpha != null ? opts.smoothingAlpha : 0.4; // EMA weight for new sample
-  let lastStepTime = -Infinity;
-  let wasAboveThreshold = false;
-  let smoothed = 0;
-  let primed = false;
-  return {
-    feed(magnitude, timestampMs){
-      if(!primed){ smoothed = magnitude; primed = true; }
-      else { smoothed = smoothingAlpha*magnitude + (1-smoothingAlpha)*smoothed; }
-      let stepped = false;
-      if(smoothed > threshold){
-        if(!wasAboveThreshold && (timestampMs - lastStepTime) > minIntervalMs){
-          stepped = true;
-          lastStepTime = timestampMs;
-        }
-        wasAboveThreshold = true;
-      } else {
-        wasAboveThreshold = false;
-      }
-      return stepped;
-    },
-    reset(){ lastStepTime = -Infinity; wasAboveThreshold = false; smoothed = 0; primed = false; }
-  };
-}
+
+const GAIT = {
+  BUFFER_SECONDS: 3.0,        // autocorrelation window — long enough for ~3-9 strides
+  RESAMPLE_HZ: 25,            // uniform grid the autocorrelation runs on
+  MIN_CADENCE_HZ: 0.7,        // ~42 steps/min — a very slow amble
+  MAX_CADENCE_HZ: 4.0,        // ~240 steps/min — a sprint
+  WALK_RUN_SPLIT_HZ: 2.6,     // above this cadence, classify as running
+  MIN_AUTOCORR: 0.55,         // periodicity score required to accept a window
+  CADENCE_STABILITY: 0.25,    // dominant frequency may drift this much between windows
+  MIN_VARIANCE: 0.03,         // below = phone is essentially still
+  MAX_VARIANCE: 45,           // above = being shaken/dropped, not carried
+  MIN_STEP_INTERVAL_MS: 250,  // refractory period; caps at 4 steps/sec
+  MAX_STEP_INTERVAL_MS: 2000, // a longer gap ends the bout
+  INTERVAL_TOLERANCE: 0.35,   // a step interval may deviate this much from the running median
+  CONFIRM_STEPS: 8,           // pending steps required before anything is banked
+  CONFIRM_WINDOW_MS: 7000,    // ...and they must arrive within this long
+  BOUT_END_MS: 2500,          // silence this long closes the bout
+  VEHICLE_SPEED_MPS: 6.5,     // ~23 km/h sustained = vehicle, suppress steps
+  PEAK_K: 0.6                 // adaptive threshold = mean + K * stddev
+};
+
 /**
- * Gates raw candidate pulses (from createStepDetector) through a
- * continuity + cadence + rotation check before confirming them as real
- * steps — this is what actually distinguishes real walking/running from
- * stray hand jitter, sitting fidgets, or picking up the phone, rather
- * than just reacting to any single acceleration spike.
- *
- * Rules: consecutive pulses must be minGapMs-maxGapMs apart (a plausible
- * cadence), each gap must be within gapToleranceRatio of the previous
- * gap (real gait is rhythmic; jitter isn't), and a pulse accompanied by
- * high rotation rate is treated as handling the phone, not gait. Nothing
- * is confirmed until confirmAfter (5) consecutive pulses all pass —
- * a broken streak resets to zero.
+ * Rolling buffer of gravity-removed acceleration magnitude, with the
+ * two features every decision downstream depends on: periodicity score
+ * and dominant cadence.
  */
-function createWalkingGate(opts){
-  opts = opts || {};
-  const minGapMs = opts.minGapMs != null ? opts.minGapMs : 250;
-  const maxGapMs = opts.maxGapMs != null ? opts.maxGapMs : 1200;
-  const gapToleranceRatio = opts.gapToleranceRatio != null ? opts.gapToleranceRatio : 0.55;
-  const confirmAfter = opts.confirmAfter != null ? opts.confirmAfter : 5;
-  const maxRotationDegPerSec = opts.maxRotationDegPerSec != null ? opts.maxRotationDegPerSec : 150;
-  let lastPulseTime = null;
-  let lastGap = null;
-  let streak = 0;
+function createGaitAnalyzer(cfg){
+  cfg = Object.assign({}, GAIT, cfg||{});
+  const samples = []; // {t, v} — v is dynamic (gravity-removed) magnitude
+  let gravityBaseline = null;
+  let lastCadenceHz = null;
+
+  function push(rawMagnitude, t){
+    // Adaptive gravity baseline rather than a hardcoded 9.81. Devices
+    // disagree about units and about whether gravity is included at all;
+    // a slow EMA of the raw magnitude tracks whatever the baseline
+    // actually is on this device and leaves only the dynamic component.
+    if(gravityBaseline == null) gravityBaseline = rawMagnitude;
+    else gravityBaseline = 0.02*rawMagnitude + 0.98*gravityBaseline;
+    const dyn = rawMagnitude - gravityBaseline;
+    samples.push({t, v: dyn});
+    const cutoff = t - cfg.BUFFER_SECONDS*1000;
+    while(samples.length && samples[0].t < cutoff) samples.shift();
+    return dyn;
+  }
+
+  // Resample the irregular devicemotion stream onto a uniform grid.
+  // devicemotion fires at an inconsistent rate (and differs between
+  // iOS and Android), and autocorrelation on unevenly-spaced samples
+  // produces a meaningless frequency.
+  function resample(){
+    if(samples.length < 8) return null;
+    const t0 = samples[0].t, t1 = samples[samples.length-1].t;
+    const span = t1 - t0;
+    if(span < cfg.BUFFER_SECONDS*1000*0.6) return null; // not enough history yet
+    const n = Math.floor(span/1000 * cfg.RESAMPLE_HZ);
+    if(n < 16) return null;
+    const out = new Float64Array(n);
+    let j = 0;
+    for(let i=0;i<n;i++){
+      const t = t0 + (i/cfg.RESAMPLE_HZ)*1000;
+      while(j < samples.length-2 && samples[j+1].t < t) j++;
+      const a = samples[j], b = samples[Math.min(j+1, samples.length-1)];
+      const dt = (b.t - a.t) || 1;
+      const w = Math.max(0, Math.min(1, (t - a.t)/dt));
+      out[i] = a.v + (b.v - a.v)*w;
+    }
+    return out;
+  }
+
+  /**
+   * Normalized autocorrelation across the gait band. Returns the best
+   * score (0-1) and the frequency that produced it.
+   *
+   * This is the single most important function in the pipeline: a
+   * periodic signal correlates strongly with a time-shifted copy of
+   * itself, an aperiodic one does not, regardless of how large its
+   * peaks are. That is precisely the difference between walking and
+   * shaking a phone around.
+   */
+  function analyze(){
+    const x = resample();
+    if(!x) return {periodic:false, score:0, cadenceHz:null, variance:0, reason:'warming up'};
+    const n = x.length;
+    let mean = 0;
+    for(let i=0;i<n;i++) mean += x[i];
+    mean /= n;
+    let variance = 0;
+    for(let i=0;i<n;i++) variance += (x[i]-mean)*(x[i]-mean);
+    variance /= n;
+    if(variance < cfg.MIN_VARIANCE) return {periodic:false, score:0, cadenceHz:null, variance, reason:'too still'};
+    if(variance > cfg.MAX_VARIANCE) return {periodic:false, score:0, cadenceHz:null, variance, reason:'too erratic'};
+
+    const minLag = Math.max(2, Math.round(cfg.RESAMPLE_HZ / cfg.MAX_CADENCE_HZ));
+    const maxLag = Math.min(n-4, Math.round(cfg.RESAMPLE_HZ / cfg.MIN_CADENCE_HZ));
+    const scores = new Float64Array(maxLag+1);
+    let bestScore = 0, bestLag = 0;
+    for(let lag=minLag; lag<=maxLag; lag++){
+      let num = 0;
+      const m = n - lag;
+      for(let i=0;i<m;i++) num += (x[i]-mean)*(x[i+lag]-mean);
+      const score = num / (m * variance); // normalized to [-1, 1]
+      scores[lag] = score;
+      if(score > bestScore){ bestScore = score; bestLag = lag; }
+    }
+    // OCTAVE CORRECTION. A periodic signal correlates just as strongly at
+    // twice its period, and real gait genuinely has both: a step period
+    // and a stride period (two steps, slightly asymmetric left/right). The
+    // raw argmax therefore lands on the stride about half the time, which
+    // reports HALF the true cadence and makes the frequency look unstable
+    // as it flips between the two. Counting steps needs the fundamental,
+    // so take the SHORTEST lag that is a local maximum and scores nearly
+    // as well as the best one.
+    let fundamentalLag = bestLag;
+    for(let lag=minLag; lag<=maxLag; lag++){
+      const s = scores[lag];
+      if(s < bestScore*0.80) continue;
+      const isLocalMax = (lag<=minLag || s >= scores[lag-1]) && (lag>=maxLag || s >= scores[lag+1]);
+      if(isLocalMax){ fundamentalLag = lag; break; }
+    }
+    bestScore = Math.min(1, Math.max(bestScore, scores[fundamentalLag]));
+    const cadenceHz = fundamentalLag ? cfg.RESAMPLE_HZ / fundamentalLag : null;
+
+    let periodic = bestScore >= cfg.MIN_AUTOCORR &&
+                   cadenceHz != null &&
+                   cadenceHz >= cfg.MIN_CADENCE_HZ &&
+                   cadenceHz <= cfg.MAX_CADENCE_HZ;
+    let reason = periodic ? 'gait' : (bestScore < cfg.MIN_AUTOCORR ? 'not rhythmic' : 'cadence out of range');
+
+    // Frequency must also be STABLE between consecutive windows. A
+    // one-off correlation spike from a repetitive hand gesture won't
+    // hold its frequency for two windows running; a real walk will.
+    if(periodic && lastCadenceHz != null){
+      const drift = Math.abs(cadenceHz - lastCadenceHz) / lastCadenceHz;
+      if(drift > cfg.CADENCE_STABILITY){ periodic = false; reason = 'cadence unstable'; }
+    }
+    if(cadenceHz != null) lastCadenceHz = cadenceHz;
+
+    return {periodic, score: Math.max(0, bestScore), cadenceHz, variance, reason};
+  }
+
+  // Adaptive peak threshold, derived from the buffer itself rather than
+  // a user-tuned constant. Different phones report wildly different
+  // accelerometer scales; deriving the threshold from the signal makes
+  // the "step sensitivity" setting a fine adjustment rather than a
+  // load-bearing one.
+  function adaptiveThreshold(sensitivityScale){
+    if(samples.length < 8) return Infinity;
+    let mean = 0;
+    for(const s of samples) mean += s.v;
+    mean /= samples.length;
+    let sd = 0;
+    for(const s of samples) sd += (s.v-mean)*(s.v-mean);
+    sd = Math.sqrt(sd/samples.length);
+    return mean + (cfg.PEAK_K * (sensitivityScale||1)) * sd;
+  }
+
+  return {analyze, push, adaptiveThreshold, get bufferSize(){ return samples.length; }, reset(){ samples.length=0; gravityBaseline=null; lastCadenceHz=null; }};
+}
+
+/**
+ * Turns validated peaks into confirmed steps and bouts.
+ *
+ * Nothing is committed until CONFIRM_STEPS consistent steps have
+ * accumulated — this is the "commit buffer". It is why picking up your
+ * phone, or three seconds of fidgeting, can never add to your total: a
+ * false burst dies in the buffer and is discarded, never banked. When a
+ * bout does confirm, the buffered steps are released all at once so a
+ * genuine walk isn't short-changed at the start.
+ */
+function createBoutTracker(cfg, callbacks){
+  cfg = Object.assign({}, GAIT, cfg||{});
+  callbacks = callbacks || {};
+  let pending = [];          // timestamps not yet committed
+  let intervals = [];        // recent step intervals, for consistency checks
+  let lastStepT = null;
+  let confirmed = false;
+  let bout = null;           // {startT, endT, steps, activity, cadenceSum, cadenceN}
+
+  function medianInterval(){
+    if(!intervals.length) return null;
+    const s = intervals.slice(-6).sort((a,b)=>a-b);
+    return s[Math.floor(s.length/2)];
+  }
+
+  function resetPending(){ pending = []; intervals = []; confirmed = false; lastStepT = null; }
+
+  function closeBout(){
+    if(bout && confirmed && bout.steps > 0 && callbacks.onBoutEnd) callbacks.onBoutEnd(bout);
+    bout = null;
+    resetPending();
+  }
+
   return {
-    feedPulse(timestampMs, rotationDegPerSec){
-      if(rotationDegPerSec != null && rotationDegPerSec > maxRotationDegPerSec){
-        lastPulseTime = timestampMs; lastGap = null; streak = 0;
-        return false;
-      }
-      if(lastPulseTime == null){
-        lastPulseTime = timestampMs; streak = 1; lastGap = null;
-        return false;
-      }
-      const gap = timestampMs - lastPulseTime;
-      lastPulseTime = timestampMs;
-      if(gap < minGapMs || gap > maxGapMs){
-        streak = 1; lastGap = null;
-        return false;
-      }
-      if(lastGap != null){
-        const delta = Math.abs(gap - lastGap) / lastGap;
-        if(delta > gapToleranceRatio){
-          streak = 1; lastGap = gap;
-          return false;
+    /** @returns number of steps newly committed by this peak (0 or more) */
+    feedPeak(t, cadenceHz, suppressed){
+      // Vehicle suppression / non-gait window: kill the pending buffer
+      // outright so a car journey can never accumulate toward a bout.
+      if(suppressed){ if(bout) closeBout(); else resetPending(); return 0; }
+
+      if(lastStepT != null){
+        const gap = t - lastStepT;
+        if(gap < cfg.MIN_STEP_INTERVAL_MS) return 0;           // refractory
+        if(gap > cfg.MAX_STEP_INTERVAL_MS){                     // bout broken
+          if(bout) closeBout(); else resetPending();
+        } else {
+          const med = medianInterval();
+          if(med != null && Math.abs(gap-med)/med > cfg.INTERVAL_TOLERANCE){
+            // Rhythm broke — restart the streak rather than banking a
+            // step that doesn't fit the gait pattern.
+            if(!confirmed){ resetPending(); }
+          } else {
+            intervals.push(gap);
+          }
         }
       }
-      lastGap = gap;
-      streak += 1;
-      return streak >= confirmAfter;
+      lastStepT = t;
+
+      if(confirmed && bout){
+        bout.steps += 1;
+        bout.endT = t;
+        if(cadenceHz){ bout.cadenceSum += cadenceHz; bout.cadenceN += 1; }
+        bout.activity = (bout.cadenceN && (bout.cadenceSum/bout.cadenceN) >= cfg.WALK_RUN_SPLIT_HZ) ? 'run' : 'walk';
+        return 1;
+      }
+
+      pending.push(t);
+      // Drop anything too old to be part of the same bout.
+      while(pending.length && (t - pending[0]) > cfg.CONFIRM_WINDOW_MS) pending.shift();
+
+      if(pending.length >= cfg.CONFIRM_STEPS){
+        confirmed = true;
+        const released = pending.length;
+        bout = {
+          startT: pending[0], endT: t, steps: released,
+          activity: (cadenceHz && cadenceHz >= cfg.WALK_RUN_SPLIT_HZ) ? 'run' : 'walk',
+          cadenceSum: cadenceHz ? cadenceHz*released : 0, cadenceN: cadenceHz ? released : 0,
+          distanceM: 0, gpsDistanceM: 0
+        };
+        pending = [];
+        if(callbacks.onBoutStart) callbacks.onBoutStart(bout);
+        return released; // retroactive commit of the whole confirmed run
+      }
+      return 0;
     },
-    reset(){ lastPulseTime = null; lastGap = null; streak = 0; },
-    get currentStreak(){ return streak; }
+    /** Called on a timer; closes a bout that has gone quiet. */
+    tick(now){
+      if(lastStepT != null && (now - lastStepT) > cfg.BOUT_END_MS){
+        if(bout) closeBout(); else resetPending();
+      }
+    },
+    get activeBout(){ return confirmed ? bout : null; },
+    get pendingCount(){ return pending.length; },
+    reset(){ bout = null; resetPending(); }
   };
 }
+
 // Standard great-circle distance between two lat/lon points, in km.
 function haversineDistanceKm(lat1, lon1, lat2, lon2){
   const R = 6371;
@@ -2227,10 +2922,18 @@ const App = {
   taskCategoryFilter: "all",
   newsCat: "global",
   _newsLoadedOnce: false,
+  _newsResult: null,       // last fetched+merged payload for the active tab
+  newsDateMode: 'all',     // 'all' | 'today' | '3d' | '7d' | 'exact'
+  newsExactDate: null,     // 'YYYY-MM-DD' when newsDateMode === 'exact'
   health: {
     stepGoal: 10000,
     calorieGoal: 2000,
-    steps: {},      // 'YYYY-MM-DD' -> count
+    steps: {},      // 'YYYY-MM-DD' -> count (legacy mirror; kept so old exports/imports still work)
+    // The real record. 'YYYY-MM-DD' -> {steps, walkSteps, runSteps, distanceM,
+    // gpsDistanceM, activeMs, walkMs, runMs, bouts:[], manualSteps, tz}
+    // Bouts are the unit of truth — every daily figure is derived from them,
+    // which is what makes "how much did I walk 5 days ago" answerable.
+    days: {},
     customFoods: [],// [{id, name, calories}]
     foodLog: {},    // 'YYYY-MM-DD' -> [{id, name, calories, qty}]
     weightLog: {},  // 'YYYY-MM-DD' -> kg
@@ -2249,10 +2952,19 @@ const App = {
   // run" without a manual start. Separate from gpsTrack below, which is
   // purely opt-in for people who also want a route map.
   stepTracker: {
-    active: false, detector: null, motionHandler: null,
+    active: false, motionHandler: null,
+    analyzer: null,        // createGaitAnalyzer — periodicity + cadence
+    tracker: null,         // createBoutTracker — commit buffer + bouts
+    lastGait: null,        // most recent {periodic, score, cadenceHz, variance, reason}
+    lastAnalyzeAt: 0,
+    aboveThreshold: false,
+    lastGpsSpeed: null, lastGpsSpeedAt: 0, // fed from watchPosition, for vehicle rejection
+    suppressedReason: null,
+    showDebug: false,
     permissionState: 'unknown', // 'unknown' | 'granted' | 'needs-gesture' | 'unavailable' | 'no-sensor-detected'
     sawAnyEvent: false
   },
+  avgWindow: 7,
   quoteOffset: 0,
   gpsTrack: null, // {date, distanceKm, lastFix, pathLatLngs, geoWatchId, rejectedFixCount, map, polyline}
 
@@ -2549,9 +3261,19 @@ const App = {
     this.renderWeatherNow(todayStr);
 
     // steps/distance — event-driven updates already happen per detected
-    // step; this is a redundant once-a-second refresh so the numbers never
-    // look stale even if no step has landed in the last moment.
-    if(document.getElementById('stepsTodayCount')) this.renderStepsSection();
+    // step; this is a redundant refresh so the numbers never look stale
+    // even if no step has landed recently. The live tiles refresh every
+    // second, but the history browser and the averages (which scan up to
+    // a year of day records) only every 10s — recomputing a 365-day
+    // average once per second is pure waste on a phone.
+    if(document.getElementById('stepsTodayCount')){
+      this.renderStepTrackerStatus();
+      this.renderWalkStats();
+      if(!this._lastStepsFullRender || now - this._lastStepsFullRender > 10000){
+        this._lastStepsFullRender = now;
+        this.renderStepsSection();
+      }
+    }
 
     // rain nowcast countdown — cheap to recompute, refresh roughly once a minute
     if(!this._lastRainNowcastTick || now - this._lastRainNowcastTick > 60000){
@@ -3365,28 +4087,129 @@ const App = {
     this.renderFoodLog();
   },
 
-  /* ---------- Steps & route ---------- */
+  /* ---------- Steps: daily records ----------
+     Everything is stored per LOCAL calendar day, alongside the IANA
+     timezone the day was recorded in. Deriving a past day's boundary
+     from your *current* timezone is wrong the moment you travel — a walk
+     recorded in India should stay on its Indian calendar day even when
+     you read this back in Amsterdam. */
+  dayRecord(dateStr, create){
+    if(!this.health.days) this.health.days = {};
+    let rec = this.health.days[dateStr];
+    if(!rec && create){
+      rec = this.health.days[dateStr] = {
+        steps:0, walkSteps:0, runSteps:0,
+        distanceM:0, gpsDistanceM:0,
+        activeMs:0, walkMs:0, runMs:0,
+        bouts:[], manualSteps:null,
+        tz: (Intl.DateTimeFormat().resolvedOptions().timeZone || 'local')
+      };
+    }
+    return rec || {steps:0, walkSteps:0, runSteps:0, distanceM:0, gpsDistanceM:0, activeMs:0, walkMs:0, runMs:0, bouts:[], manualSteps:null, tz:null};
+  },
+  // A manually-entered count always wins for that day — it comes from
+  // your phone's own OS-level pedometer, which has a motion coprocessor
+  // and runs all day, so it is genuinely the better number when present.
+  stepsForDay(dateStr){
+    const rec = this.dayRecord(dateStr);
+    if(rec.manualSteps != null) return rec.manualSteps;
+    return rec.steps || 0;
+  },
+  // Distance prefers real GPS; falls back to stride x steps and says so.
+  distanceForDay(dateStr){
+    const rec = this.dayRecord(dateStr);
+    const gps = rec.gpsDistanceM || 0;
+    const steps = this.stepsForDay(dateStr);
+    // Only trust GPS if it covers a sensible share of the day's steps —
+    // otherwise a partly-tracked day would report a distance far below
+    // what was actually walked.
+    const stride = this.health.strideM || 0.72;
+    const estimated = steps * stride;
+    if(gps > 0 && gps >= estimated*0.6) return {meters: gps, estimated:false};
+    return {meters: estimated, estimated:true};
+  },
+  // One-time migration: the old format kept only health.steps['date'] = n.
+  // Those totals are real data, so they're carried forward as day records
+  // rather than discarded.
+  migrateLegacyStepData(){
+    if(!this.health.days) this.health.days = {};
+    const legacy = this.health.steps || {};
+    let migrated = 0;
+    Object.keys(legacy).forEach(d=>{
+      if(this.health.days[d]) return;
+      const n = legacy[d];
+      if(typeof n !== 'number' || n <= 0) return;
+      this.health.days[d] = {
+        steps:n, walkSteps:n, runSteps:0,
+        distanceM:0, gpsDistanceM:0,
+        activeMs:0, walkMs:0, runMs:0,
+        bouts:[], manualSteps:null, tz:null, legacy:true
+      };
+      migrated++;
+    });
+    // Retention: keep ~400 days so the history view stays useful without
+    // pushing localStorage toward its quota.
+    const keys = Object.keys(this.health.days).sort();
+    if(keys.length > 400){
+      keys.slice(0, keys.length-400).forEach(k=>delete this.health.days[k]);
+    }
+    if(migrated) this.saveHealthState();
+  },
+
+  /* ---------- Steps & route rendering ---------- */
   renderStepsSection(){
     const today = dstr(new Date());
-    const count = this.health.steps[today] || 0;
-    document.getElementById('stepsTodayCount').textContent = count.toLocaleString();
-    document.getElementById('stepsGoalLabel').textContent = `Goal: ${this.health.stepGoal.toLocaleString()} (${Math.min(100, Math.round(count/this.health.stepGoal*100))}%)`;
-    const strideM = this.health.strideM || 0.7; // calibrated from a GPS-tracked walk once available, generic estimate until then
-    const distanceKm = count * (strideM/1000);
-    document.getElementById('stepsDistanceLabel').textContent = `${distanceKm.toFixed(1)} km`;
+    const count = this.stepsForDay(today);
+    const rec = this.dayRecord(today);
+    const el = id => document.getElementById(id);
+    if(el('stepsTodayCount')) el('stepsTodayCount').textContent = count.toLocaleString();
+    if(el('stepsGoalLabel')) el('stepsGoalLabel').textContent = `Goal: ${this.health.stepGoal.toLocaleString()} (${Math.min(100, Math.round(count/this.health.stepGoal*100))}%)`;
+    const dist = this.distanceForDay(today);
+    const distanceKm = dist.meters/1000;
+    if(el('stepsDistanceLabel')) el('stepsDistanceLabel').textContent = `${distanceKm.toFixed(2)} km`;
     const weightKg = this.getLatestWeightKg();
-    const walkedCalories = estimateCaloriesBurned(count, distanceKm, weightKg, null);
+    const activeHours = (rec.activeMs||0)/3600000;
+    const walkedCalories = estimateCaloriesBurned(count, distanceKm, weightKg, activeHours || null);
     const loggedBurn = (this.health.calorieBurnLog && this.health.calorieBurnLog[today]) || 0;
     const totalCalories = Math.max(walkedCalories, loggedBurn);
-    document.getElementById('stepsCaloriesLabel').textContent = `~${totalCalories} kcal burned (est.)${weightKg ? '' : ' — add your weight below for a more personal estimate'}`;
-    if(document.getElementById('strideCalibrationNote')){
-      document.getElementById('strideCalibrationNote').textContent = this.health.strideM
-        ? `Distance uses your calibrated stride (${strideM.toFixed(2)}m/step, learned from a past GPS-tracked walk).`
-        : `Distance uses a generic 0.7m/step assumption until you complete one GPS-tracked walk to calibrate it to you.`;
+    if(el('stepsCaloriesLabel')) el('stepsCaloriesLabel').textContent = `~${totalCalories} kcal burned (est.)${weightKg ? '' : ' — add your weight below for a more personal estimate'}`;
+    if(el('stepsSourceNote')){
+      el('stepsSourceNote').textContent = dist.estimated
+        ? `Distance estimated from ${(this.health.strideM||0.72).toFixed(2)}m stride × steps${this.health.strideM ? ' (calibrated to you from GPS-tracked walks)' : ' (generic default until one GPS-tracked walk calibrates it)'}.`
+        : `Distance measured by GPS across ${(rec.bouts||[]).length} tracked bout${(rec.bouts||[]).length===1?'':'s'}.`;
+    }
+    // Live pace + activity split for today.
+    if(el('stepsPaceLabel')){
+      const walkPace = this.paceSecPerKm(rec.walkMs, rec.walkSteps);
+      el('stepsPaceLabel').textContent = walkPace ? this.formatPace(walkPace) : '—';
+    }
+    if(el('stepsActivityLabel')){
+      el('stepsActivityLabel').textContent =
+        `${Math.round((rec.walkMs||0)/60000)} min walking · ${Math.round((rec.runMs||0)/60000)} min running`;
+    }
+    if(el('strideCalibrationNote')){
+      el('strideCalibrationNote').textContent = this.health.strideM
+        ? `Stride calibrated to ${this.health.strideM.toFixed(2)}m/step over ${this.health.strideSamples||1} GPS-tracked walk${(this.health.strideSamples||1)===1?'':'s'}.`
+        : `Stride not yet calibrated — complete one GPS-tracked walk of 60+ steps and it will learn your real stride.`;
     }
     this.renderStepTrackerStatus();
     this.renderWalkStats();
     this.ensureWalkMapVisible();
+    this.renderStepHistory();
+    this.renderStepAverages();
+  },
+  paceSecPerKm(activeMs, steps){
+    // Duration-weighted, computed from the totals — never an average of
+    // per-day paces, which is a different (and wrong) number.
+    if(!activeMs || !steps) return null;
+    const meters = steps * (this.health.strideM || 0.72);
+    if(meters < 100) return null;
+    return (activeMs/1000) / (meters/1000);
+  },
+  formatPace(secPerKm){
+    if(!secPerKm || !isFinite(secPerKm)) return '—';
+    const m = Math.floor(secPerKm/60), s = Math.round(secPerKm%60);
+    return `${m}:${String(s).padStart(2,'0')} /km`;
   },
   renderStepTrackerStatus(){
     const el = document.getElementById('stepTrackerStatus');
@@ -3394,10 +4217,14 @@ const App = {
     if(!el) return;
     const st = this.stepTracker.permissionState;
     if(st === 'granted'){
-      el.innerHTML = `🟢 Automatic tracking is <b>on</b> — steps count in real time as you carry your phone, no need to press anything.`;
+      const g = this.stepTracker.lastGait;
+      const state = this.stepTracker.suppressedReason
+        ? `paused — ${this.stepTracker.suppressedReason}`
+        : (g && g.periodic ? 'walking detected' : 'watching for walking motion');
+      el.innerHTML = `🟢 Motion tracking is <b>on</b> (${escapeHtml(state)}). Steps are only banked once a real, rhythmic walking pattern is confirmed — scrolling, typing, fidgeting and car journeys are filtered out rather than counted.`;
       if(btn) btn.style.display = 'none';
     } else if(st === 'needs-gesture'){
-      el.innerHTML = `🟡 One tap needed to enable automatic tracking on this device (iPhone requires this for privacy — it's a one-time tap per visit, not a "start walk" button).`;
+      el.innerHTML = `🟡 One tap needed to enable motion tracking on this device (iPhone requires this for privacy — it's a one-time tap per visit, not a "start walk" button).`;
       if(btn) btn.style.display = 'inline-block';
     } else if(st === 'no-sensor-detected'){
       el.innerHTML = `⚪ No motion sensor detected on this device (likely a laptop/desktop) — automatic tracking isn't possible here. Use manual entry below, or open this on a phone.`;
@@ -3409,14 +4236,39 @@ const App = {
       el.innerHTML = `Checking for a motion sensor…`;
       if(btn) btn.style.display = 'none';
     }
+    // Live signal readout — the same numbers the gate is deciding on.
+    const dbg = document.getElementById('gaitDebug');
+    if(dbg && this.stepTracker.showDebug){
+      const g = this.stepTracker.lastGait || {};
+      const tr = this.stepTracker.tracker;
+      dbg.style.display = 'block';
+      dbg.innerHTML = `rhythm score <b>${(g.score||0).toFixed(2)}</b> (needs ≥${GAIT.MIN_AUTOCORR}) · cadence <b>${g.cadenceHz ? (g.cadenceHz*60).toFixed(0)+' spm' : '—'}</b> · energy <b>${(g.variance||0).toFixed(2)}</b> · verdict <b>${escapeHtml(g.reason||'—')}</b><br>pending steps <b>${tr ? tr.pendingCount : 0}</b>/${GAIT.CONFIRM_STEPS} · GPS speed <b>${this.stepTracker.lastGpsSpeed != null ? this.stepTracker.lastGpsSpeed.toFixed(1)+' m/s' : '—'}</b>`;
+    } else if(dbg && !this.stepTracker.showDebug){
+      dbg.style.display = 'none';
+    }
+  },
+  toggleGaitDebug(){
+    this.stepTracker.showDebug = !this.stepTracker.showDebug;
+    this.renderStepTrackerStatus();
   },
   saveManualSteps(){
     const val = parseInt(document.getElementById('manualStepsInput').value, 10);
     if(isNaN(val) || val < 0) return;
-    this.health.steps[dstr(new Date())] = val;
+    const today = dstr(new Date());
+    const rec = this.dayRecord(today, true);
+    rec.manualSteps = val;
+    this.health.steps[today] = val; // legacy mirror
     this.saveHealthState();
     this.renderStepsSection();
     document.getElementById('manualStepsInput').value = '';
+  },
+  clearManualSteps(){
+    const today = dstr(new Date());
+    const rec = this.dayRecord(today, true);
+    rec.manualSteps = null;
+    this.health.steps[today] = rec.steps || 0;
+    this.saveHealthState();
+    this.renderStepsSection();
   },
   saveStepGoal(){
     const val = parseInt(document.getElementById('stepGoalInput').value, 10);
@@ -3431,18 +4283,12 @@ const App = {
     this.health.stepSensitivity = val;
     this.saveHealthState();
     document.getElementById('sensitivitySaveStatus').textContent = 'Saved — takes effect immediately.';
-    // Re-arm the live detector with the new sensitivity without losing today's count.
     if(this.stepTracker.active) this.attachStepListener(true);
   },
 
-  /* ---------- Automatic, always-on step tracking ----------
-     This is the part that should "just work": as soon as the app is open
-     (and, on iPhone, after one required tap — Apple gates motion-sensor
-     access behind a user gesture; there's no way around that from any
-     website), every detected step immediately updates today's count and
-     distance. No "start walk" button involved — that button is reserved
-     for the separate, optional GPS route map below. */
+  /* ---------- Motion tracking lifecycle ---------- */
   startAutoStepTracking(){
+    this.migrateLegacyStepData();
     if(typeof window === 'undefined' || typeof DeviceMotionEvent === 'undefined'){
       this.stepTracker.permissionState = 'unavailable';
       this.renderStepTrackerStatus();
@@ -3454,14 +4300,9 @@ const App = {
       this.renderStepTrackerStatus();
       return;
     }
-    // Android / most other browsers: no gesture-gated permission API exists,
-    // so we can genuinely start listening immediately, with zero taps.
     this.attachStepListener();
     this.stepTracker.permissionState = 'granted';
     this.renderStepTrackerStatus();
-    // If we never actually receive a motion event within a few seconds,
-    // this is almost certainly a device with no accelerometer (a laptop) —
-    // say so plainly instead of silently doing nothing forever.
     setTimeout(()=>this.checkForSensorData(), 6000);
   },
   checkForSensorData(){
@@ -3471,8 +4312,6 @@ const App = {
     }
   },
   async enableAutoStepTrackingTap(){
-    // The one required tap on iOS — this IS the user gesture Apple requires;
-    // there is no way to skip it, on any website, for privacy reasons.
     try{
       const perm = await DeviceMotionEvent.requestPermission();
       if(perm === 'granted'){
@@ -3488,62 +4327,94 @@ const App = {
     }
     this.renderStepTrackerStatus();
   },
+  /**
+   * The live pipeline. Per motion event:
+   *   raw magnitude -> adaptive gravity removal -> rolling buffer
+   *   every ~400ms: autocorrelation over the buffer -> periodicity verdict
+   *   peak crossing -> only forwarded to the bout tracker if that verdict
+   *   currently says "this is gait" and no vehicle suppression is active
+   */
   attachStepListener(replace){
     if(this.stepTracker.active && !replace) return;
     if(this.stepTracker.motionHandler) window.removeEventListener('devicemotion', this.stepTracker.motionHandler);
+
     const sensitivity = this.health.stepSensitivity || 0.8;
-    this.stepTracker.detector = createStepDetector({threshold: sensitivity});
-    this.stepTracker.gate = createWalkingGate();
+    const analyzer = createGaitAnalyzer();
+    const tracker = createBoutTracker({}, {
+      onBoutStart: (bout)=>{ this.onBoutStart(bout); },
+      onBoutEnd:   (bout)=>{ this.onBoutEnd(bout); }
+    });
+    this.stepTracker.analyzer = analyzer;
+    this.stepTracker.tracker = tracker;
+    this.stepTracker.lastGait = null;
+    this.stepTracker.lastAnalyzeAt = 0;
+    this.stepTracker.aboveThreshold = false;
+
     this.stepTracker.motionHandler = (ev)=>{
-      // Devices/browsers are inconsistent about which of these two fields
-      // is populated — some only fill accelerationIncludingGravity, some
-      // only fill acceleration (already gravity-free), some fill both.
-      // Treating either one as "gravity-included" was the bug: subtracting
-      // 9.81 from an already gravity-free reading produces a permanently
-      // large magnitude and massively over-counts steps.
+      // Devices disagree about which field is populated and whether
+      // gravity is included, so take whichever exists and let the
+      // analyzer's adaptive baseline remove the constant component —
+      // rather than blindly subtracting 9.81 from a value that may
+      // already be gravity-free.
       const withG = ev.accelerationIncludingGravity;
       const noG = ev.acceleration;
-      let magnitude = null;
+      let raw = null;
       if(withG && (withG.x!=null || withG.y!=null || withG.z!=null)){
-        const gx=withG.x||0, gy=withG.y||0, gz=withG.z||0;
-        magnitude = Math.sqrt(gx*gx+gy*gy+gz*gz) - 9.81; // remove gravity baseline
+        raw = Math.sqrt((withG.x||0)**2 + (withG.y||0)**2 + (withG.z||0)**2);
       } else if(noG && (noG.x!=null || noG.y!=null || noG.z!=null)){
-        const gx=noG.x||0, gy=noG.y||0, gz=noG.z||0;
-        magnitude = Math.sqrt(gx*gx+gy*gy+gz*gz); // already gravity-free, nothing to remove
-      } else {
-        return; // no usable acceleration data in this event
-      }
+        raw = Math.sqrt((noG.x||0)**2 + (noG.y||0)**2 + (noG.z||0)**2);
+      } else return;
+
       this.stepTracker.sawAnyEvent = true;
       const now = Date.now();
-      // Raw candidate pulse (could still be a false positive on its own).
-      if(!this.stepTracker.detector.feed(Math.abs(magnitude), now)) return;
-      // Gyroscope rotation rate, when available, distinguishes carrying
-      // the phone while walking (low/moderate, rhythmic rotation) from
-      // picking it up or fidgeting with it (sharp, high rotation spikes).
-      // Not every browser/device reports rotationRate — gracefully
-      // degrade to cadence-only gating when it's unavailable.
-      let rotationMagnitude = null;
-      if(ev.rotationRate){
-        const ra = ev.rotationRate.alpha||0, rb = ev.rotationRate.beta||0, rg = ev.rotationRate.gamma||0;
-        rotationMagnitude = Math.sqrt(ra*ra+rb*rb+rg*rg);
+      const dyn = analyzer.push(raw, now);
+
+      // Re-run the periodicity analysis a few times a second rather than
+      // per sample — it's an O(n·lags) scan and doesn't need to run at
+      // sensor rate to be responsive.
+      if(now - this.stepTracker.lastAnalyzeAt > 400){
+        this.stepTracker.lastAnalyzeAt = now;
+        this.stepTracker.lastGait = analyzer.analyze();
       }
-      // Only a run of 5+ consistent, plausible-cadence pulses confirms an
-      // actual step — a lone bump or a few seconds of hand jitter never
-      // reaches this, so it can never register as walking.
-      if(this.stepTracker.gate.feedPulse(now, rotationMagnitude)){
-        this.registerStep();
+      const gait = this.stepTracker.lastGait;
+
+      // Vehicle rejection: fast, sustained GPS movement with no gait
+      // rhythm is a car, train or bus. Suppress rather than count.
+      let suppressed = false;
+      this.stepTracker.suppressedReason = null;
+      const spd = this.stepTracker.lastGpsSpeed;
+      const spdFresh = this.stepTracker.lastGpsSpeedAt && (now - this.stepTracker.lastGpsSpeedAt) < 20000;
+      if(spdFresh && spd != null && spd > GAIT.VEHICLE_SPEED_MPS && !(gait && gait.periodic)){
+        suppressed = true;
+        this.stepTracker.suppressedReason = 'moving too fast for walking (vehicle)';
+      }
+      if(!gait || !gait.periodic){
+        // Not rhythmic enough to be gait — the pending buffer decays and
+        // nothing is banked. This is the check that kills scrolling,
+        // typing and fidgeting.
+        if(!suppressed) this.stepTracker.suppressedReason = gait ? gait.reason : 'warming up';
+        tracker.feedPeak(now, null, true);
+        return;
+      }
+      if(suppressed){ tracker.feedPeak(now, null, true); return; }
+
+      // Adaptive peak detection inside a confirmed-gait window.
+      const threshold = analyzer.adaptiveThreshold(sensitivity);
+      if(dyn > threshold){
+        if(!this.stepTracker.aboveThreshold){
+          const committed = tracker.feedPeak(now, gait.cadenceHz, false);
+          if(committed > 0) this.commitSteps(committed, gait.cadenceHz);
+        }
+        this.stepTracker.aboveThreshold = true;
+      } else {
+        this.stepTracker.aboveThreshold = false;
       }
     };
+
     window.addEventListener('devicemotion', this.stepTracker.motionHandler);
     this.stepTracker.active = true;
     if(!replace) this.notifyAutoTrackingStarted();
   },
-  // Vibration + a short chime the moment step tracking auto-starts, so it's
-  // noticeable without having to watch the screen. Honest limit: the
-  // Vibration API has never been implemented in iOS Safari (an Apple
-  // platform decision, not something any website can work around) — it
-  // silently does nothing there, while the chime still plays on every
-  // platform since Web Audio API is universally supported.
   notifyAutoTrackingStarted(){
     try{
       if(navigator.vibrate) navigator.vibrate([60, 40, 60]);
@@ -3568,14 +4439,209 @@ const App = {
       playTone(1175, now+0.13, 0.16);
     }catch(e){ /* audio autoplay can be blocked before any user gesture — non-fatal */ }
   },
-  registerStep(){
-    const today = dstr(new Date());
-    this.health.steps[today] = (this.health.steps[today]||0) + 1;
+  onBoutStart(bout){
+    // A bout only reaches here after 8 consistent steps confirmed it, so
+    // this is a safe moment to be confident real walking is underway.
+    this.renderWalkStats();
+  },
+  onBoutEnd(bout){
+    const dateStr = dstr(new Date(bout.startT));
+    const rec = this.dayRecord(dateStr, true);
+    const durMs = Math.max(0, bout.endT - bout.startT);
+    const gpsM = bout.gpsDistanceM || 0;
+    const strideM = this.health.strideM || 0.72;
+    const distM = gpsM > 0 ? gpsM : bout.steps * strideM;
+
+    rec.activeMs += durMs;
+    if(bout.activity === 'run'){ rec.runMs += durMs; } else { rec.walkMs += durMs; }
+    rec.gpsDistanceM = (rec.gpsDistanceM||0) + gpsM;
+    rec.distanceM = (rec.distanceM||0) + distM;
+    rec.bouts.push({
+      s: bout.startT, e: bout.endT, a: bout.activity, st: bout.steps,
+      d: Math.round(distM), gd: Math.round(gpsM),
+      c: bout.cadenceN ? +(bout.cadenceSum/bout.cadenceN).toFixed(2) : null
+    });
+    // Keep the per-day bout list bounded so localStorage stays small.
+    if(rec.bouts.length > 80) rec.bouts = rec.bouts.slice(-80);
+
+    this.calibrateStrideFromBout(bout);
     this.saveHealthState();
     this.renderStepsSection();
+  },
+  /** Banks confirmed steps against today. Called only by the bout tracker. */
+  commitSteps(n, cadenceHz){
+    if(!n) return;
+    const today = dstr(new Date());
+    const rec = this.dayRecord(today, true);
+    rec.steps += n;
+    if(cadenceHz && cadenceHz >= GAIT.WALK_RUN_SPLIT_HZ) rec.runSteps += n; else rec.walkSteps += n;
+    this.health.steps[today] = rec.steps; // legacy mirror, keeps old exports working
+    this._stepsDirty = true;
+    // Writing localStorage on every single step is wasteful; batch it.
+    if(!this._stepSaveTimer){
+      this._stepSaveTimer = setTimeout(()=>{
+        this._stepSaveTimer = null;
+        if(this._stepsDirty){ this.saveHealthState(); this._stepsDirty = false; }
+      }, 3000);
+    }
     const liveEl = document.getElementById('walkStepsLive');
-    if(liveEl) liveEl.textContent = this.health.steps[today].toLocaleString();
-    this.tryCalibrateStride();
+    if(liveEl) liveEl.textContent = this.stepsForDay(today).toLocaleString();
+  },
+
+  /* ---------- History: any past day, on demand ---------- */
+  stepHistoryOffset: 0,
+  shiftStepHistory(delta){
+    this.stepHistoryOffset = Math.min(0, (this.stepHistoryOffset||0) + delta);
+    const inp = document.getElementById('stepHistDate');
+    if(inp) inp.value = dstr(addDays(new Date(), this.stepHistoryOffset));
+    this.renderStepHistory();
+  },
+  setStepHistoryDate(){
+    const inp = document.getElementById('stepHistDate');
+    if(!inp || !inp.value) return;
+    const picked = new Date(inp.value + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    this.stepHistoryOffset = Math.round((picked - today)/86400000);
+    this.renderStepHistory();
+  },
+  renderStepHistory(){
+    const out = document.getElementById('stepHistOut');
+    if(!out) return;
+    const offset = this.stepHistoryOffset || 0;
+    const date = addDays(new Date(), offset);
+    const dateStr = dstr(date);
+    const inp = document.getElementById('stepHistDate');
+    if(inp && !inp.value) inp.value = dateStr;
+    const rec = this.dayRecord(dateStr);
+    const steps = this.stepsForDay(dateStr);
+    const dist = this.distanceForDay(dateStr);
+    const label = offset === 0 ? 'Today' : (offset === -1 ? 'Yesterday' : `${Math.abs(offset)} days ago`);
+    const dateLabel = date.toLocaleDateString(undefined, {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+    if(!steps && !(rec.bouts||[]).length){
+      out.innerHTML = `<div class="stat-sub"><b>${label}</b> · ${escapeHtml(dateLabel)}<br>No tracking data for this day. Days with no recorded session are treated as <i>missing data</i>, not as a zero — they're excluded from your averages below so one untracked day can't drag them down.</div>`;
+    } else {
+      const walkPace = this.paceSecPerKm(rec.walkMs, rec.walkSteps);
+      const runPace  = this.paceSecPerKm(rec.runMs, rec.runSteps);
+      const boutRows = (rec.bouts||[]).slice().reverse().slice(0,12).map(b=>{
+        const t = new Date(b.s).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+        const mins = Math.max(1, Math.round((b.e-b.s)/60000));
+        return `<div class="stat-sub" style="padding:3px 0;">${b.a==='run'?'🏃':'🚶'} ${t} · ${b.st.toLocaleString()} steps · ${(b.d/1000).toFixed(2)} km · ${mins} min${b.c ? ' · '+Math.round(b.c*60)+' spm' : ''}${b.gd ? '' : ' · <i>distance estimated</i>'}</div>`;
+      }).join('');
+      out.innerHTML = `
+        <div class="stat-sub" style="margin-bottom:8px;"><b>${label}</b> · ${escapeHtml(dateLabel)}${rec.manualSteps!=null?' · <i>manually entered</i>':''}${rec.legacy?' · <i>imported from earlier version</i>':''}</div>
+        <div class="dc-stat-grid">
+          <div class="dc-stat"><div class="num">${steps.toLocaleString()}</div><div class="lbl">Steps</div></div>
+          <div class="dc-stat"><div class="num">${(dist.meters/1000).toFixed(2)} km</div><div class="lbl">Distance${dist.estimated?' (est.)':''}</div></div>
+          <div class="dc-stat"><div class="num">${Math.round((rec.activeMs||0)/60000)}</div><div class="lbl">Active minutes</div></div>
+          <div class="dc-stat"><div class="num">${walkPace?this.formatPace(walkPace).replace(' /km',''):'—'}</div><div class="lbl">Walk pace /km</div></div>
+          <div class="dc-stat"><div class="num">${runPace?this.formatPace(runPace).replace(' /km',''):'—'}</div><div class="lbl">Run pace /km</div></div>
+          <div class="dc-stat"><div class="num">${(rec.bouts||[]).length}</div><div class="lbl">Bouts</div></div>
+        </div>
+        ${boutRows ? `<div class="group-label" style="margin:10px 0 4px;">Sessions</div>${boutRows}` : ''}`;
+    }
+    this.renderStepBars();
+  },
+  // 14-day bar chart, same visual language as the weight graph.
+  renderStepBars(){
+    const svg = document.getElementById('stepBarsSvg');
+    if(!svg) return;
+    const days = [];
+    for(let i=13;i>=0;i--) days.push(dstr(addDays(new Date(), -i)));
+    const vals = days.map(d=>this.stepsForDay(d));
+    const max = Math.max(this.health.stepGoal || 10000, ...vals, 1);
+    const W = 320, H = 100, padTop = 8, padBottom = 14;
+    const chartH = H - padTop - padBottom;
+    const bw = W/days.length;
+    let content = '';
+    const goalY = padTop + chartH - (Math.min(this.health.stepGoal, max)/max)*chartH;
+    content += `<line x1="0" y1="${goalY.toFixed(1)}" x2="${W}" y2="${goalY.toFixed(1)}" stroke="var(--text-lo)" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"></line>`;
+    days.forEach((d,i)=>{
+      const v = vals[i];
+      const h = v ? Math.max(2, (v/max)*chartH) : 0;
+      const x = i*bw + bw*0.18, w = bw*0.64;
+      const y = padTop + chartH - h;
+      if(h) content += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="var(--saffron)" opacity="${v>=this.health.stepGoal?1:0.6}"><title>${d}: ${v.toLocaleString()} steps</title></rect>`;
+      const dl = new Date(d+'T00:00:00').toLocaleDateString(undefined,{weekday:'narrow'});
+      content += `<text class="sleep-axis-label" x="${(i*bw+bw/2).toFixed(1)}" y="${H-3}" text-anchor="middle">${dl}</text>`;
+    });
+    svg.innerHTML = content;
+  },
+
+  /* ---------- Averages ----------
+     Two rules that make these honest rather than merely plausible:
+
+     1. A day with NO tracked session is missing data, not a zero. Counting
+        untracked days as zeros is the single biggest source of misleading
+        step averages, so they're excluded and the coverage is shown
+        instead ("averaged over 22 of 30 days").
+     2. Pace is duration-weighted across the whole window
+        (total distance / total moving time), never an average of daily
+        paces — averaging averages weights a 5-minute stroll the same as
+        a two-hour hike. */
+  computeStepAverages(windowDays){
+    const days = [];
+    for(let i=0;i<windowDays;i++) days.push(dstr(addDays(new Date(), -i)));
+    let tracked = [], walkMs=0, runMs=0, walkSteps=0, runSteps=0, distM=0, activeMs=0;
+    days.forEach(d=>{
+      const rec = this.dayRecord(d);
+      const steps = this.stepsForDay(d);
+      const hasData = steps > 0 || (rec.bouts||[]).length > 0;
+      if(!hasData) return;
+      tracked.push(steps);
+      walkMs += rec.walkMs||0; runMs += rec.runMs||0;
+      walkSteps += rec.walkSteps||0; runSteps += rec.runSteps||0;
+      activeMs += rec.activeMs||0;
+      distM += this.distanceForDay(d).meters;
+    });
+    if(!tracked.length){
+      return {sampleSize:0, coverage:0, windowDays, mean:0, median:0, distanceKm:0, walkMin:0, runMin:0, walkPace:null, runPace:null, best:0};
+    }
+    const sorted = tracked.slice().sort((a,b)=>a-b);
+    const mean = tracked.reduce((a,b)=>a+b,0)/tracked.length;
+    const median = sorted.length%2 ? sorted[(sorted.length-1)/2] : (sorted[sorted.length/2-1]+sorted[sorted.length/2])/2;
+    return {
+      sampleSize: tracked.length,
+      coverage: tracked.length/windowDays,
+      windowDays,
+      mean: Math.round(mean),
+      median: Math.round(median),
+      best: sorted[sorted.length-1],
+      distanceKm: distM/1000,
+      walkMin: Math.round(walkMs/60000),
+      runMin: Math.round(runMs/60000),
+      walkPace: this.paceSecPerKm(walkMs, walkSteps),
+      runPace: this.paceSecPerKm(runMs, runSteps)
+    };
+  },
+  setAverageWindow(n){
+    this.avgWindow = n;
+    document.querySelectorAll('#stepAvgRow button').forEach(b=>{
+      b.classList.toggle('active', Number(b.dataset.win) === n);
+    });
+    this.renderStepAverages();
+  },
+  renderStepAverages(){
+    const out = document.getElementById('stepAvgOut');
+    if(!out) return;
+    const win = this.avgWindow || 7;
+    const a = this.computeStepAverages(win);
+    if(!a.sampleSize){
+      out.innerHTML = `<div class="stat-sub">No tracked days in the last ${win} days yet — averages appear once there's at least one day of data.</div>`;
+      return;
+    }
+    out.innerHTML = `
+      <div class="dc-stat-grid">
+        <div class="dc-stat"><div class="num">${a.mean.toLocaleString()}</div><div class="lbl">Avg steps/day</div></div>
+        <div class="dc-stat"><div class="num">${a.median.toLocaleString()}</div><div class="lbl">Median steps/day</div></div>
+        <div class="dc-stat"><div class="num">${a.best.toLocaleString()}</div><div class="lbl">Best day</div></div>
+        <div class="dc-stat"><div class="num">${(a.distanceKm/a.sampleSize).toFixed(2)} km</div><div class="lbl">Avg distance/day</div></div>
+        <div class="dc-stat"><div class="num">${a.walkPace?this.formatPace(a.walkPace).replace(' /km',''):'—'}</div><div class="lbl">Walking pace /km</div></div>
+        <div class="dc-stat"><div class="num">${a.runPace?this.formatPace(a.runPace).replace(' /km',''):'—'}</div><div class="lbl">Running pace /km</div></div>
+        <div class="dc-stat"><div class="num">${a.walkMin}</div><div class="lbl">Walk min (total)</div></div>
+        <div class="dc-stat"><div class="num">${a.runMin}</div><div class="lbl">Run min (total)</div></div>
+      </div>
+      <div class="stat-sub" style="margin-top:8px;">Averaged over <b>${a.sampleSize} tracked day${a.sampleSize===1?'':'s'}</b> out of the last ${win}. Days with no session at all are excluded as missing data rather than counted as zero — including them would understate your real average. The median is shown alongside the mean because one unusually long walk can pull a mean well away from a typical day.</div>`;
   },
   saveWeightLog(){
     const val = parseFloat(document.getElementById('weightLogInput').value);
@@ -3642,78 +4708,125 @@ const App = {
     });
     svg.innerHTML = svgContent;
   },
-  /* ---------- Always-on GPS route tracking for today ----------
-     Same philosophy as steps: starts automatically, no button needed.
-     Calling watchPosition triggers the browser's own native location
-     permission prompt — that's a one-time browser dialog, not a custom
-     gesture gate like iOS's motion permission, so this can genuinely
-     start itself without a "Start" tap. */
+  /* ---------- Always-on GPS: distance, pace, route ----------
+     Two changes that matter for accuracy:
+
+     1. Distance only accrues while a CONFIRMED BOUT is running. The old
+        version summed every accepted fix all day, so normal GPS drift
+        while the phone sat on a desk quietly inflated the daily total by
+        hundreds of metres. Now, if you aren't walking, the distance
+        doesn't move.
+     2. Reported speed is fed back into the step engine, which is what
+        makes vehicle rejection possible — a car journey has GPS speed
+        but no gait periodicity, so steps are suppressed instead of
+        counted. */
   startAutoGpsTracking(){
     if(!('geolocation' in navigator)){
-      document.getElementById('walkStatus').textContent = 'Geolocation is not available in this browser — the route map isn\'t possible here, but steps still track.';
+      const el = document.getElementById('walkStatus');
+      if(el) el.textContent = 'Geolocation is not available in this browser — distance, pace and the route map need it. Steps still count without it.';
       return;
     }
     const today = dstr(new Date());
     if(!this.gpsTrack || this.gpsTrack.date !== today){
-      this.gpsTrack = { date: today, distanceKm: 0, lastFix: null, pathLatLngs: [], rejectedFixCount: 0, map: null, polyline: null };
+      this.gpsTrack = { date: today, distanceKm: 0, lastFix: null, pathLatLngs: [], rejectedFixCount: 0, map: null, polyline: null, lastSpeedMps: null };
     }
     if(this.gpsTrack.geoWatchId != null) return; // already watching
-    document.getElementById('walkStatus').textContent = 'Locating… GPS typically takes 5-15 seconds to lock on the first time.';
+    const st = document.getElementById('walkStatus');
+    if(st) st.textContent = 'Locating… GPS typically takes 5-15 seconds to lock on the first time.';
     this.gpsTrack.geoWatchId = navigator.geolocation.watchPosition((pos)=>{
       const track = this.gpsTrack;
-      const nextFix = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy, timestamp: pos.timestamp || Date.now() };
+      const nextFix = {
+        lat: pos.coords.latitude, lon: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        speed: (typeof pos.coords.speed === 'number' && !isNaN(pos.coords.speed)) ? pos.coords.speed : null,
+        timestamp: pos.timestamp || Date.now()
+      };
       if(!isPlausibleGpsFix(track.lastFix, nextFix)){
         track.rejectedFixCount++;
-        return; // drop this fix — poor accuracy or an implausible jump; don't corrupt the route/distance
+        return; // poor accuracy or an implausible jump — don't corrupt the route
       }
+      let segmentM = 0;
       if(track.lastFix){
-        track.distanceKm += haversineDistanceKm(track.lastFix.lat, track.lastFix.lon, nextFix.lat, nextFix.lon);
+        segmentM = haversineDistanceKm(track.lastFix.lat, track.lastFix.lon, nextFix.lat, nextFix.lon) * 1000;
+        const dtSec = Math.max(0.001, (nextFix.timestamp - track.lastFix.timestamp)/1000);
+        // Derive speed when the device doesn't report it directly.
+        if(nextFix.speed == null) nextFix.speed = segmentM / dtSec;
+      }
+      track.lastSpeedMps = nextFix.speed;
+      this.stepTracker.lastGpsSpeed = nextFix.speed;
+      this.stepTracker.lastGpsSpeedAt = Date.now();
+
+      // A 3m floor per segment: consumer GPS wanders by a few metres even
+      // when perfectly still, and summing that noise is what makes an
+      // untouched phone report a "walk" it never took.
+      const bout = this.stepTracker.tracker && this.stepTracker.tracker.activeBout;
+      if(segmentM >= 3 && bout){
+        track.distanceKm += segmentM/1000;
+        bout.gpsDistanceM = (bout.gpsDistanceM||0) + segmentM;
       }
       track.lastFix = nextFix;
       track.pathLatLngs.push([nextFix.lat, nextFix.lon]);
+      if(track.pathLatLngs.length > 5000) track.pathLatLngs.shift();
       this.renderWalkStats();
       if(track.map && track.polyline){
         track.polyline.addLatLng([nextFix.lat, nextFix.lon]);
         track.map.panTo([nextFix.lat, nextFix.lon]);
       }
-      // Stride calibration from real-world walking, continuously refined:
-      // any time we've moved a meaningful distance with a plausible pace,
-      // quietly improve the steps-to-distance conversion used elsewhere.
-      this.tryCalibrateStride();
     }, (err)=>{
-      document.getElementById('walkStatus').textContent = `Location access ${err.code===1?'denied':'unavailable'} — steps still track, but the route map needs it. ${err.code===1?'You can allow it from your browser\'s site settings.':''}`;
+      const el = document.getElementById('walkStatus');
+      if(el) el.textContent = `Location access ${err.code===1?'denied':'unavailable'} — steps still count, but distance falls back to a stride estimate and the route map needs it. ${err.code===1?'You can allow it from your browser\'s site settings.':''}`;
     }, { enableHighAccuracy:true, maximumAge:2000, timeout:15000 });
 
     if(!this._walkTimerInterval){
-      this._walkTimerInterval = setInterval(()=>this.renderWalkStats(), 1000);
+      this._walkTimerInterval = setInterval(()=>{
+        try{
+          // Closes a bout that has gone quiet, which is what writes it to
+          // history and finalizes its pace.
+          if(this.stepTracker.tracker) this.stepTracker.tracker.tick(Date.now());
+          this.renderWalkStats();
+        }catch(e){}
+      }, 1000);
     }
   },
-  tryCalibrateStride(){
-    const today = dstr(new Date());
-    const steps = this.health.steps[today] || 0;
-    const track = this.gpsTrack;
-    if(!track || steps < 200 || track.distanceKm < 0.1) return;
-    const strideM = (track.distanceKm*1000) / steps;
-    if(strideM >= 0.3 && strideM <= 1.3){
-      this.health.strideM = strideM;
-      this.saveHealthState();
-    }
+  // Stride calibration now runs per COMPLETED BOUT rather than against
+  // the whole day: a bout has a matched steps-and-GPS-distance pair over
+  // the same interval, so the ratio is meaningful. Comparing all-day
+  // steps to all-day GPS distance (the old approach) mixed in every
+  // period where one was tracked and the other wasn't.
+  calibrateStrideFromBout(bout){
+    if(!bout || bout.steps < 60) return;
+    const gpsM = bout.gpsDistanceM || 0;
+    if(gpsM < 50) return;
+    const strideM = gpsM / bout.steps;
+    if(strideM < 0.3 || strideM > 1.6) return; // implausible — ignore rather than corrupt
+    const prev = this.health.strideM;
+    // Exponential moving average, so one odd walk can't overwrite a
+    // well-established stride length.
+    this.health.strideM = prev ? (0.8*prev + 0.2*strideM) : strideM;
+    this.health.strideSamples = (this.health.strideSamples||0) + 1;
+    this.saveHealthState();
   },
   renderWalkStats(){
     const track = this.gpsTrack;
     const statusEl = document.getElementById('walkStatus');
     const liveEl = document.getElementById('walkLiveStats');
-    if(!track){ return; }
+    if(!track) return;
     if(liveEl) liveEl.style.display = 'grid';
-    const today = dstr(new Date());
-    const steps = this.health.steps[today] || 0;
+    const day = this.dayRecord(dstr(new Date()));
     const stepsEl = document.getElementById('walkStepsLive');
-    if(stepsEl) stepsEl.textContent = steps.toLocaleString();
+    if(stepsEl) stepsEl.textContent = this.stepsForDay(dstr(new Date())).toLocaleString();
     const distEl = document.getElementById('walkDistLive');
-    if(distEl) distEl.textContent = track.distanceKm.toFixed(2)+' km';
-    if(statusEl && track.lastFix){
-      const accNote = track.rejectedFixCount > 0 ? ` · ${track.rejectedFixCount} low-quality reading${track.rejectedFixCount===1?'':'s'} filtered out` : '';
-      statusEl.textContent = `🟢 Live-tracking today's route automatically.${accNote}`;
+    if(distEl) distEl.textContent = ((day.gpsDistanceM||0)/1000).toFixed(2)+' km';
+    const bout = this.stepTracker.tracker && this.stepTracker.tracker.activeBout;
+    if(statusEl){
+      if(bout){
+        const mins = Math.max(0.01, (Date.now()-bout.startT)/60000);
+        const cadenceSpm = Math.round((bout.steps/mins));
+        statusEl.textContent = `🟢 ${bout.activity === 'run' ? 'Running' : 'Walking'} — ${bout.steps} steps this bout at ~${cadenceSpm} steps/min.`;
+      } else if(track.lastFix){
+        const accNote = track.rejectedFixCount > 0 ? ` · ${track.rejectedFixCount} low-quality fix${track.rejectedFixCount===1?'':'es'} discarded` : '';
+        statusEl.textContent = `⚪ Location locked, waiting for walking motion. Distance only accrues once real walking is detected, so a stationary phone can't drift up your total.${accNote}`;
+      }
     }
   },
   ensureWalkMapVisible(){
@@ -3741,13 +4854,14 @@ const App = {
   },
   clearTodayRoute(){
     const today = dstr(new Date());
-    this.gpsTrack = { date: today, distanceKm: 0, lastFix: null, pathLatLngs: [], rejectedFixCount: 0, map: this.gpsTrack?this.gpsTrack.map:null, polyline: null };
+    this.gpsTrack = { date: today, distanceKm: 0, lastFix: null, pathLatLngs: [], rejectedFixCount: 0, map: this.gpsTrack?this.gpsTrack.map:null, polyline: null, lastSpeedMps: null };
     if(this.gpsTrack.map){
       if(this.gpsTrack.polyline) this.gpsTrack.map.removeLayer(this.gpsTrack.polyline);
       this.gpsTrack.polyline = window.L.polyline([], {color: '#FF8A26', weight: 4}).addTo(this.gpsTrack.map);
     }
     this.renderWalkStats();
-    document.getElementById('walkStatus').textContent = 'Route cleared for today. Distance tracking continues.';
+    const el = document.getElementById('walkStatus');
+    if(el) el.textContent = 'Route cleared for today. Step and distance history is unaffected.';
   },
   getLatestWeightKg(){
     const dates = Object.keys(this.health.weightLog||{}).sort();
@@ -4241,39 +5355,108 @@ const App = {
         this.loadNews(this.newsCat);
       });
     });
-  },
-  async loadNews(cat){
-    const list = document.getElementById('newsList');
-    list.innerHTML = `<div class="stat-sub">Loading headlines…</div>`;
-    const NEWS_CAT_LABELS = {
-      global:'🌍 International', local_nl:'🇳🇱 Netherlands', local_in:'🇮🇳 India',
-      business:'💼 Business', entrepreneur:'🚀 Entrepreneur', ai:'🤖 AI', tech:'💻 Tech', it:'🖥️ IT'
-    };
-    try{
-      const { items, sourceLabel } = await loadNewsItems(cat, 9000);
-      const catLabel = NEWS_CAT_LABELS[cat] || cat;
-      list.innerHTML = items.map(item=>{
-        const clean = (item.description||'').replace(/<[^>]*>/g,'').trim();
-        const snippet = clean.length > 140 ? clean.slice(0,140).trim()+'…' : clean;
-        const parsedDate = parsePubDate(item.pubDate);
-        const when = parsedDate ? parsedDate.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Unknown date';
-        const img = item.enclosure && item.enclosure.link ? item.enclosure.link : (item.thumbnail || '');
-        return `<div class="news-item">
-          ${img ? `<img class="news-thumb" src="${img}" loading="lazy" onerror="this.style.display='none'">` : ''}
-          <div class="news-body">
-            <div class="news-top-row">
-              <span class="news-cat-pill">${catLabel}</span>
-              <span class="news-meta-date">${escapeHtml(when)}</span>
-            </div>
-            <a class="news-title" href="${item.link}" target="_blank" rel="noopener">${escapeHtml(item.title||'')}</a>
-            <div class="news-meta">${escapeHtml(sourceLabel)}${snippet ? ' · '+escapeHtml(snippet) : ''}</div>
-          </div>
-        </div>`;
-      }).join('') + `<div class="stat-sub" style="margin-top:10px;opacity:0.65;">Sorted newest first · Source: ${escapeHtml(sourceLabel)}</div>`;
-    }catch(e){
-      list.innerHTML = `<div class="news-error">Every source failed: ${escapeHtml(e.message)}. This usually means outbound requests aren't reaching the network at all (offline, blocked, or a very strict preview sandbox) — try opening this file directly in a regular browser tab.</div>
-        <button class="btn ghost news-retry" onclick="App.loadNews('${cat}')">Try again</button>`;
+    const dateRow = document.getElementById('newsDateRow');
+    if(dateRow){
+      dateRow.querySelectorAll('button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          dateRow.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          this.newsDateMode = b.dataset.range;
+          this.newsExactDate = null;
+          const inp = document.getElementById('newsExactDate');
+          if(inp) inp.value = '';
+          // Re-filters the already-fetched list in memory — no refetch.
+          this.renderNewsList();
+        });
+      });
     }
+  },
+  applyNewsExactDate(){
+    const inp = document.getElementById('newsExactDate');
+    if(!inp || !inp.value) return;
+    this.newsDateMode = 'exact';
+    this.newsExactDate = inp.value;
+    document.querySelectorAll('#newsDateRow button').forEach(x=>x.classList.remove('active'));
+    this.renderNewsList();
+  },
+  async loadNews(cat, forceRefresh){
+    const list = document.getElementById('newsList');
+    // Skeleton loader — an immediate, shaped placeholder instead of bare
+    // "Loading…" text, so the tab feels responsive even before any network
+    // response arrives.
+    list.innerHTML = Array.from({length:5}).map(()=>`
+      <div class="news-item news-skeleton">
+        <div class="news-body">
+          <div class="news-top-row"><span class="skeleton-pill"></span><span class="skeleton-date"></span></div>
+          <div class="skeleton-line skeleton-title"></div>
+          <div class="skeleton-line skeleton-meta"></div>
+        </div>
+      </div>`).join('');
+    try{
+      // Waits for ALL feeds rather than racing to the first — that breadth
+      // is the whole point of a worldwide tab.
+      this._newsResult = await loadNewsItems(cat, 12000, {forceRefresh: !!forceRefresh});
+      this._newsResult.cat = cat;
+      this.renderNewsList();
+    }catch(e){
+      this._newsResult = null;
+      list.innerHTML = `<div class="news-error">Every source for this tab failed: ${escapeHtml(e.message)}. This usually means outbound requests aren't reaching the network at all (offline, blocked, or a very strict preview sandbox) — try opening this file directly in a regular browser tab.</div>
+        <button class="btn ghost news-retry" onclick="App.loadNews('${cat}', true)">Try again</button>`;
+    }
+  },
+  // Rendering is deliberately separate from fetching: the date filter and
+  // sort order operate on the already-downloaded array, so changing them
+  // is instant and costs nothing.
+  renderNewsList(){
+    const list = document.getElementById('newsList');
+    const note = document.getElementById('newsFilterNote');
+    const res = this._newsResult;
+    if(!res || !list) return;
+    const cat = res.cat;
+    const spec = NEWS_TABS[cat] || NEWS_TABS.global;
+    const catLabel = spec.label || cat;
+    const order = (document.getElementById('newsSortOrder')||{}).value || 'newest';
+    const mode = this.newsDateMode || 'all';
+
+    let items = filterNewsByDate(res.items, mode, this.newsExactDate);
+    items = sortNewsItems(items, order);
+
+    if(note){
+      const scopeText = spec.scope === 'geo'
+        ? `Country-locked to ${catLabel} — ${res.droppedOffScope||0} off-country article${res.droppedOffScope===1?'':'s'} filtered out this load.`
+        : `Worldwide — no country restriction.`;
+      let dateText;
+      if(mode === 'exact' && this.newsExactDate){
+        dateText = `Showing ${new Date(this.newsExactDate+'T00:00:00').toLocaleDateString(undefined,{weekday:'long', day:'numeric', month:'long', year:'numeric'})} only.`;
+      } else if(mode === 'all'){
+        dateText = 'Showing all available headlines.';
+      } else {
+        dateText = mode === 'today' ? 'Showing today only.' : `Showing the last ${mode==='3d'?3:7} days.`;
+      }
+      note.textContent = `${dateText} ${scopeText} ${items.length} of ${res.items.length} headlines · ${res.sources.length} source${res.sources.length===1?'':'s'} live${res.failed ? `, ${res.failed} unreachable` : ''}.`;
+    }
+
+    if(!items.length){
+      list.innerHTML = `<div class="news-error">No headlines match this date filter. ${mode==='exact' ? 'Most RSS feeds only carry the last day or two of articles, so older exact dates often have nothing to show.' : ''}</div>
+        <button class="btn ghost news-retry" onclick="App.loadNews('${cat}', true)">Refresh sources</button>`;
+      return;
+    }
+
+    list.innerHTML = items.map(item=>{
+      const snippet = item.description.length > 140 ? item.description.slice(0,140).trim()+'…' : item.description;
+      const when = formatNewsDate(item.ts);
+      const exact = item.ts != null ? new Date(item.ts).toLocaleString() : 'no date supplied by the source';
+      return `<div class="news-item">
+        <div class="news-body">
+          <div class="news-top-row">
+            <span class="news-cat-pill">${escapeHtml(item.publisher)}</span>
+            <span class="news-meta-date" title="${escapeHtml(exact)}">${escapeHtml(when)}</span>
+          </div>
+          <a class="news-title" href="${escapeHtml(item.link)}" target="_blank" rel="noopener">${escapeHtml(item.title)}</a>
+          <div class="news-meta">${escapeHtml(catLabel)}${snippet ? ' · '+escapeHtml(snippet) : ''}</div>
+        </div>
+      </div>`;
+    }).join('') + `<div class="stat-sub news-footer-note" style="margin-top:10px;opacity:0.65;">Sources: ${escapeHtml(res.sources.join(', '))}${res.fromCache ? ' · cached' : ''} <button class="news-refresh-inline" onclick="App.loadNews('${cat}', true)" title="Refresh">⟳</button></div>`;
   }
 };
 

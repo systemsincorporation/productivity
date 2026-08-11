@@ -4,7 +4,7 @@
 // that already have this app installed pick up the new version instead of
 // silently continuing to run the old cached one. This is the #1 fix for
 // "my GitHub Pages update isn't showing up."
-const SW_VERSION = 'v7';
+const SW_VERSION = 'v9';
 const CACHE_NAME = `productivityapp-shell-${SW_VERSION}`;
 
 const SHELL_FILES = [
