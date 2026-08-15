@@ -737,6 +737,70 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
   </div>
 
   <!-- ===================== NEWS ===================== -->
+  <!-- ===================== MARKET ===================== -->
+  <div class="view" id="view-market">
+    <div class="section-title">Market dashboard</div>
+    <div class="section-sub">World indices, precious metals, energy and rate indicators — refreshed automatically while this tab is open.</div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="add-row" style="flex-wrap:wrap; gap:8px;">
+        <button class="btn" onclick="App.loadMarket(true)">🔄 Refresh now</button>
+        <select id="mktCurrency" onchange="App.setMarketCurrency()" style="max-width:150px;">
+          <option value="USD">US Dollar</option>
+          <option value="EUR">Euro</option>
+          <option value="INR">Indian Rupee</option>
+        </select>
+        <label class="stat-sub" style="display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" id="mktAutoRefresh" checked onchange="App.setMarketAutoRefresh()"> Auto-refresh
+        </label>
+        <label class="stat-sub" style="display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" id="mktNotify" onchange="App.setMarketNotify()"> Notify on big moves
+        </label>
+      </div>
+      <div class="stat-sub" id="mktStatus" style="margin-top:8px;">Loading market data…</div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;" id="mktHighlightCard">
+      <h3>⚡ Today's highlights</h3>
+      <div id="mktHighlights"><div class="stat-sub">Waiting for data…</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h3>🥇 Gold &amp; silver</h3>
+      <div class="stat-sub">Spot prices converted from USD using the ECB's daily reference rate. Retail jewellery prices are always higher — they add making charges, GST or VAT, and a dealer margin.</div>
+      <div id="mktMetals" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h3>📊 Stock markets</h3>
+      <div class="filter-row" id="mktRegionRow" style="margin-bottom:8px;">
+        <button class="active" data-region="all" onclick="App.setMarketRegion('all')">All</button>
+        <button data-region="United States" onclick="App.setMarketRegion('United States')">🇺🇸 US</button>
+        <button data-region="India" onclick="App.setMarketRegion('India')">🇮🇳 India</button>
+        <button data-region="Europe" onclick="App.setMarketRegion('Europe')">🇪🇺 Europe</button>
+        <button data-region="Asia" onclick="App.setMarketRegion('Asia')">🌏 Asia-Pacific</button>
+      </div>
+      <div id="mktIndices"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h3>🏦 Rates &amp; mortgage indicator</h3>
+      <div class="stat-sub">No free source publishes mortgage rates directly. These are 10-year government bond yields, which mortgage pricing tracks closely — useful for direction, but not a rate you can borrow at. For actual quotes check your bank or a comparison site.</div>
+      <div id="mktRates" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h3>🛢️ Energy &amp; currencies</h3>
+      <div id="mktEnergy"></div>
+      <div id="mktFx" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <h3>📰 Market news</h3>
+      <div id="mktNews"><div class="stat-sub">Loading…</div></div>
+    </div>
+  </div>
+
   <div class="view" id="view-news">
     <div class="section-title">Headlines</div>
     <div class="section-sub">Every tab merges several independent publishers at once. Only the India and Netherlands tabs are country-locked — every other tab is deliberately worldwide.</div>
@@ -786,8 +850,31 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
 
     <!-- ---- Steps & Route ---- -->
     <div id="healthSteps">
+      <div class="card" style="margin-bottom:14px; border:1px solid rgba(var(--tint-rgb),0.35);">
+        <h3>⚠️ Why this can't count steps while the app is closed</h3>
+        <div class="stat-sub">This is a limitation of the web platform, not a setting that can be switched on. When a browser tab is closed or the screen locks, the browser <b>stops delivering motion sensor events entirely</b> and suspends the page's JavaScript. There is no web API — none, on any browser — that lets a website read the accelerometer in the background. Service workers can wake for network events and notifications, but they have no sensor access at all.<br><br>
+        Your phone's built-in health app does this because it isn't a web page: it's native code with permission to run against a dedicated low-power motion coprocessor that counts steps in hardware, all day, without waking the main processor. A website cannot reach that chip.<br><br>
+        <b>What that means in practice:</b> automatic counting here works while this screen is open and awake — a deliberate walk with the app in front of you. It will always under-count your true daily total, because it cannot see the walking you do the rest of the time.<br><br>
+        <b>The accurate options, in order:</b><br>
+        1. Read the number from Apple Health or Google Fit at the end of the day and enter it below. That number comes from the motion coprocessor and is the most accurate figure available to you.<br>
+        2. Wrap this app with Capacitor or a similar native shell, which can request HealthKit / Health Connect permission and read all-day counts properly. That's a build step, not a change inside this file.<br>
+        3. Use the automatic tracking here for individual walks, where it's genuinely useful, and treat the daily total as a floor rather than a full picture.</div>
+      </div>
+
       <div class="card" style="margin-bottom:14px;">
-        <div class="stat-sub">Steps are only counted when you're <b>actually walking</b>. Every few hundred milliseconds the app checks whether your phone's motion is genuinely rhythmic (an autocorrelation test across the human gait band), and holds detected steps in a buffer until eight consistent ones confirm a real walking bout. Scrolling, typing, fidgeting, gesturing while talking, and car or train journeys all fail that test and are discarded rather than counted.<br><br><b>Honest limits, upfront:</b> this uses your <i>phone's</i> sensors and only while this page is open and the screen is on — browsers suspend motion and location for background tabs, which no website can work around. It also can't read an Apple Watch or Wear OS watch. Your phone's own health app runs on a dedicated low-power motion chip all day, so if you have that number, manual entry below still beats any browser pedometer.</div>
+        <h3>🎯 Calibrate the counter</h3>
+        <div class="stat-sub">If the automatic count is consistently off on your phone, correct it here. Walk a counted number of steps with tracking on, then enter both figures — the app works out the correction factor and applies it to future counts. This compensates for how you carry your phone and how you walk, which are the two largest sources of error.</div>
+        <div class="add-row" style="margin-top:10px; flex-wrap:wrap; gap:8px;">
+          <input type="number" id="calibActual" placeholder="Steps you actually took" min="20">
+          <input type="number" id="calibCounted" placeholder="Steps the app showed" min="1">
+          <button onclick="App.applyStepCalibration()">Apply</button>
+          <button class="btn ghost" onclick="App.resetStepCalibration()">Reset</button>
+        </div>
+        <div class="stat-sub" id="calibStatus" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <div class="stat-sub">Steps are only counted when you're <b>actually walking</b>. Every few hundred milliseconds the app checks whether your phone's motion is genuinely rhythmic (an autocorrelation test across the human gait band), and holds detected steps in a buffer until eight consistent ones confirm a real walking bout. Scrolling, typing, fidgeting, gesturing while talking, and car or train journeys all fail that test and are discarded rather than counted.<br><br>It also can't read an Apple Watch or Wear OS watch — smartwatches don't run web pages, that needs a native watch app.</div>
       </div>
 
       <div class="card" style="margin-bottom:14px;">
@@ -1175,6 +1262,7 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
     <button class="tab-btn" data-view="tasks" onclick="App.switchTab('tasks')"><span class="ticon">✅</span>Tasks</button>
     <button class="tab-btn" data-view="datecalc" onclick="App.switchTab('datecalc')"><span class="ticon">🧮</span>Dates</button>
     <button class="tab-btn" data-view="news" onclick="App.switchTab('news')"><span class="ticon">📰</span>News</button>
+    <button class="tab-btn" data-view="market" onclick="App.switchTab('market')"><span class="ticon">📈</span>Market</button>
     <button class="tab-btn" data-view="health" onclick="App.switchTab('health')"><span class="ticon">❤️</span>Health</button>
     <button class="tab-btn" data-view="network" onclick="App.switchTab('network')"><span class="ticon">📡</span>Network</button>
   </div>
@@ -1244,6 +1332,27 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
     </div>
 
     <div class="card">
+      <h3>🔔 Reminders &amp; notifications</h3>
+      <div class="stat-sub" id="notifStatus">Reminders are off.</div>
+      <div style="margin-top:10px;"><button class="btn" id="enableNotifBtn" onclick="App.enableNotifications()">Turn on reminders</button></div>
+      <div class="settings-row" style="margin-top:10px;"><label>Remind me before</label>
+        <select id="reminderLead" onchange="App.setReminderLead()">
+          <option value="0">At the time</option>
+          <option value="5">5 minutes</option>
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="120">2 hours</option>
+        </select>
+      </div>
+      <div class="stat-sub" id="missedReminders" style="display:none; margin-top:10px; padding:10px; background:rgba(var(--tint-rgb),0.06); border-radius:10px;"></div>
+      <div class="stat-sub" style="margin-top:10px;">
+        <b>What to expect, honestly.</b> Reminders fire reliably while the app is open, including in a background tab. Once the app is fully closed, delivery depends on your browser: Chrome on Android can wake the app periodically to check (roughly hourly at best, and not at all on battery saver), so a reminder may arrive <i>late</i>. iOS Safari won't wake it at all. Anything missed while closed is shown here the next time you open the app.
+        <br><br>Exact-to-the-minute delivery while fully closed needs a push server, which this app deliberately doesn't have — it's a single file with no backend and no account. For appointments you can't miss, keep using your phone's own calendar alarm.
+      </div>
+    </div>
+
+    <div class="card">
       <h3>🛌 Sleep schedule</h3>
       <div class="settings-row"><label>Wake-up time</label><input type="time" id="wakeInput"></div>
       <div class="settings-row"><label>Bedtime</label><input type="time" id="bedInput"></div>
@@ -1251,6 +1360,7 @@ body.dim-mode .moon-disc{ box-shadow: inset -6px -6px 14px rgba(0,0,0,0.4), inse
 
     <div class="card">
       <h3>💾 Your data</h3>
+      <div class="stat-sub" id="storageInfo" style="margin-bottom:10px;">Checking storage…</div>
       <div class="stat-sub">Everything — tasks, steps, sleep, food log, settings — already saves automatically in this browser and survives closing the tab or reloading the page. It only goes away if you clear this browser's site data, or open the app in a different browser/device. Use these to back it up or move it.</div>
       <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn ghost" onclick="App.exportAllData()">⬇️ Export backup file</button>
@@ -1958,6 +2068,659 @@ function parsePubDate(str){
   d = new Date(String(str).replace(' ','T'));
   if(!isNaN(d.getTime())) return d;
   return null;
+}
+
+/* ============================================================
+   APPDB — IndexedDB storage layer.
+
+   Why this replaces localStorage as the primary store:
+
+     - localStorage is capped at ~5MB per origin and, once full, throws
+       on every write. Step bouts, market history and notification
+       queues grow without bound, so that ceiling was going to be hit.
+     - localStorage is synchronous: every save blocks the main thread.
+       With per-second step updates that is a measurable jank source.
+     - localStorage cannot be read by a service worker. Anything the
+       worker needs to act on while the page is closed — scheduled
+       reminders, most importantly — has to live in IndexedDB.
+
+   localStorage is kept as a mirror for the small settings blobs, so an
+   older build of the app still opens and nothing is stranded if
+   IndexedDB is unavailable (private browsing on some platforms
+   disables it). Every read falls back to the mirror.
+   ============================================================ */
+
+const APPDB_NAME = 'productivityapp';
+const APPDB_VERSION = 1;
+
+const AppDB = {
+  _db: null,
+  _failed: false,
+
+  async open(){
+    if(this._db) return this._db;
+    if(this._failed) return null;
+    if(!('indexedDB' in window)){ this._failed = true; return null; }
+    try{
+      this._db = await new Promise((resolve, reject)=>{
+        const req = indexedDB.open(APPDB_NAME, APPDB_VERSION);
+        req.onupgradeneeded = (ev)=>{
+          const db = req.result;
+          // days: one record per local calendar date — the step/activity
+          // rollup the history UI reads.
+          if(!db.objectStoreNames.contains('days')) db.createObjectStore('days', {keyPath:'date'});
+          // bouts: individual walking/running sessions, indexed by date
+          // so a day can be rebuilt from its parts.
+          if(!db.objectStoreNames.contains('bouts')){
+            const s = db.createObjectStore('bouts', {keyPath:'id', autoIncrement:true});
+            s.createIndex('date', 'date', {unique:false});
+            s.createIndex('startT', 'startT', {unique:false});
+          }
+          // kv: settings, preferences, and any small blob.
+          if(!db.objectStoreNames.contains('kv')) db.createObjectStore('kv', {keyPath:'key'});
+          // reminders: the queue the SERVICE WORKER reads. This is the
+          // only reason notifications can fire without the page open.
+          if(!db.objectStoreNames.contains('reminders')){
+            const s = db.createObjectStore('reminders', {keyPath:'id'});
+            s.createIndex('fireAt', 'fireAt', {unique:false});
+          }
+          // market: cached quotes plus a daily close history, so the
+          // dashboard can show a trend without re-fetching everything.
+          if(!db.objectStoreNames.contains('market')) db.createObjectStore('market', {keyPath:'key'});
+        };
+        req.onsuccess = ()=>resolve(req.result);
+        req.onerror = ()=>reject(req.error);
+        req.onblocked = ()=>reject(new Error('blocked'));
+      });
+      return this._db;
+    }catch(e){
+      // Private browsing, disabled storage, or a corrupt database. The
+      // app must still work, so fall through to the localStorage mirror.
+      console.warn('IndexedDB unavailable, using localStorage only:', e);
+      this._failed = true;
+      return null;
+    }
+  },
+
+  async _tx(store, mode, fn){
+    const db = await this.open();
+    if(!db) return null;
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(store, mode);
+      const req = fn(tx.objectStore(store));
+      tx.onerror = ()=>reject(tx.error);
+      if(req) req.onsuccess = ()=>resolve(req.result);
+      else tx.oncomplete = ()=>resolve(true);
+    });
+  },
+
+  async get(store, key){ try{ return await this._tx(store,'readonly',s=>s.get(key)); }catch(e){ return null; } },
+  async put(store, value){ try{ return await this._tx(store,'readwrite',s=>s.put(value)); }catch(e){ return null; } },
+  async del(store, key){ try{ return await this._tx(store,'readwrite',s=>s.delete(key)); }catch(e){ return null; } },
+  async all(store){ try{ return (await this._tx(store,'readonly',s=>s.getAll())) || []; }catch(e){ return []; } },
+
+  /** Range query on an index — used for "bouts on this date". */
+  async byIndex(store, index, value){
+    try{
+      const db = await this.open();
+      if(!db) return [];
+      return await new Promise((resolve,reject)=>{
+        const tx = db.transaction(store,'readonly');
+        const req = tx.objectStore(store).index(index).getAll(value);
+        req.onsuccess = ()=>resolve(req.result||[]);
+        req.onerror = ()=>reject(req.error);
+      });
+    }catch(e){ return []; }
+  },
+
+  // --- Convenience wrappers with a localStorage mirror -----------------
+  async setKV(key, value){
+    await this.put('kv', {key, value, updated: Date.now()});
+    try{ localStorage.setItem('productivityapp_kv_'+key, JSON.stringify(value)); }catch(e){}
+  },
+  async getKV(key, fallback){
+    const rec = await this.get('kv', key);
+    if(rec && rec.value !== undefined) return rec.value;
+    try{
+      const raw = localStorage.getItem('productivityapp_kv_'+key);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return fallback;
+  },
+
+  /**
+   * One-time migration of the existing localStorage data.
+   *
+   * Runs on every start but is idempotent: it only copies a key that
+   * isn't already in IndexedDB, and it never deletes the originals. If
+   * this migration is wrong in some way, the source data is still there
+   * and nothing is lost.
+   */
+  async migrateFromLocalStorage(){
+    const done = await this.getKV('migrated_v1', false);
+    if(done) return {migrated:false, reason:'already done'};
+    let dayCount = 0;
+    try{
+      const raw = localStorage.getItem('productivityapp_health');
+      if(raw){
+        const health = JSON.parse(raw);
+        const days = health.days || {};
+        for(const [date, rec] of Object.entries(days)){
+          const existing = await this.get('days', date);
+          if(existing) continue;
+          await this.put('days', Object.assign({date}, rec));
+          dayCount++;
+          // Bouts are stored separately so a day record stays small and
+          // a single long walk can't bloat the day row.
+          for(const b of (rec.bouts||[])){
+            await this.put('bouts', {date, startT:b.s, endT:b.e, activity:b.a,
+              steps:b.st, distanceM:b.d, gpsDistanceM:b.gd, cadenceHz:b.c});
+          }
+        }
+        // Legacy flat format from the very first version.
+        for(const [date, n] of Object.entries(health.steps||{})){
+          if(typeof n !== 'number' || n<=0) continue;
+          if(await this.get('days', date)) continue;
+          await this.put('days', {date, steps:n, walkSteps:n, runSteps:0,
+            distanceM:0, gpsDistanceM:0, activeMs:0, walkMs:0, runMs:0, legacy:true});
+          dayCount++;
+        }
+      }
+    }catch(e){ console.warn('Migration partial failure', e); }
+    await this.setKV('migrated_v1', true);
+    return {migrated:true, days:dayCount};
+  },
+
+  /** Storage pressure, so the UI can warn before anything breaks. */
+  async usage(){
+    try{
+      if(navigator.storage && navigator.storage.estimate){
+        const est = await navigator.storage.estimate();
+        return {used: est.usage||0, quota: est.quota||0};
+      }
+    }catch(e){}
+    return null;
+  },
+
+  /**
+   * Ask the browser not to evict this data under storage pressure.
+   * Without this, everything here is "best effort" and can be cleared
+   * silently when the device runs low — which for months of step
+   * history is a real loss.
+   */
+  async requestPersistence(){
+    try{
+      if(navigator.storage && navigator.storage.persist){
+        if(await navigator.storage.persisted()) return true;
+        return await navigator.storage.persist();
+      }
+    }catch(e){}
+    return false;
+  }
+};
+
+/* ============================================================
+   NOTIFICATIONS — reminders for tasks and calendar events.
+
+   What actually works, and what doesn't, on the web:
+
+   WORKS RELIABLY
+     - Notifications while the app is open, including when it's in a
+       background tab or another app is in front (on desktop, and on
+       Android once installed to the home screen).
+     - Notifications fired by the SERVICE WORKER, which can outlive the
+       page. This is why the reminder queue lives in IndexedDB: the
+       worker reads it directly and doesn't need the page at all.
+
+   WORKS ONLY ON SOME PLATFORMS
+     - Periodic Background Sync ('periodicsync') wakes the service
+       worker every so often to check for due reminders. Chromium-based
+       browsers only, only for installed apps, and the browser decides
+       the interval — typically no better than hourly, and it is
+       skipped entirely on battery saver. Treated here as a bonus, not
+       a foundation.
+
+   DOESN'T WORK WITHOUT A SERVER
+     - Guaranteed delivery at an exact minute while the app is fully
+       closed. That requires Web Push, which needs a push server
+       holding a VAPID key to send the message. There is no way around
+       this: the browser will not run your code at an arbitrary future
+       time on its own. This app is a single static file with no
+       backend, so exact-time delivery while closed is out of reach.
+
+   The design therefore front-loads: when the app is open it schedules
+   precise in-page timers AND writes the queue to IndexedDB, so if the
+   page is closed the service worker still fires them on its next wake.
+   A reminder may arrive late in that case. It says so on screen rather
+   than pretending otherwise.
+   ============================================================ */
+
+const Notifier = {
+  permission: (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported',
+  _timers: new Map(),
+
+  supported(){ return typeof Notification !== 'undefined' && 'serviceWorker' in navigator; },
+
+  async requestPermission(){
+    if(typeof Notification === 'undefined') return 'unsupported';
+    if(Notification.permission === 'granted'){ this.permission = 'granted'; return 'granted'; }
+    try{
+      const p = await Notification.requestPermission();
+      this.permission = p;
+      if(p === 'granted'){
+        // Persistence matters more once reminders exist: an evicted
+        // database is a queue of missed reminders.
+        AppDB.requestPersistence();
+        await this.registerPeriodicSync();
+      }
+      return p;
+    }catch(e){ return 'denied'; }
+  },
+
+  /** Best-effort background wake-up. Silently unavailable on most browsers. */
+  async registerPeriodicSync(){
+    try{
+      const reg = await navigator.serviceWorker.ready;
+      if('periodicSync' in reg){
+        const status = await navigator.permissions.query({name:'periodic-background-sync'});
+        if(status.state === 'granted'){
+          await reg.periodicSync.register('check-reminders', {minInterval: 30*60*1000});
+          return true;
+        }
+      }
+    }catch(e){ /* not supported — the in-page scheduler still covers the app-open case */ }
+    return false;
+  },
+
+  /**
+   * Adds or updates a reminder. Writing to IndexedDB is what makes it
+   * survive the page closing; the in-page timer is the precise path.
+   */
+  async schedule(reminder){
+    // {id, fireAt (epoch ms), title, body, tag, kind, url}
+    if(!reminder || !reminder.id || !reminder.fireAt) return;
+    await AppDB.put('reminders', Object.assign({fired:false, created:Date.now()}, reminder));
+    this._armTimer(reminder);
+  },
+
+  async cancel(id){
+    const t = this._timers.get(id);
+    if(t){ clearTimeout(t); this._timers.delete(id); }
+    await AppDB.del('reminders', id);
+  },
+
+  _armTimer(r){
+    const delay = r.fireAt - Date.now();
+    // setTimeout is capped at ~24.8 days (32-bit ms). Anything further
+    // out is left to the periodic rearm on next app open.
+    if(delay < 0 || delay > 24*24*3600*1000) return;
+    const existing = this._timers.get(r.id);
+    if(existing) clearTimeout(existing);
+    this._timers.set(r.id, setTimeout(()=>this.fire(r), delay));
+  },
+
+  async fire(r){
+    this._timers.delete(r.id);
+    const rec = await AppDB.get('reminders', r.id);
+    if(rec && rec.fired) return; // the service worker got there first
+    await this.show(r.title, {
+      body: r.body, tag: r.tag || r.id, data: {url: r.url || '/'},
+      requireInteraction: r.kind === 'event'
+    });
+    if(rec){ rec.fired = true; rec.firedAt = Date.now(); await AppDB.put('reminders', rec); }
+  },
+
+  async show(title, opts){
+    if(this.permission !== 'granted') return false;
+    try{
+      // Prefer the service worker: its notifications persist after the
+      // page closes, and they're the only kind Android will show for an
+      // installed app that isn't in the foreground.
+      const reg = await navigator.serviceWorker.getRegistration();
+      if(reg && reg.showNotification){
+        await reg.showNotification(title, Object.assign({
+          icon: './icons/icon-192.png', badge: './icons/icon-192.png'
+        }, opts));
+        return true;
+      }
+      new Notification(title, opts);
+      return true;
+    }catch(e){ return false; }
+  },
+
+  /**
+   * Rebuilds the whole queue from current tasks and events.
+   *
+   * Cheaper and far less error-prone than trying to diff individual
+   * reminders as tasks are edited: any stale entry is dropped, anything
+   * already fired stays marked so it can't repeat.
+   */
+  async rebuildQueue(items){
+    const existing = await AppDB.all('reminders');
+    const keep = new Set(items.map(i=>i.id));
+    for(const r of existing){
+      if(!keep.has(r.id)) await this.cancel(r.id);
+    }
+    const firedIds = new Set(existing.filter(r=>r.fired).map(r=>r.id));
+    for(const item of items){
+      if(firedIds.has(item.id)) continue;
+      if(item.fireAt <= Date.now()) continue;
+      await this.schedule(item);
+    }
+    // Housekeeping: fired reminders older than a week are dead weight.
+    const cutoff = Date.now() - 7*DAY_MS;
+    for(const r of existing){
+      if(r.fired && r.firedAt && r.firedAt < cutoff) await AppDB.del('reminders', r.id);
+    }
+  },
+
+  /** Catches anything that came due while the app was closed. */
+  async catchUpMissed(){
+    const all = await AppDB.all('reminders');
+    const now = Date.now();
+    const missed = [];
+    for(const r of all){
+      if(r.fired) continue;
+      if(r.fireAt <= now){
+        missed.push(r);
+        r.fired = true; r.firedAt = now; r.wasLate = true;
+        await AppDB.put('reminders', r);
+      } else {
+        this._armTimer(r);
+      }
+    }
+    return missed;
+  }
+};
+
+/* ============================================================
+   MARKET ENGINE — indices, metals, FX and rate proxies.
+
+   Sourcing reality, stated plainly: there is no free, keyless,
+   CORS-enabled API that covers world indices, spot metals and FX
+   together. So this uses several sources and merges them, the same
+   pattern the news and weather code already uses:
+
+     - Stooq (CSV) for indices and metal spot. Free, no key, broad
+       symbol coverage. Not CORS-enabled, so it goes through the same
+       proxies the rest of the app uses.
+     - Yahoo Finance chart API as a second route for indices. Richer
+       data, also needs a proxy.
+     - Frankfurter (ECB reference rates) for FX. Genuinely keyless and
+       CORS-enabled, so it usually works directly.
+
+   Quotes are delayed, typically by 15 minutes or more, and closing
+   values only settle after each exchange closes. This is a dashboard,
+   not a trading terminal, and the UI says so rather than implying
+   live prices.
+
+   MORTGAGE RATES: no free API publishes these. What IS available is
+   the 10-year government bond yield, which mortgage pricing tracks
+   closely — so that is shown, explicitly labelled as an indicator of
+   direction rather than a rate anyone can borrow at.
+   ============================================================ */
+
+const MARKET_SYMBOLS = {
+  indices: [
+    // --- Americas ---
+    {id:'spx',    name:'S&P 500',        region:'United States', stooq:'^spx',  yahoo:'^GSPC'},
+    {id:'ndq',    name:'NASDAQ Composite',region:'United States',stooq:'^ndq',  yahoo:'^IXIC'},
+    {id:'dji',    name:'Dow Jones',      region:'United States', stooq:'^dji',  yahoo:'^DJI'},
+    {id:'rut',    name:'Russell 2000',   region:'United States', stooq:'^rut',  yahoo:'^RUT'},
+    {id:'vix',    name:'VIX (volatility)',region:'United States',stooq:'^vix',  yahoo:'^VIX'},
+    {id:'gsptse', name:'S&P/TSX',        region:'Canada',        stooq:'^tsx',  yahoo:'^GSPTSE'},
+    {id:'bvsp',   name:'Bovespa',        region:'Brazil',        stooq:'^bvp',  yahoo:'^BVSP'},
+    // --- India ---
+    {id:'sensex', name:'BSE SENSEX',     region:'India',         stooq:'^snx',  yahoo:'^BSESN'},
+    {id:'nifty',  name:'NIFTY 50',       region:'India',         stooq:'^nsei', yahoo:'^NSEI'},
+    {id:'niftybank',name:'NIFTY Bank',   region:'India',         stooq:null,    yahoo:'^NSEBANK'},
+    // --- Europe ---
+    {id:'ftse',   name:'FTSE 100',       region:'United Kingdom',stooq:'^ukx',  yahoo:'^FTSE'},
+    {id:'dax',    name:'DAX',            region:'Germany',       stooq:'^dax',  yahoo:'^GDAXI'},
+    {id:'cac',    name:'CAC 40',         region:'France',        stooq:'^cac',  yahoo:'^FCHI'},
+    {id:'aex',    name:'AEX',            region:'Netherlands',   stooq:'^aex',  yahoo:'^AEX'},
+    {id:'stoxx',  name:'Euro Stoxx 50',  region:'Eurozone',      stooq:'^stx',  yahoo:'^STOXX50E'},
+    {id:'ibex',   name:'IBEX 35',        region:'Spain',         stooq:'^ibex', yahoo:'^IBEX'},
+    {id:'smi',    name:'SMI',            region:'Switzerland',   stooq:'^smi',  yahoo:'^SSMI'},
+    // --- Asia-Pacific & Middle East ---
+    {id:'nikkei', name:'Nikkei 225',     region:'Japan',         stooq:'^nkx',  yahoo:'^N225'},
+    {id:'hsi',    name:'Hang Seng',      region:'Hong Kong',     stooq:'^hsi',  yahoo:'^HSI'},
+    {id:'shcomp', name:'Shanghai Composite',region:'China',      stooq:'^shc',  yahoo:'000001.SS'},
+    {id:'kospi',  name:'KOSPI',          region:'South Korea',   stooq:'^kospi',yahoo:'^KS11'},
+    {id:'asx',    name:'ASX 200',        region:'Australia',     stooq:'^axjo', yahoo:'^AXJO'},
+    {id:'sti',    name:'Straits Times',  region:'Singapore',     stooq:'^sti',  yahoo:'^STI'},
+    {id:'twii',   name:'TAIEX',          region:'Taiwan',        stooq:null,    yahoo:'^TWII'},
+    {id:'tasi',   name:'Tadawul',        region:'Saudi Arabia',  stooq:null,    yahoo:'^TASI.SR'}
+  ],
+  metals: [
+    {id:'gold',      name:'Gold',      unit:'troy oz', stooq:'xauusd', yahoo:'GC=F'},
+    {id:'silver',    name:'Silver',    unit:'troy oz', stooq:'xagusd', yahoo:'SI=F'},
+    {id:'platinum',  name:'Platinum',  unit:'troy oz', stooq:'xptusd', yahoo:'PL=F'},
+    {id:'palladium', name:'Palladium', unit:'troy oz', stooq:'xpdusd', yahoo:'PA=F'},
+    {id:'copper',    name:'Copper',    unit:'lb',      stooq:'hg.f',   yahoo:'HG=F'}
+  ],
+  rates: [
+    {id:'us10y', name:'US 10-year Treasury', region:'United States', stooq:'10usy.b'},
+    {id:'de10y', name:'German 10-year Bund', region:'Germany',       stooq:'10dey.b'},
+    {id:'uk10y', name:'UK 10-year Gilt',     region:'United Kingdom',stooq:'10uky.b'},
+    {id:'in10y', name:'India 10-year',       region:'India',         stooq:'10iny.b'}
+  ],
+  energy: [
+    {id:'brent', name:'Brent crude', unit:'bbl', stooq:'cb.f', yahoo:'BZ=F'},
+    {id:'wti',   name:'WTI crude',   unit:'bbl', stooq:'cl.f', yahoo:'CL=F'}
+  ]
+};
+
+// Troy ounce -> gram, for the per-gram gold and silver prices that
+// actually matter when buying jewellery or coins in India or Europe.
+const GRAMS_PER_TROY_OZ = 31.1034768;
+const GRAMS_PER_TOLA = 11.6638038; // Indian/South Asian jeweller's unit
+
+function parseStooqCsv(text){
+  // Format: Symbol,Date,Time,Open,High,Low,Close,Volume
+  const lines = String(text||'').trim().split('\n');
+  if(lines.length < 2) return null;
+  const cols = lines[1].split(',');
+  if(cols.length < 7) return null;
+  const close = parseFloat(cols[6]);
+  const open  = parseFloat(cols[3]);
+  if(!isFinite(close) || close === 0) return null;
+  return {
+    price: close,
+    open: isFinite(open) ? open : null,
+    high: parseFloat(cols[4]), low: parseFloat(cols[5]),
+    date: cols[1], time: cols[2],
+    change: (isFinite(open) && open) ? close-open : null,
+    changePct: (isFinite(open) && open) ? ((close-open)/open)*100 : null
+  };
+}
+
+async function fetchStooq(symbol, timeoutMs){
+  const url = `https://stooq.com/q/l/?s=${encodeURIComponent(symbol)}&f=sd2t2ohlcv&h&e=csv`;
+  const routes = [proxyAllOrigins(url), proxyCodeTabs(url), url];
+  for(const r of routes){
+    try{
+      const res = await fetchWithTimeout(r, timeoutMs||9000);
+      if(!res.ok) continue;
+      const q = parseStooqCsv(await res.text());
+      if(q) return Object.assign(q, {source:'Stooq'});
+    }catch(e){}
+  }
+  return null;
+}
+
+async function fetchYahooQuote(symbol, timeoutMs){
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5d&interval=1d`;
+  const routes = [proxyAllOrigins(url), proxyCodeTabs(url)];
+  for(const r of routes){
+    try{
+      const res = await fetchWithTimeout(r, timeoutMs||9000);
+      if(!res.ok) continue;
+      const data = await res.json();
+      const result = data?.chart?.result?.[0];
+      if(!result) continue;
+      const meta = result.meta || {};
+      const price = meta.regularMarketPrice;
+      const prev  = meta.chartPreviousClose ?? meta.previousClose;
+      if(!isFinite(price)) continue;
+      // Prefer the previous CLOSE over the session open: an index's
+      // headline "up 1.2%" is always measured against yesterday's close,
+      // and using the open instead silently understates overnight moves.
+      return {
+        price,
+        open: prev ?? null,
+        change: isFinite(prev) ? price-prev : null,
+        changePct: isFinite(prev) && prev ? ((price-prev)/prev)*100 : null,
+        currency: meta.currency || null,
+        exchange: meta.exchangeName || null,
+        marketState: meta.marketState || null,
+        date: meta.regularMarketTime ? new Date(meta.regularMarketTime*1000).toISOString() : null,
+        closes: (result.indicators?.quote?.[0]?.close || []).filter(v=>isFinite(v)),
+        source:'Yahoo Finance'
+      };
+    }catch(e){}
+  }
+  return null;
+}
+
+/** Yahoo first (previous-close basis, richer), Stooq as the fallback. */
+async function fetchQuote(spec, timeoutMs){
+  if(spec.yahoo){
+    const q = await fetchYahooQuote(spec.yahoo, timeoutMs);
+    if(q) return q;
+  }
+  if(spec.stooq){
+    const q = await fetchStooq(spec.stooq, timeoutMs);
+    if(q) return q;
+  }
+  return null;
+}
+
+/**
+ * FX rates. Frankfurter serves the ECB's daily reference rates, is
+ * keyless and sends CORS headers, so it normally works without a proxy.
+ * Note these are DAILY reference rates published each afternoon, not
+ * live tick data — fine for converting a metal price, not for trading.
+ */
+async function fetchFxRates(timeoutMs){
+  const attempts = [
+    'https://api.frankfurter.app/latest?from=USD&to=EUR,INR,GBP,JPY,CHF,AUD,CAD,CNY',
+    proxyAllOrigins('https://api.frankfurter.app/latest?from=USD&to=EUR,INR,GBP,JPY,CHF,AUD,CAD,CNY'),
+    'https://open.er-api.com/v6/latest/USD'
+  ];
+  for(const url of attempts){
+    try{
+      const res = await fetchWithTimeout(url, timeoutMs||9000);
+      if(!res.ok) continue;
+      const d = await res.json();
+      const rates = d.rates || d.conversion_rates;
+      if(rates && rates.EUR && rates.INR){
+        return {base:'USD', rates, date: d.date || d.time_last_update_utc || null,
+                source: url.includes('frankfurter') ? 'ECB via Frankfurter' : 'open.er-api'};
+      }
+    }catch(e){}
+  }
+  return null;
+}
+
+/**
+ * Everything the dashboard needs, fetched concurrently.
+ *
+ * Concurrency matters here: fetching ~35 symbols sequentially through a
+ * proxy would take the better part of a minute. Failures are per-symbol
+ * so one dead ticker never blanks the board.
+ */
+async function loadMarketData(opts){
+  opts = opts || {};
+  const timeout = opts.timeout || 10000;
+  const wanted = opts.groups || ['indices','metals','rates','energy'];
+
+  const jobs = [];
+  const layout = [];
+  wanted.forEach(group=>{
+    (MARKET_SYMBOLS[group]||[]).forEach(spec=>{
+      layout.push({group, spec});
+      jobs.push(fetchQuote(spec, timeout));
+    });
+  });
+  const fxJob = fetchFxRates(timeout);
+
+  const [settled, fx] = await Promise.all([Promise.allSettled(jobs), fxJob]);
+
+  const out = {indices:[], metals:[], rates:[], energy:[], fx, fetchedAt: Date.now(), failed:0};
+  settled.forEach((res, i)=>{
+    const {group, spec} = layout[i];
+    const q = res.status === 'fulfilled' ? res.value : null;
+    if(!q){ out.failed++; out[group].push(Object.assign({}, spec, {unavailable:true})); return; }
+    out[group].push(Object.assign({}, spec, q));
+  });
+
+  // Convert metals into the currencies and units people actually use.
+  if(fx && fx.rates){
+    out.metals.forEach(m=>{
+      if(m.unavailable || !isFinite(m.price)) return;
+      const usd = m.price;
+      m.perOz = {USD: usd, EUR: usd*(fx.rates.EUR||0), INR: usd*(fx.rates.INR||0)};
+      if(m.unit === 'troy oz'){
+        m.perGram = {
+          USD: usd/GRAMS_PER_TROY_OZ,
+          EUR: (usd*(fx.rates.EUR||0))/GRAMS_PER_TROY_OZ,
+          INR: (usd*(fx.rates.INR||0))/GRAMS_PER_TROY_OZ
+        };
+        m.perTola = {INR: ((usd*(fx.rates.INR||0))/GRAMS_PER_TROY_OZ)*GRAMS_PER_TOLA};
+        // Indian retail gold is quoted per 10g, by purity.
+        m.per10gINR = {
+          '24k': m.perGram.INR*10,
+          '22k': m.perGram.INR*10*0.9167,
+          '18k': m.perGram.INR*10*0.75
+        };
+      }
+    });
+  }
+  return out;
+}
+
+/**
+ * Picks out what's worth telling someone about without them asking.
+ *
+ * The bar is deliberately high: a notification that fires on every
+ * half-percent wiggle gets muted within a day, at which point it's
+ * worse than no notification at all.
+ */
+function findMarketHighlights(data, thresholds){
+  const th = Object.assign({index: 1.5, metal: 2.0, vix: 15, yield: 5}, thresholds||{});
+  const out = [];
+  (data.indices||[]).forEach(q=>{
+    if(q.unavailable || !isFinite(q.changePct)) return;
+    if(q.id === 'vix'){
+      if(Math.abs(q.changePct) >= th.vix){
+        out.push({severity:'high', text:`Volatility ${q.changePct>0?'spiking':'collapsing'}: VIX ${q.changePct>0?'+':''}${q.changePct.toFixed(1)}% to ${q.price.toFixed(1)}`});
+      }
+      return;
+    }
+    if(Math.abs(q.changePct) >= th.index){
+      out.push({
+        severity: Math.abs(q.changePct) >= th.index*2 ? 'high' : 'normal',
+        text: `${q.name} (${q.region}) ${q.changePct>0?'up':'down'} ${Math.abs(q.changePct).toFixed(2)}% to ${q.price.toLocaleString(undefined,{maximumFractionDigits:2})}`
+      });
+    }
+  });
+  (data.metals||[]).forEach(q=>{
+    if(q.unavailable || !isFinite(q.changePct)) return;
+    if(Math.abs(q.changePct) >= th.metal){
+      out.push({severity:'normal',
+        text:`${q.name} ${q.changePct>0?'up':'down'} ${Math.abs(q.changePct).toFixed(2)}% to $${q.price.toFixed(2)}/${q.unit}`});
+    }
+  });
+  (data.rates||[]).forEach(q=>{
+    if(q.unavailable || !isFinite(q.changePct)) return;
+    if(Math.abs(q.changePct) >= th.yield){
+      out.push({severity:'normal',
+        text:`${q.name} yield ${q.changePct>0?'up':'down'} ${Math.abs(q.changePct).toFixed(1)}% to ${q.price.toFixed(2)}% — mortgage pricing tends to follow`});
+    }
+  });
+  out.sort((a,b)=> (a.severity==='high'?-1:1) - (b.severity==='high'?-1:1));
+  return out;
 }
 
 /* ============================================================
@@ -3532,7 +4295,8 @@ const App = {
     weightLog: {},  // 'YYYY-MM-DD' -> kg
     calorieBurnLog: {}, // 'YYYY-MM-DD' -> kcal burned from tracked walks
     strideM: null,      // calibrated stride length (meters/step), learned from a GPS-tracked walk
-    stepSensitivity: 0.8, // accelerometer threshold; lower = more sensitive
+    stepSensitivity: 0.8,
+    stepCalibration: 1,   // user-supplied correction factor for their phone/gait // accelerometer threshold; lower = more sensitive
     waterGlassMl: 250,
     waterGoalMl: 2500,
     waterLog: {},   // 'YYYY-MM-DD' -> glasses count
@@ -3576,6 +4340,8 @@ const App = {
       ['startAutoGpsTracking', ()=>this.startAutoGpsTracking()],
       ['autoLocateOnFirstLoad', ()=>this.autoLocateOnFirstLoad()],
       ['renderQuote', ()=>this.renderQuote()],
+      ['initDatabase', ()=>this.initDatabase()],
+      ['initNotifications', ()=>this.initNotifications()],
       ['renderVedicEvents', ()=>this.renderVedicEvents()],
       ['renderLocationNow', ()=>this.renderLocationNow()],
       ['tick', ()=>this.tick()],
@@ -3935,7 +4701,382 @@ const App = {
       `<text class="sleep-axis-label" x="2" y="${H-3}">${Math.round(span/60000)} min ago</text>` +
       `<text class="sleep-axis-label" x="${W-4}" y="${H-3}" text-anchor="end">now</text>`;
   },
-  saveTasks(){ localStorage.setItem('productivityapp_tasks', JSON.stringify(this.tasks)); },
+  /* ---------- Market dashboard ---------- */
+  market: {data:null, currency:'USD', region:'all', autoRefresh:true, notify:false,
+           loading:false, lastNotified:{}, timer:null},
+  // Markets move on a scale of minutes, and every quote goes through a
+  // shared public proxy — polling harder than this would be rude to the
+  // proxy and useless to the user.
+  MARKET_REFRESH_MS: 5*60*1000,
+
+  initMarket(){
+    if(!this._marketInit){
+      this._marketInit = true;
+      AppDB.getKV('marketPrefs', null).then(p=>{
+        if(p){
+          Object.assign(this.market, {currency:p.currency||'USD', autoRefresh:p.autoRefresh!==false, notify:!!p.notify});
+          const c=document.getElementById('mktCurrency'); if(c) c.value=this.market.currency;
+          const a=document.getElementById('mktAutoRefresh'); if(a) a.checked=this.market.autoRefresh;
+          const n=document.getElementById('mktNotify'); if(n) n.checked=this.market.notify;
+        }
+        this.loadMarket();
+      });
+      this.loadMarketNews();
+    } else if(!this.market.data){
+      this.loadMarket();
+    }
+    this.armMarketRefresh();
+  },
+  saveMarketPrefs(){
+    AppDB.setKV('marketPrefs', {currency:this.market.currency, autoRefresh:this.market.autoRefresh, notify:this.market.notify});
+  },
+  setMarketCurrency(){ this.market.currency = document.getElementById('mktCurrency').value; this.saveMarketPrefs(); this.renderMarket(); },
+  setMarketAutoRefresh(){ this.market.autoRefresh = document.getElementById('mktAutoRefresh').checked; this.saveMarketPrefs(); this.armMarketRefresh(); },
+  async setMarketNotify(){
+    const on = document.getElementById('mktNotify').checked;
+    if(on && Notifier.permission !== 'granted'){
+      const p = await Notifier.requestPermission();
+      if(p !== 'granted'){
+        document.getElementById('mktNotify').checked = false;
+        document.getElementById('mktStatus').textContent = 'Notifications are blocked for this site, so market alerts can\'t be sent. You can re-enable them in your browser\'s site settings.';
+        return;
+      }
+    }
+    this.market.notify = on;
+    this.saveMarketPrefs();
+  },
+  setMarketRegion(r){
+    this.market.region = r;
+    document.querySelectorAll('#mktRegionRow button').forEach(b=>b.classList.toggle('active', b.dataset.region===r));
+    this.renderMarket();
+  },
+  armMarketRefresh(){
+    if(this.market.timer){ clearInterval(this.market.timer); this.market.timer = null; }
+    if(!this.market.autoRefresh) return;
+    this.market.timer = setInterval(()=>{
+      // Only refresh when the tab is actually visible — polling a
+      // hidden tab burns the user's data for a screen nobody is reading.
+      if(document.hidden) return;
+      const view = document.getElementById('view-market');
+      if(view && view.classList.contains('active')) this.loadMarket();
+    }, this.MARKET_REFRESH_MS);
+  },
+  async loadMarket(force){
+    if(this.market.loading) return;
+    this.market.loading = true;
+    const status = document.getElementById('mktStatus');
+    if(status) status.textContent = 'Fetching quotes…';
+    // Show the last good data immediately while the new fetch runs, so
+    // a refresh never blanks the board.
+    if(!this.market.data){
+      const cached = await AppDB.get('market', 'latest');
+      if(cached && cached.data && (force || Date.now()-cached.data.fetchedAt < 30*60*1000)){
+        this.market.data = cached.data; this.renderMarket();
+      }
+    }
+    try{
+      const data = await loadMarketData({timeout: 11000});
+      this.market.data = data;
+      await AppDB.put('market', {key:'latest', data});
+      await this.recordMarketHistory(data);
+      this.renderMarket();
+      this.maybeNotifyMarket(data);
+    }catch(e){
+      if(status) status.textContent = `Couldn't reach the market data sources: ${escapeHtml(e.message)}. This usually means the network or the public proxy is unavailable.`;
+    }finally{
+      this.market.loading = false;
+    }
+  },
+  // A rolling 90-day close history, so trends survive a page reload.
+  async recordMarketHistory(data){
+    const today = dstr(new Date());
+    const rec = (await AppDB.get('market', 'history')) || {key:'history', days:{}};
+    const snapshot = {};
+    ['indices','metals','rates','energy'].forEach(g=>(data[g]||[]).forEach(q=>{
+      if(!q.unavailable && isFinite(q.price)) snapshot[q.id] = q.price;
+    }));
+    rec.days[today] = snapshot;
+    const keys = Object.keys(rec.days).sort();
+    if(keys.length > 90) keys.slice(0, keys.length-90).forEach(k=>delete rec.days[k]);
+    await AppDB.put('market', rec);
+  },
+  async maybeNotifyMarket(data){
+    if(!this.market.notify || Notifier.permission !== 'granted') return;
+    const highlights = findMarketHighlights(data);
+    const bigOnes = highlights.filter(h=>h.severity === 'high');
+    if(!bigOnes.length) return;
+    // At most one market notification every two hours, whatever happens.
+    // Markets can wobble across a threshold repeatedly, and a stream of
+    // alerts about the same move is exactly how people end up muting an
+    // app permanently.
+    const last = this.market.lastNotified.at || 0;
+    if(Date.now() - last < 2*3600*1000) return;
+    this.market.lastNotified.at = Date.now();
+    await Notifier.show('Market moves worth knowing', {
+      body: bigOnes.slice(0,3).map(h=>h.text).join('\n'),
+      tag: 'market-highlights'
+    });
+  },
+  fmtMoney(v, cur){
+    if(!isFinite(v)) return '—';
+    const sym = {USD:'$', EUR:'€', INR:'₹'}[cur] || '';
+    const dp = v >= 1000 ? 0 : 2;
+    return sym + v.toLocaleString(undefined, {minimumFractionDigits:dp, maximumFractionDigits:dp});
+  },
+  changeHtml(q){
+    if(q.unavailable) return '<span class="stat-sub">unavailable</span>';
+    if(!isFinite(q.changePct)) return '<span class="stat-sub">—</span>';
+    const up = q.changePct >= 0;
+    const col = up ? 'var(--teal)' : '#E5614F';
+    return `<span style="color:${col}; font-weight:600;">${up?'▲':'▼'} ${Math.abs(q.changePct).toFixed(2)}%</span>`;
+  },
+  renderMarket(){
+    const d = this.market.data;
+    if(!d) return;
+    const cur = this.market.currency;
+    const fx = d.fx && d.fx.rates;
+    const conv = v => cur === 'USD' ? v : (fx && fx[cur] ? v*fx[cur] : NaN);
+
+    const status = document.getElementById('mktStatus');
+    if(status){
+      const age = Math.round((Date.now()-d.fetchedAt)/60000);
+      status.textContent = `Updated ${age<1?'just now':age+' min ago'}`
+        + (d.failed ? ` · ${d.failed} symbol${d.failed===1?'':'s'} unavailable` : '')
+        + ` · quotes are delayed, typically by 15 minutes or more, and are not suitable for trading decisions.`
+        + (d.fx ? ` FX from ${d.fx.source}${d.fx.date?' ('+d.fx.date+')':''}.` : '');
+    }
+
+    // --- Highlights ---
+    const hl = findMarketHighlights(d);
+    const hlEl = document.getElementById('mktHighlights');
+    if(hlEl){
+      hlEl.innerHTML = hl.length
+        ? hl.slice(0,8).map(h=>`<div class="stat-sub" style="padding:4px 0;">${h.severity==='high'?'🔴':'•'} ${escapeHtml(h.text)}</div>`).join('')
+        : '<div class="stat-sub">Nothing dramatic today — no index moved more than 1.5% and no metal more than 2%.</div>';
+    }
+
+    // --- Metals ---
+    const mEl = document.getElementById('mktMetals');
+    if(mEl){
+      mEl.innerHTML = (d.metals||[]).map(m=>{
+        if(m.unavailable) return `<div class="food-row"><div class="fr-name">${escapeHtml(m.name)}</div><div class="stat-sub">unavailable</div></div>`;
+        const perOz = m.perOz ? m.perOz[cur] : conv(m.price);
+        const perG  = m.perGram ? m.perGram[cur] : null;
+        let extra = '';
+        if(m.per10gINR && cur === 'INR'){
+          extra = `<div class="stat-sub" style="margin-top:2px;">Per 10g — 24k ₹${Math.round(m.per10gINR['24k']).toLocaleString('en-IN')} · 22k ₹${Math.round(m.per10gINR['22k']).toLocaleString('en-IN')} · 18k ₹${Math.round(m.per10gINR['18k']).toLocaleString('en-IN')}</div>`;
+        } else if(perG){
+          extra = `<div class="stat-sub" style="margin-top:2px;">${this.fmtMoney(perG, cur)} per gram</div>`;
+        }
+        return `<div style="padding:8px 0; border-bottom:1px solid var(--card-line);">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
+            <div><b>${escapeHtml(m.name)}</b> <span class="stat-sub">per ${escapeHtml(m.unit)}</span></div>
+            <div style="text-align:right;"><div style="font-family:var(--font-mono); font-weight:600;">${this.fmtMoney(perOz, cur)}</div>${this.changeHtml(m)}</div>
+          </div>${extra}</div>`;
+      }).join('');
+    }
+
+    // --- Indices ---
+    const iEl = document.getElementById('mktIndices');
+    if(iEl){
+      const regionGroups = {
+        'Europe': ['United Kingdom','Germany','France','Netherlands','Eurozone','Spain','Switzerland'],
+        'Asia': ['Japan','Hong Kong','China','South Korea','Australia','Singapore','Taiwan','Saudi Arabia']
+      };
+      let list = d.indices||[];
+      if(this.market.region !== 'all'){
+        const group = regionGroups[this.market.region];
+        list = group ? list.filter(q=>group.includes(q.region)) : list.filter(q=>q.region===this.market.region);
+      }
+      iEl.innerHTML = list.map(q=>`
+        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:8px 0; border-bottom:1px solid var(--card-line);">
+          <div><b>${escapeHtml(q.name)}</b><div class="stat-sub">${escapeHtml(q.region)}${q.marketState?' · '+escapeHtml(q.marketState.toLowerCase()):''}</div></div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--font-mono); font-weight:600;">${q.unavailable?'—':q.price.toLocaleString(undefined,{maximumFractionDigits:2})}</div>
+            ${this.changeHtml(q)}
+          </div>
+        </div>`).join('') || '<div class="stat-sub">No indices in this region.</div>';
+    }
+
+    // --- Rates ---
+    const rEl = document.getElementById('mktRates');
+    if(rEl){
+      rEl.innerHTML = (d.rates||[]).map(q=>`
+        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid var(--card-line);">
+          <div><b>${escapeHtml(q.name)}</b><div class="stat-sub">${escapeHtml(q.region)}</div></div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--font-mono); font-weight:600;">${q.unavailable?'—':q.price.toFixed(2)+'%'}</div>
+            ${this.changeHtml(q)}
+          </div>
+        </div>`).join('');
+    }
+
+    // --- Energy + FX ---
+    const eEl = document.getElementById('mktEnergy');
+    if(eEl){
+      eEl.innerHTML = (d.energy||[]).map(q=>`
+        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid var(--card-line);">
+          <div><b>${escapeHtml(q.name)}</b> <span class="stat-sub">per ${escapeHtml(q.unit)}</span></div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--font-mono); font-weight:600;">${q.unavailable?'—':this.fmtMoney(conv(q.price), cur)}</div>
+            ${this.changeHtml(q)}
+          </div>
+        </div>`).join('');
+    }
+    const fxEl = document.getElementById('mktFx');
+    if(fxEl && fx){
+      const pairs = [['EUR','Euro'],['INR','Indian Rupee'],['GBP','Pound'],['JPY','Yen'],['CHF','Franc'],['CNY','Yuan']];
+      fxEl.innerHTML = `<div class="group-label" style="margin-bottom:6px;">1 US Dollar buys</div><div class="dc-stat-grid">` +
+        pairs.filter(([c])=>fx[c]).map(([c,n])=>
+          `<div class="dc-stat"><div class="num">${fx[c].toFixed(c==='JPY'?1:2)}</div><div class="lbl">${escapeHtml(n)}</div></div>`
+        ).join('') + `</div>`;
+    }
+  },
+  // Market news reuses the existing news engine's business tab rather
+  // than duplicating a second set of feeds and filters.
+  async loadMarketNews(){
+    const el = document.getElementById('mktNews');
+    if(!el) return;
+    try{
+      const res = await loadNewsItems('business', 11000, {});
+      el.innerHTML = res.items.slice(0,10).map(it=>`
+        <div class="news-item"><div class="news-body">
+          <div class="news-top-row"><span class="news-cat-pill">${escapeHtml(it.publisher)}</span>
+          <span class="news-meta-date">${escapeHtml(formatNewsDate(it.ts))}</span></div>
+          <a class="news-title" href="${escapeHtml(it.link)}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
+        </div></div>`).join('');
+    }catch(e){
+      el.innerHTML = `<div class="news-error">Market news unavailable: ${escapeHtml(e.message)}</div>`;
+    }
+  },
+
+  saveTasks(){
+    localStorage.setItem('productivityapp_tasks', JSON.stringify(this.tasks));
+    // Any task edit can change what needs reminding about, so the queue
+    // is rebuilt from scratch — see rebuildReminders for why that's
+    // cheaper than trying to diff individual entries.
+    this.rebuildReminders();
+  },
+
+  /* ---------- Reminders ---------- */
+  reminderPrefs: {enabled:false, leadMinutes:15, dailyDigest:false},
+
+  async initNotifications(){
+    const saved = await AppDB.getKV('reminderPrefs', null);
+    if(saved) this.reminderPrefs = Object.assign(this.reminderPrefs, saved);
+    Notifier.permission = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+    this.renderNotificationSettings();
+    if(this.reminderPrefs.enabled && Notifier.permission === 'granted'){
+      const missed = await Notifier.catchUpMissed();
+      if(missed.length) this.showMissedReminders(missed);
+      await this.rebuildReminders();
+      await Notifier.registerPeriodicSync();
+    }
+  },
+  async enableNotifications(){
+    const p = await Notifier.requestPermission();
+    this.renderNotificationSettings();
+    if(p !== 'granted') return;
+    this.reminderPrefs.enabled = true;
+    await AppDB.setKV('reminderPrefs', this.reminderPrefs);
+    await this.rebuildReminders();
+    Notifier.show('Reminders are on', {body:'You\'ll be reminded before tasks and events with a time set.', tag:'welcome'});
+    this.renderNotificationSettings();
+  },
+  async setReminderLead(){
+    const v = parseInt(document.getElementById('reminderLead').value, 10);
+    if(isNaN(v)) return;
+    this.reminderPrefs.leadMinutes = v;
+    await AppDB.setKV('reminderPrefs', this.reminderPrefs);
+    await this.rebuildReminders();
+    this.renderNotificationSettings();
+  },
+  /**
+   * Turns every timed task into a reminder entry.
+   *
+   * Rebuilt wholesale rather than diffed: tasks can be edited, deleted,
+   * moved between days and marked done, and tracking which reminder
+   * corresponds to which past state is where scheduling bugs live. A
+   * full rebuild is a few milliseconds and is always correct.
+   */
+  async rebuildReminders(){
+    if(!this.reminderPrefs.enabled || Notifier.permission !== 'granted') return;
+    const lead = this.reminderPrefs.leadMinutes;
+    const items = [];
+    const horizon = Date.now() + 30*DAY_MS;
+    for(const [dateStr, arr] of Object.entries(this.tasks||{})){
+      for(const t of (arr||[])){
+        if(t.done || !t.time) continue; // untimed tasks have no moment to fire at
+        const when = new Date(`${dateStr}T${t.time}`);
+        if(isNaN(when.getTime())) continue;
+        const fireAt = when.getTime() - lead*60000;
+        if(fireAt <= Date.now() || fireAt > horizon) continue;
+        items.push({
+          id: 'task-'+t.id,
+          fireAt,
+          title: lead > 0 ? `In ${lead} min: ${t.text}` : t.text,
+          body: `${when.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}${t.category && t.category!=='none' ? ' · '+t.category : ''}`,
+          kind: 'task', tag: 'task-'+t.id
+        });
+      }
+    }
+    await Notifier.rebuildQueue(items);
+    this._reminderCount = items.length;
+    this.renderNotificationSettings();
+  },
+  showMissedReminders(missed){
+    const el = document.getElementById('missedReminders');
+    if(!el) return;
+    el.style.display = 'block';
+    el.innerHTML = `<b>While the app was closed:</b><br>` + missed.slice(0,8).map(m=>
+      `• ${escapeHtml(m.title)} <span class="stat-sub">(was due ${new Date(m.fireAt).toLocaleString()})</span>`).join('<br>');
+  },
+  renderNotificationSettings(){
+    const st = document.getElementById('notifStatus');
+    if(!st) return;
+    const btn = document.getElementById('enableNotifBtn');
+    if(Notifier.permission === 'unsupported'){
+      st.textContent = 'This browser doesn\'t support notifications.';
+      if(btn) btn.style.display = 'none';
+    } else if(Notifier.permission === 'granted' && this.reminderPrefs.enabled){
+      st.innerHTML = `🟢 Reminders are on — ${this._reminderCount||0} scheduled.`;
+      if(btn) btn.style.display = 'none';
+    } else if(Notifier.permission === 'denied'){
+      st.textContent = 'Notifications are blocked for this site. You can re-enable them in your browser\'s site settings, then reload.';
+      if(btn) btn.style.display = 'none';
+    } else {
+      st.textContent = 'Reminders are off.';
+      if(btn) btn.style.display = 'inline-block';
+    }
+    const lead = document.getElementById('reminderLead');
+    if(lead) lead.value = String(this.reminderPrefs.leadMinutes);
+  },
+
+  /* ---------- Storage ---------- */
+  async initDatabase(){
+    const db = await AppDB.open();
+    const result = await AppDB.migrateFromLocalStorage();
+    await AppDB.requestPersistence();
+    this._dbReady = !!db;
+    this._dbMigration = result;
+    this.renderStorageInfo();
+  },
+  async renderStorageInfo(){
+    const el = document.getElementById('storageInfo');
+    if(!el) return;
+    if(!this._dbReady){
+      el.textContent = 'Local database unavailable (this happens in some private-browsing modes) — the app is falling back to simple browser storage, which is capped at about 5MB.';
+      return;
+    }
+    const u = await AppDB.usage();
+    const persisted = (navigator.storage && navigator.storage.persisted) ? await navigator.storage.persisted() : false;
+    const days = (await AppDB.all('days')).length;
+    const bouts = (await AppDB.all('bouts')).length;
+    el.innerHTML = `Database active · ${days} day record${days===1?'':'s'}, ${bouts} walking session${bouts===1?'':'s'} stored.`
+      + (u ? ` Using ${(u.used/1048576).toFixed(1)} MB of roughly ${(u.quota/1048576).toFixed(0)} MB available.` : '')
+      + `<br>${persisted ? 'Storage is marked persistent, so the browser won\'t clear it to free space.' : 'Storage is best-effort — the browser may clear it if the device runs very low on space. Installing the app to your home screen makes persistence much more likely to be granted.'}`;
+  },
+
   saveSleepLogState(){ localStorage.setItem('productivityapp_sleep_log', JSON.stringify(this.sleepLog)); },
   saveHealthState(){ localStorage.setItem('productivityapp_health', JSON.stringify(this.health)); },
   saveSleepLog(){
@@ -4026,6 +5167,7 @@ const App = {
       if(name==='datecalc') this.initDateCalc();
       if(name==='news' && !this._newsLoadedOnce){ this._newsLoadedOnce = true; this.loadNews(this.newsCat || 'global'); }
       if(name==='health') this.initHealth();
+      if(name==='market'){ this.initMarket(); }
       if(name==='network') this.renderRadiationSection();
     }catch(e){ console.error(`switchTab(${name}) render failed`, e); }
   },
@@ -5086,6 +6228,7 @@ const App = {
     this.ensureWalkMapVisible();
     this.renderStepHistory();
     this.renderStepAverages();
+    this.renderCalibrationStatus();
   },
   paceSecPerKm(activeMs, steps){
     // Duration-weighted, computed from the totals — never an average of
@@ -5139,6 +6282,44 @@ const App = {
   toggleGaitDebug(){
     this.stepTracker.showDebug = !this.stepTracker.showDebug;
     this.renderStepTrackerStatus();
+  },
+  applyStepCalibration(){
+    const actual = parseInt(document.getElementById('calibActual').value, 10);
+    const counted = parseInt(document.getElementById('calibCounted').value, 10);
+    const st = document.getElementById('calibStatus');
+    if(isNaN(actual) || isNaN(counted) || actual < 20 || counted < 1){
+      st.textContent = 'Enter both numbers — at least 20 actual steps, so the ratio means something.';
+      return;
+    }
+    const factor = actual/counted;
+    // Anything beyond 2x either way is far more likely a typo or a
+    // failed session than a real calibration, and silently accepting it
+    // would corrupt every future count.
+    if(factor < 0.5 || factor > 2.0){
+      st.textContent = `That works out to a ${factor.toFixed(2)}x correction, which is too large to be a genuine calibration — it usually means tracking wasn't running for the whole walk. Try again with a fresh count.`;
+      return;
+    }
+    // Blend with any existing factor so repeated calibrations converge
+    // rather than each one overwriting the last.
+    const prev = this.health.stepCalibration || 1;
+    this.health.stepCalibration = prev === 1 ? factor : (prev*0.5 + factor*0.5);
+    this.saveHealthState();
+    this.renderCalibrationStatus();
+    document.getElementById('calibActual').value = '';
+    document.getElementById('calibCounted').value = '';
+  },
+  resetStepCalibration(){
+    this.health.stepCalibration = 1;
+    this.saveHealthState();
+    this.renderCalibrationStatus();
+  },
+  renderCalibrationStatus(){
+    const st = document.getElementById('calibStatus');
+    if(!st) return;
+    const f = this.health.stepCalibration || 1;
+    st.textContent = f === 1
+      ? 'No correction applied — the raw count is being used.'
+      : `Applying a ${f.toFixed(3)}x correction (${f > 1 ? 'raising' : 'lowering'} counts by ${Math.abs((f-1)*100).toFixed(1)}%).`;
   },
   saveManualSteps(){
     const val = parseInt(document.getElementById('manualStepsInput').value, 10);
@@ -5378,6 +6559,14 @@ const App = {
     if(!n) return;
     const today = dstr(new Date());
     const rec = this.dayRecord(today, true);
+    // The user's own calibration factor, if they've set one.
+    const cal = this.health.stepCalibration || 1;
+    if(cal !== 1){
+      this._calFrac = (this._calFrac||0) + n*cal;
+      n = Math.floor(this._calFrac);
+      this._calFrac -= n;
+      if(n <= 0) return;
+    }
     rec.steps += n;
     if(cadenceHz && cadenceHz >= GAIT.WALK_RUN_SPLIT_HZ) rec.runSteps += n; else rec.walkSteps += n;
     this.health.steps[today] = rec.steps; // legacy mirror, keeps old exports working
